@@ -1,19 +1,36 @@
 {{define "content"}}
 {{$o := .Data}}
 <nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "estructuras/"}}">Estructuras</a> / <a href="{{rel .Root $o.Mod.URL}}">{{$o.Mod.Name}}</a></nav>
-<div class="page-head">
+<header class="item-title">
   <h1>{{$o.Name}}</h1>
-  <p class="id">{{$o.ID}}</p>
-</div>
-
+  <p>{{if eq $o.Mod.ID.Namespace "minecraft"}}Minecraft (vanilla){{else}}{{$o.Mod.Name}}{{end}} · {{len $o.Uses}} {{if eq (len $o.Uses) 1}}tipo de contenedor{{else}}tipos de contenedor{{end}} · {{len $o.Haul}} objetos posibles</p>
+</header>
 {{template "statusBox" $o.Status}}
+
+<div class="cols-2">
+<section class="pozo">
+  <header class="pozo-head"><h2>¿Qué hay aquí?</h2>
+  <p class="meta">Todo lo que pueden tener sus contenedores, sin abrir cada uno. La probabilidad es la de encontrarlo en un contenedor.</p></header>
+  {{template "haul" (dict "Root" .Root "Haul" $o.Haul "ID" "t-haul")}}
+</section>
 <section class="pozo">
   <h2>Dónde aparece</h2>
   {{if $o.BiomesNote}}<p>{{$o.BiomesNote}}</p>{{end}}
   {{if $o.Biomes}}{{template "biomeChips" (dict "Root" .Root "Biomes" $o.Biomes)}}
   {{else if not $o.BiomesNote}}<p class="empty">No se conocen sus biomas: la estructura no los declara en sus datos.</p>{{end}}
 </section>
+</div>
 
-<h2 class="section-title">Loot <span class="count">{{len $o.Uses}} {{if eq (len $o.Uses) 1}}tabla{{else}}tablas{{end}}</span></h2>
-{{range $o.Uses}}{{template "use" (dict "Root" $.Root "Use" .)}}{{end}}
+<section class="pozo card" id="contenedores">
+  <header class="card-head"><h2>Contenedores <span class="count">{{len $o.Uses}}</span></h2><p class="meta">Qué tiene cada uno, con la probabilidad por contenedor.</p></header>
+  {{range $o.Uses}}
+  <div class="place-block">
+    <div class="place-head"><h4><a href="{{rel $.Root .Table.URL}}">{{.Table.Name}}</a></h4>{{template "status" .Status}}</div>
+    <p class="biome-line meta">{{kind .Kind}}{{if .Container}} · {{short .Container}}{{end}}{{if .Share}} · usa esta tabla en el {{pct .Share}} de sus contenedores{{end}} · {{len .Table.Drops}} objetos · {{template "conf" .Confidence}}</p>
+    {{template "notes" .Notes}}
+    {{template "drops" (dict "Root" $.Root "Drops" .Table.Drops)}}
+    {{if .Evidence}}<details class="evidence"><summary>Cómo se encontró</summary><ul>{{range .Evidence}}<li>{{.}}</li>{{end}}</ul><p class="id">{{.Table.ID}}</p></details>{{end}}
+  </div>
+  {{end}}
+</section>
 {{end}}

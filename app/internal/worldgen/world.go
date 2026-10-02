@@ -33,6 +33,10 @@ type Template struct {
 	Containers  []Container
 	JigsawPools []domain.ResourceID
 	DataMarkers []string
+	// Mobs counts the entities saved in the template; Spawners counts the
+	// mob spawner blocks by the entity they spawn.
+	Mobs     map[domain.ResourceID]int
+	Spawners map[domain.ResourceID]int
 }
 
 // Found is a loot table placed by a structure.
@@ -162,6 +166,18 @@ func parseTemplate(id domain.ResourceID, doc nbt.Compound) *Template {
 				pools[rid] = true
 			}
 		}
+		if sd := data.Compound("SpawnData"); sd != nil {
+			id := sd.String("id") // before 1.18
+			if e := sd.Compound("entity"); e != nil {
+				id = e.String("id")
+			}
+			if rid, err := domain.ParseResourceID(id); err == nil && id != "" {
+				if t.Spawners == nil {
+					t.Spawners = map[domain.ResourceID]int{}
+				}
+				t.Spawners[rid]++
+			}
+		}
 		if data.String("mode") == "DATA" {
 			if m := data.String("metadata"); m != "" {
 				t.DataMarkers = append(t.DataMarkers, m)
@@ -176,6 +192,12 @@ func parseTemplate(id domain.ResourceID, doc nbt.Compound) *Template {
 		data := entity.Compound("nbt")
 		if data == nil {
 			continue
+		}
+		if rid, err := domain.ParseResourceID(data.String("id")); err == nil && data.String("id") != "" {
+			if t.Mobs == nil {
+				t.Mobs = map[domain.ResourceID]int{}
+			}
+			t.Mobs[rid]++
 		}
 		if lt := data.String("LootTable"); lt != "" {
 			if rid, err := domain.ParseResourceID(lt); err == nil {

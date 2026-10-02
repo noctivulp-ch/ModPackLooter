@@ -6,17 +6,13 @@
   <p class="id">{{$b.ID}}</p>
 </div>
 {{template "statusBox" $b.Status}}
-<div class="grid">
+<div class="cols-2">
   <section class="pozo">
-    <h2>Estructuras con loot <span class="count">{{len $b.Owners}}</span></h2>
-    <ul class="links">
-    {{range $b.Owners}}<li><a href="{{rel $.Root .URL}}">{{.Name}}</a> {{template "status" .Status}} <span class="meta">{{.Mod.Name}} · {{len .Uses}} {{if eq (len .Uses) 1}}tabla{{else}}tablas{{end}}</span></li>{{end}}
-    </ul>
-  </section>
-  <section class="pozo">
-    <h2>Lo más fácil de encontrar aquí</h2>
+    <header class="pozo-head"><h2>¿Qué hay aquí?</h2><p class="meta">Lo más fácil de encontrar en las estructuras de este bioma.</p></header>
+    {{if gt (len $b.Top) 12}}<div class="filters"><label class="sr-only" for="f-top">Filtrar objetos</label>
+      <input id="f-top" type="search" class="field filter" data-filter="t-top" placeholder="Filtrar objetos" autocomplete="off"></div>{{end}}
     <div class="scroll">
-    <table class="data">
+    <table class="data stack-sm" id="t-top">
       <thead><tr><th scope="col">Objeto</th><th scope="col" class="w-chance">Probabilidad</th><th scope="col">Dónde</th></tr></thead>
       <tbody>
       {{range $b.Top}}
@@ -25,10 +21,17 @@
           <td>{{template "chance" .Source.Effective}}</td>
           <td><a href="{{rel $.Root .Source.Owner.URL}}">{{.Source.Owner.Name}}</a></td>
         </tr>
-      {{end}}
+      {{else}}<tr><td colspan="3" class="empty">Las estructuras de este bioma no tienen loot conocido.</td></tr>{{end}}
       </tbody>
     </table>
     </div>
+    <p class="empty filter-empty" hidden>Ningún objeto coincide.</p>
+  </section>
+  <section class="pozo">
+    <h2>Estructuras con loot <span class="count">{{len $b.Owners}}</span></h2>
+    <ul class="links">
+    {{range $b.Owners}}<li><a href="{{rel $.Root .URL}}">{{.Name}}</a> {{template "status" .Status}} <span class="meta">{{.Mod.Name}} · {{len .Uses}} {{if eq (len .Uses) 1}}tabla{{else}}tablas{{end}}</span></li>{{end}}
+    </ul>
   </section>
 </div>
 {{end}}

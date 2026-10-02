@@ -1,0 +1,56 @@
+{{define "content"}}
+{{$c := .Data}}
+<nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "criaturas/"}}">Criaturas</a> / <a href="{{rel .Root $c.Mod.URL}}">{{$c.Mod.Name}}</a></nav>
+<header class="item-title">
+  <h1>{{$c.Name}}</h1>
+  <p>{{$c.Mod.Name}} · {{$c.Where}}{{if $c.Table}} · suelta {{len $c.Table.Drops}} objetos{{end}}{{if $c.Merchants}} · comercia{{end}}</p>
+</header>
+{{template "statusBox" $c.Status}}
+
+<section class="pozo card" id="donde">
+  <header class="card-head"><h2>Dónde aparece</h2></header>
+  {{if not $c.Known}}<p class="warn-text">Los datos del modpack no dicen dónde aparece.</p>
+  <p class="meta">Puede aparecer por código del mod (eventos, invocaciones, scripts). El mod companion de ModPackLooter podrá registrarlo desde el juego.</p>{{end}}
+  {{if $c.Other}}<h3 class="grp">Otras formas de que aparezca</h3><ul class="plain">{{range $c.Other}}<li>{{.}}</li>{{end}}</ul>{{end}}
+  {{if $c.Structures}}
+  <h3 class="grp">En estructuras <span class="count">{{len $c.Structures}}</span></h3>
+  <div class="scroll"><table class="data stack-sm">
+    <thead><tr><th scope="col">Estructura</th><th scope="col">Cómo</th></tr></thead>
+    <tbody>{{range $c.Structures}}<tr{{if .Status.Disabled}} class="off"{{end}}>
+      <td>{{if .URL}}<a href="{{rel $.Root .URL}}">{{.Name}}</a>{{else}}{{.Name}}{{end}} {{template "status" .Status}}</td>
+      <td>{{if .Count}}{{.Count}} {{if eq .Count 1}}colocada{{else}}colocadas{{end}} en sus piezas{{end}}{{if .Spawners}}{{if .Count}} · {{end}}{{.Spawners}} {{if eq .Spawners 1}}generador de monstruos{{else}}generadores de monstruos{{end}}{{end}}{{if .Override}}{{if or .Count .Spawners}} · {{end}}aparece dentro de la estructura{{end}}</td>
+    </tr>{{end}}</tbody>
+  </table></div>
+  {{end}}
+  {{if $c.Natural}}
+  <h3 class="grp">De forma natural <span class="count">{{len $c.Natural}} biomas</span></h3>
+  <p class="meta">La probabilidad es la de que, al aparecer una criatura de su tipo en ese bioma, sea esta.</p>
+  {{if gt (len $c.Natural) 12}}<div class="filters"><label class="sr-only" for="f-nat">Filtrar biomas</label><input id="f-nat" type="search" class="field filter" data-filter="t-nat" placeholder="Filtrar biomas" autocomplete="off"></div>{{end}}
+  <div class="scroll"><table class="data stack-sm" id="t-nat">
+    <thead><tr><th scope="col">Bioma</th><th scope="col" class="w-chance">Probabilidad en su tipo</th><th scope="col">Tipo</th><th scope="col" class="num">Grupo</th></tr></thead>
+    <tbody>{{range $c.Natural}}<tr>
+      <td>{{if .URL}}<a href="{{rel $.Root .URL}}">{{.Name}}</a>{{else}}{{.Name}}{{end}}{{if ne .Origin "bioma"}}<br><span class="meta">{{.Origin}}</span>{{end}}</td>
+      <td>{{template "chance" .Share}}</td>
+      <td>{{.Category}}</td>
+      <td class="num">{{.Group}}</td>
+    </tr>{{end}}</tbody>
+  </table></div>
+  <p class="empty filter-empty" hidden>Ningún bioma coincide.</p>
+  {{end}}
+</section>
+
+{{if $c.Table}}{{if $c.Table.Drops}}
+<section class="pozo card" id="suelta">
+  <header class="card-head"><h2>Qué suelta <span class="count">{{len $c.Table.Drops}}</span></h2><p class="meta">Probabilidad de que lo suelte al matarla, sin Botín.</p></header>
+  {{template "drops" (dict "Root" .Root "Drops" $c.Table.Drops)}}
+</section>
+{{end}}{{end}}
+
+{{if $c.Merchants}}
+<section class="pozo card" id="comercia">
+  <header class="card-head"><h2>Comercia</h2></header>
+  <ul class="links">{{range $c.Merchants}}<li><a href="{{rel $.Root .URL}}">{{.Name}}</a> <span class="meta">· {{.Offers}} ofertas{{if .Station}} · trabaja en {{.Station.Name}}{{end}}</span></li>{{end}}</ul>
+</section>
+{{end}}
+<p class="id tech">{{$c.ID}}</p>
+{{end}}

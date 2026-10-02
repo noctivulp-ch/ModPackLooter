@@ -1,0 +1,29 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>Criaturas</h1>
+  <p class="lede">Cada criatura con dónde aparece, lo que suelta y lo que comercia. Busca por su nombre o por un objeto para ver quién lo suelta.</p>
+</div>
+<div class="filters">
+  <label for="f-mobs" class="sr-only">Filtrar criaturas</label>
+  <input id="f-mobs" type="search" class="field" data-cards="c-mobs" placeholder="Criatura, mod u objeto: zombi, pólvora…" autocomplete="off" spellcheck="false">
+  <span class="count" aria-live="polite" data-count></span>
+</div>
+<div id="c-mobs">
+{{range .Data}}
+<section class="cat">
+  <h2 class="section-title">{{.Mod.Name}} <span class="meta">{{len .Creatures}}</span></h2>
+  <div class="places-grid">
+  {{range .Creatures}}
+    <article class="pozo place" data-k="{{.Mod.Name}} · {{.ID}}{{if .Table}} · {{range .Table.Drops}}{{.Item.Name}} · {{end}}{{end}}">
+      <h3><a href="{{rel $.Root .URL}}">{{.Name}}</a></h3>
+      <p class="meta">{{template "status" .Status}} {{.Where}}</p>
+      {{if .Table}}{{if .Table.Drops}}<ul class="what">{{range $i, $d := .Table.Drops}}{{if lt $i 4}}<li><span>{{$d.Item.Name}}</span><span class="num">{{pct $d.Chance}}</span></li>{{end}}{{end}}</ul>{{end}}{{end}}
+      {{if .Merchants}}<p class="meta">Comercia: {{range $i, $m := .Merchants}}{{if lt $i 3}}{{if $i}}, {{end}}{{$m.Name}}{{end}}{{end}}{{if gt (len .Merchants) 3}}…{{end}}</p>{{end}}
+    </article>
+  {{end}}
+  </div>
+</section>
+{{end}}
+</div>
+<p class="empty filter-empty" hidden>Ninguna criatura coincide.</p>
+{{end}}

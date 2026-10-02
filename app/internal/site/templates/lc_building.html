@@ -1,10 +1,10 @@
 {{define "content"}}
 {{$b := .Data}}
 {{template "lcCrumbs" (dict "Root" .Root "Sub" "Edificios" "SubURL" "lostcities/edificios/")}}
-<div class="page-head">
+<header class="item-title">
   <h1>{{$b.Name}}</h1>
-  <p class="id">{{$b.ID}}</p>
-</div>
+  <p>Edificio de Lost Cities · {{$b.Containers}} contenedores · {{len $b.Haul}} objetos posibles</p>
+</header>
 <div class="grid">
   <section class="pozo">
     <h2>Dónde aparece</h2>
@@ -20,15 +20,21 @@
     {{if $b.Tables}}<ul class="chips">{{range $b.Tables}}<li><a href="{{rel $.Root .URL}}" title="{{.ID}}">{{.Name}}</a></li>{{end}}</ul>{{end}}
   </section>
 </div>
+<section class="pozo">
+  <header class="pozo-head"><h2>¿Qué hay aquí?</h2>
+  <p class="meta">Todo lo que pueden tener sus contenedores{{if $b.Children}} y los de los edificios que lo forman{{end}}. La probabilidad es la de encontrarlo en un contenedor; «Contenedores» cuenta los que pueden tenerlo en todas sus variantes de pisos.</p></header>
+  {{template "haul" (dict "Root" .Root "Haul" $b.Haul "ID" "t-haul" "Containers" true)}}
+</section>
 {{if $b.Children}}
 <section class="pozo">
   <h2>Edificios que lo forman</h2>
   <ul class="links">{{range $b.Children}}<li><a href="{{rel $.Root .URL}}">{{.Name}}</a> <span class="meta">{{if .Containers}}{{.Containers}} {{if eq .Containers 1}}contenedor{{else}}contenedores{{end}}{{else}}sin loot{{end}}</span></li>{{end}}</ul>
 </section>
 {{end}}
+{{if $b.Parts}}<h2 class="section-title">Partes y contenedores <span class="meta">piso por piso</span></h2>{{end}}
 {{range $b.Parts}}
-<section class="pozo">
-  <header class="pozo-head"><h3>{{.Name}}</h3><p class="id">{{.ID}}</p></header>
+<section class="pozo card">
+  <header class="card-head"><h3>{{.Name}}</h3><p class="meta">{{len .Containers}} {{if eq (len .Containers) 1}}tipo de contenedor{{else}}tipos de contenedor{{end}}</p></header>
   <div class="scroll">
   <table class="data">
     <thead><tr><th scope="col">Contenedor</th><th scope="col" class="num">Cantidad</th><th scope="col">Tabla de loot</th><th scope="col" class="w-chance">Probabilidad por contenedor</th><th scope="col">Solo si…</th></tr></thead>
@@ -45,6 +51,7 @@
     {{end}}
   </table>
   </div>
+  <p class="id">{{.ID}}</p>
 </section>
 {{end}}
 {{end}}

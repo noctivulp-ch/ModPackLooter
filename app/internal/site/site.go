@@ -75,7 +75,7 @@ func Build(res *analysis.Result, opts Options) (Stats, error) {
 	}
 
 	r.render("home", "", "inicio", opts.Title, m, nil)
-	r.render("items", "objetos/", "objetos", "Objetos", m, m.Items)
+	r.render("items", "objetos/", "objetos", "Objetos", m, listRows(m.Items))
 	for _, it := range m.Items {
 		r.render("item", it.URL, "objetos", it.Name, m, it)
 	}
@@ -87,7 +87,11 @@ func Build(res *analysis.Result, opts Options) (Stats, error) {
 	for _, b := range m.Biomes {
 		r.render("biome", b.URL, "biomas", b.Name, m, b)
 	}
-	r.render("sources", "fuentes/", "fuentes", "Otras fuentes", m, unownedGroups(m))
+	r.render("creatures", "criaturas/", "criaturas", "Criaturas", m, groupCreatures(m.Creatures))
+	for _, c := range m.Creatures {
+		r.render("creature", c.URL, "criaturas", c.Name, m, c)
+	}
+	r.render("sources", "fuentes/", "fuentes", "Criaturas y otras fuentes", m, unownedGroups(m))
 	for _, t := range m.Tables {
 		r.render("table", t.URL, "fuentes", t.Name, m, t)
 	}
@@ -219,6 +223,9 @@ func (r *renderer) writeAssets(m *Model) error {
 		idx = append(idx, searchEntry{Type: "b", Name: b.Name, ID: b.ID.String(), URL: b.URL + "index.html", Sub: b.Mod.Name, Keys: b.Mod.Name, Mod: b.ID.Namespace})
 	}
 	idx = append(idx, lcSearch(m)...)
+	for _, c := range m.Creatures {
+		idx = append(idx, searchEntry{Type: "c", Name: c.Name, ID: c.ID.String(), URL: c.URL + "index.html", Sub: c.Mod.Name + " · " + c.Where(), Keys: c.Mod.Name, Mod: c.ID.Namespace})
+	}
 	for _, md := range m.Mods {
 		idx = append(idx, searchEntry{Type: "m", Name: md.Name, ID: md.ID.Namespace, URL: md.URL + "index.html", Mod: md.ID.Namespace})
 	}
@@ -365,10 +372,30 @@ var funcs = template.FuncMap{
 			if len(v) > n {
 				return v[:n]
 			}
+		case []HaulItem:
+			if len(v) > n {
+				return v[:n]
+			}
+		case []BiomeItem:
+			if len(v) > n {
+				return v[:n]
+			}
 		}
 		return s
 	},
 	"plus": func(a, b int) int { return a + b },
+	// haulKeys lets a structure be found by what it holds.
+	"haulKeys": func(h []HaulItem) string {
+		var b strings.Builder
+		for i, x := range h {
+			if i == 80 {
+				break
+			}
+			b.WriteString(x.Item.Name)
+			b.WriteString(" · ")
+		}
+		return b.String()
+	},
 	"dict": func(kv ...any) (map[string]any, error) {
 		if len(kv)%2 != 0 {
 			return nil, fmt.Errorf("dict: número impar de argumentos")
@@ -384,6 +411,13 @@ var funcs = template.FuncMap{
 		return m, nil
 	},
 	"metals": func() []string { return Metals },
+	"wayOptions": func() [][2]string {
+		out := make([][2]string, 0, len(wayOrder)+1)
+		for _, w := range wayOrder {
+			out = append(out, [2]string{w.key, w.title})
+		}
+		return append(out, [2]string{"compra", "Te lo compran"})
+	},
 }
 
 // ownerGroup groups owners by mod for the structures page.
@@ -416,6 +450,27 @@ func groupOwners(owners []*Owner) []ownerGroup {
 	if len(templates) > 0 {
 		out = append(out, ownerGroup{Mod: &Mod{Ref: Ref{Name: "Plantillas sin estructura conocida"}}, Owners: templates})
 	}
+	return out
+}
+
+type creatureGroup struct {
+	Mod       *Mod
+	Creatures []*Creature
+}
+
+func groupCreatures(cs []*Creature) []creatureGroup {
+	var out []creatureGroup
+	idx := map[*Mod]int{}
+	for _, c := range cs {
+		i, ok := idx[c.Mod]
+		if !ok {
+			i = len(out)
+			idx[c.Mod] = i
+			out = append(out, creatureGroup{Mod: c.Mod})
+		}
+		out[i].Creatures = append(out[i].Creatures, c)
+	}
+	sortRefs(out, func(g creatureGroup) Ref { return g.Mod.Ref })
 	return out
 }
 

@@ -235,6 +235,15 @@ func buildLostCities(res *analysis.Result, m *Model, namer *names.Namer) {
 					choice.Detail = strings.Join(detail, " · ")
 					addTable(choice.Table)
 					h.add(choice.Table, ch.Share, c.Count)
+					if choice.Table != nil {
+						share := ch.Share
+						if share <= 0 {
+							share = 1
+						}
+						for _, d := range choice.Table.Drops {
+							d.Item.addLC(x, LCItemRow{Part: part.Name, Block: box.Block, Count: c.Count, Chance: d.Chance * share, Share: ch.Share, Table: choice.Table, Detail: choice.Detail, CountMin: d.CountMin, CountMax: d.CountMax})
+						}
+					}
 					box.Choices = append(box.Choices, choice)
 				}
 				x.Containers += c.Count
