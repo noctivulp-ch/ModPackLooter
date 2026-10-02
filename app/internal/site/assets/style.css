@@ -139,6 +139,18 @@ kbd {
 }
 .brand small { display: block; font-weight: 400; font-size: 0.75rem; color: var(--texto-atenuado); }
 
+/* Campos: pozos con canto; el foco se ve con el metal. */
+.field {
+  font: inherit;
+  color: var(--texto-pozo);
+  background: var(--pozo);
+  border: var(--borde-reposo) solid var(--canto);
+  border-radius: var(--radio-pozo);
+  min-height: var(--objetivo-tactil);
+}
+.field::placeholder { color: var(--texto-secundario); opacity: 1; }
+.field:focus { outline: none; border-color: var(--metal); box-shadow: inset 0 0 0 1px var(--metal); }
+
 /* Botón de búsqueda de la barra: abre el panel. */
 .find-btn {
   justify-self: end;
@@ -513,7 +525,7 @@ td .label-v { color: var(--texto-secundario); font-size: 0.8125rem; }
   :root { --labio: 16px; }
   .topbar { grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; }
   .find-btn span, .find-btn kbd, .look > summary .look-label { display: none; }
-  .finder-panel { inset: 3vh 4vw; padding: 16px; }
+  .finder-panel { inset: 3vh 4vw; padding: 16px; justify-content: flex-start; }
   .finder-bar input { font-size: 1.0625rem; min-height: 52px; }
   .finder-close kbd { display: none; }
   .item-title h1 { font-size: 1.875rem; }

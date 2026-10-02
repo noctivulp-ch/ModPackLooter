@@ -12,6 +12,7 @@
   {{if not $c.Known}}<p class="warn-text">Los datos del modpack no dicen dónde aparece.</p>
   <p class="meta">Puede aparecer por código del mod (eventos, invocaciones, scripts). El mod companion de ModPackLooter podrá registrarlo desde el juego.</p>{{end}}
   {{if $c.Other}}<h3 class="grp">Otras formas de que aparezca</h3><ul class="plain">{{range $c.Other}}<li>{{.}}</li>{{end}}</ul>{{end}}
+  {{if $c.From}}<p>Viene de: {{range $i, $f := $c.From}}{{if $i}} · {{end}}<a href="{{rel $.Root $f.URL}}">{{$f.Name}}</a> ({{$f.Where}}){{end}}</p>{{end}}
   {{if $c.Structures}}
   <h3 class="grp">En estructuras <span class="count">{{len $c.Structures}}</span></h3>
   <div class="scroll"><table class="data stack-sm">

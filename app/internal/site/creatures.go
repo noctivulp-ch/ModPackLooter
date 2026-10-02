@@ -21,7 +21,10 @@ type Creature struct {
 	Structures []CreatureStructure
 	Merchants  []*TradeMerchant
 	Other      []string // other ways it appears (curing, summoning…)
-	Status     domain.Status
+	// From are creatures it comes from (a villager from a cured zombie
+	// villager): their spawns are its spawns too.
+	From   []*Creature
+	Status domain.Status
 }
 
 // CreatureBiome is a biome where it spawns naturally.
@@ -118,6 +121,14 @@ var otherOrigins = map[string][]string{
 	"minecraft:cat":              {"Callejeros en aldeas; negros en cabañas de bruja"},
 }
 
+// Creatures another one turns into, set by the game's code.
+var comesFrom = map[string][]string{
+	"minecraft:villager":         {"minecraft:zombie_villager"},
+	"minecraft:zombie_villager":  {"minecraft:zombie"},
+	"minecraft:witch":            {"minecraft:villager"},
+	"minecraft:zombified_piglin": {"minecraft:piglin", "minecraft:pig"},
+}
+
 // buildCreatures makes a page for every mob with drops or trades.
 func buildCreatures(res *analysis.Result, m *Model, namer *names.Namer, modOf func(string) *Mod) {
 	model, _ := res.Extras[spawns.Extra].(*spawns.Model)
@@ -190,6 +201,15 @@ func buildCreatures(res *analysis.Result, m *Model, namer *names.Namer, modOf fu
 				c := of(mc.entity)
 				c.Merchants = append(c.Merchants, mc)
 				mc.Creature = c
+			}
+		}
+	}
+	for _, c := range creatures {
+		for _, f := range comesFrom[c.ID.String()] {
+			if src, ok := creatures[domain.MustParseResourceID(f)]; ok {
+				c.From = append(c.From, src)
+			} else if model != nil && model.Entities[domain.MustParseResourceID(f)] != nil {
+				c.From = append(c.From, of(domain.MustParseResourceID(f)))
 			}
 		}
 	}
