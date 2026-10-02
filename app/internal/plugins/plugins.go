@@ -6,6 +6,7 @@ import (
 	"github.com/EnierAragon/ModPackLooter/app/internal/analysis"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/changes"
+	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/customnpcs"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/disablers"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/generic"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/heuristics"
@@ -26,6 +27,9 @@ func Discoverers() *discovery.Registry[discovery.Discoverer] {
 		starcatcher.Discoverer{},
 		tide.Discoverer{},
 		vanilla.Fishing{},
+		vanilla.Trades1_20{},
+		vanilla.Trades1_21{},
+		customnpcs.Discoverer{},
 		heuristics.NameMatching{},
 		generic.ByPath{},
 	)

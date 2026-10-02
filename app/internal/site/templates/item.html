@@ -21,6 +21,23 @@
   </ul>
 </section>
 {{end}}
+{{if $it.Trades}}
+<section class="pozo">
+  <h2>Por tradeo</h2>
+  <ul class="links">
+  {{range limit 30 $it.Trades}}
+    <li>{{if .Sells}}<strong>Lo vende</strong>{{else}}<strong>Lo compra</strong>{{end}} <a href="{{rel $.Root .Merchant.URL}}">{{.Merchant.Name}}</a>{{if .Level}} <span class="meta">({{.Level}})</span>{{end}}:
+      {{template "toffer" (dict "Root" $.Root "O" .Offer)}} <span class="meta">· {{pct .Offer.Chance}} de probabilidad de ofrecerlo</span></li>
+  {{end}}
+  </ul>
+</section>
+{{end}}
+{{if $it.NPCDrops}}
+<section class="pozo">
+  <h2>Lo sueltan NPCs</h2>
+  <ul class="links">{{range $it.NPCDrops}}<li><a href="{{rel $.Root .Merchant.URL}}">{{.Merchant.Name}}</a> <span class="meta">· {{.Count}} unid. · {{pct .Chance}}</span></li>{{end}}</ul>
+</section>
+{{end}}
 {{if $it.Changes}}
 <section class="pozo">
   <h2>Cambios de mods</h2>
@@ -72,6 +89,6 @@
 <section class="pozo">
   <h2>Biomas donde puede aparecer</h2>
   {{if $it.Biomes}}{{template "biomeChips" (dict "Root" .Root "Biomes" $it.Biomes)}}
-  {{else if not $it.Fishing}}<p class="empty">Sus fuentes no están ligadas a biomas conocidos (criaturas, pesca o tablas sin origen).</p>{{else}}<p class="meta">Para la pesca, mira los biomas de arriba.</p>{{end}}
+  {{else if not (or $it.Fishing $it.Trades $it.NPCDrops)}}<p class="empty">Sus fuentes no están ligadas a biomas conocidos (criaturas, pesca o tablas sin origen).</p>{{else}}<p class="meta">Para la pesca, mira los biomas de arriba.</p>{{end}}
 </section>
 {{end}}

@@ -37,8 +37,10 @@ Objetivo: un sitio útil para un modpack real de una sola versión.
 - ✅ **Pestañas por mod** (solo si el mod está): Lost Cities por capas (doc 15).
   ✅ Pesca: Starcatcher, Tide 2 y vanilla (doc 16).
   ✅ Cambios de mods a las fuentes, genérico + específicos (doc 17).
-  Siguientes: tradeos (aldeanos, piglins, NPC); específicos de formato para
-  configs frecuentes (Quark, Vinery…).
+  ✅ Tradeos: aldeanos y comerciante errante (verificados contra 1.20.1 y 1.21),
+  trueque con piglins, NPCs de CustomNPCs (doc 18).
+  Siguientes: específicos de formato para configs frecuentes (Quark, Vinery…),
+  iconos de objetos desde texturas.
 - Interfaz del sitio traducible (hoy solo los nombres siguen el idioma; la interfaz está
   en español).
 - Comandos de consulta (`where`, `structure`, `biome`) y `export`.

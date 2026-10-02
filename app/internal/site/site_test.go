@@ -48,7 +48,8 @@ func buildSite(t *testing.T) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if stats.Items != 3 || stats.Owners != 1 || stats.Biomes != 2 {
+	// Items include the vanilla trades (built-in knowledge), so only a minimum.
+	if stats.Items < 3 || stats.Owners != 1 || stats.Biomes != 2 {
 		t.Errorf("estadísticas = %+v", stats)
 	}
 	return out
@@ -354,5 +355,57 @@ func TestEnchantNotes(t *testing.T) {
 	}
 	if !strings.Contains(string(changes), "DeceasedCraft") {
 		t.Error("la página de cambios debería nombrar al mod que reemplaza la tabla")
+	}
+}
+
+func TestTradesTab(t *testing.T) {
+	in := testkit.NewInstance(t)
+	in.Jar("mods/customnpcs.jar", testkit.Files{
+		"META-INF/mods.toml": testkit.ModsToml("customnpcs", "CustomNPCs", "[1.20.1,1.21)"),
+		"data/minecraft/loot_tables/gameplay/piglin_bartering.json": `{"type":"minecraft:barter","pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:ender_pearl","weight":1},{"type":"minecraft:item","name":"minecraft:gravel","weight":3}]}]}`,
+		"assets/mymod/lang/es_es.json":                              `{"npc.mymod.bandit.name":"Bandido","entity.minecraft.villager.farmer":"Granjero"}`,
+	})
+	in.Dir("customnpcs/clones/1", testkit.Files{
+		"Bandit.json": "{\n  \"Name\": \"npc.mymod.bandit.name\",\n  \"Role\": 0,\n  \"Health\": 40.0f,\n  \"ReturnToStart\": 0b,\n" +
+			"  \"NpcInv\": [ { \"Slot\": 0b, \"id\": \"mymod:money\", \"Count\": 5b }, { \"Slot\": 1b, \"id\": \"minecraft:bread\", \"Count\": 2b } ],\n" +
+			"  \"DropChance\": [ { \"Integer\": 100.0f, \"Slot\": 0 }, { \"Integer\": 25.0f, \"Slot\": 1 } ],\n  \"KilledTime\": 0L\n}\n",
+	})
+	res, err := plugins.Analyzer().Run(context.Background(), modpack.Options{Path: in.Root}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Close()
+	out := filepath.Join(t.TempDir(), "site")
+	if _, err := site.Build(res, site.Options{OutDir: out}); err != nil {
+		t.Fatal(err)
+	}
+	read := func(rel string) string {
+		data, err := os.ReadFile(filepath.Join(out, filepath.FromSlash(rel)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(data)
+	}
+	index := read("tradeos/index.html")
+	for _, want := range []string{"Aldeanos y comerciante errante", "Trueque con piglins", "NPCs (CustomNPCs)", "Granjero"} {
+		if !strings.Contains(index, want) {
+			t.Errorf("la portada de tradeos no contiene %q", want)
+		}
+	}
+	farmer := read("tradeos/aldeanos/minecraft/farmer/index.html")
+	for _, want := range []string{"Novato", "Se eligen 2 de estas 5 ofertas", "20 × ", "40 %", "Composter"} {
+		if !strings.Contains(farmer, want) {
+			t.Errorf("el granjero no contiene %q", want)
+		}
+	}
+	bread := read("objetos/minecraft/bread/index.html")
+	for _, want := range []string{"Lo vende", "Granjero", "Lo sueltan NPCs", "Bandido", "25 %"} {
+		if !strings.Contains(bread, want) {
+			t.Errorf("el pan no contiene %q", want)
+		}
+	}
+	npc := read("tradeos/npcs/npc/bandit/index.html")
+	if !strings.Contains(npc, "Lo que suelta al morir") || !strings.Contains(npc, "100 %") {
+		t.Error("el bandido debería listar sus drops")
 	}
 }

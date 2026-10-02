@@ -103,3 +103,7 @@
 <strong>{{.Effect}}</strong>{{if .Items}} {{range $i, $it := .Items}}{{if $i}}, {{end}}<a href="{{rel $r $it.URL}}">{{$it.Name}}</a>{{end}}{{end}}{{if .With}} por {{range $i, $it := .With}}{{if $i}}, {{end}}<a href="{{rel $r $it.URL}}">{{$it.Name}}</a>{{end}}{{end}}{{if .Inject}} el loot de <a href="{{rel $r .Inject.URL}}">{{.Inject.Name}}</a>{{end}}{{if .Chance}} <span class="meta">({{pct .Chance}})</span>{{end}}
 <span class="meta">· {{.Mod}}</span>
 {{if .Detail}}<br><span class="meta">{{.Detail}}</span>{{end}}{{end}}{{end}}
+
+{{define "tstack"}}{{$r := .Root}}{{with .S}}<span class="tstack">{{if .Max}}{{.Count}}–{{.Max}}{{else}}{{.Count}}{{end}} × <a href="{{rel $r .Item.URL}}">{{.Item.Name}}</a>{{if .Enchanted}} <span class="meta">(encantado)</span>{{end}}</span>{{end}}{{end}}
+
+{{define "toffer"}}{{$r := .Root}}{{with .O}}{{range $i, $b := .Buy}}{{if $i}} + {{end}}{{template "tstack" (dict "Root" $r "S" $b)}}{{end}} <span aria-label="a cambio de">→</span> {{template "tstack" (dict "Root" $r "S" .Sell)}}{{end}}{{end}}
