@@ -56,3 +56,23 @@ Mineshaft, fortaleza del Nether, stronghold, templos, monumento, tesoro
 enterrado, naufragios (*data markers*), etc. no declaran su loot en datos.
 La app incluye una **tabla de conocimiento por versión** (estructura → loot
 tables), mantenida a mano y versionada en el repo, con confianza `conocida`.
+
+## Dónde están los datos vanilla en un servidor
+
+El `server.jar` no siempre es el jar de Mojang: muchos hosts y cargadores llaman
+así a su lanzador, que no trae datos. La app prueba, en orden, y usa el primer
+jar que tenga `data/minecraft/` (los que no tienen datos solo se avisan si no
+aparece ninguno):
+
+| Servidor | Dónde quedan los datos |
+|---|---|
+| Oficial | `server.jar` (desde 1.18 es un *bundler*: el jar real va dentro, en `META-INF/versions/`); al ejecutarlo se extrae a `versions/<v>/server-<v>.jar` |
+| Forge 1.17+ · NeoForge 1.20.1–1.21.1 · híbridos (Mohist, Arclight…) | `libraries/net/minecraft/server/<v>-<mcp>/server-<v>-<mcp>-extra.jar` (datos y assets del servidor, sin clases) |
+| NeoForge (instaladores nuevos) | `libraries/net/minecraft/server/<v>/server-<v>.jar` y `libraries/net/neoforged/minecraft-server-patched/<ver>/…jar` (según `CreateInstallerProfile` del repositorio de NeoForge) |
+| Fabric · Quilt | `.fabric/server/<v>-server.jar`, `.quilt/server/…` y sus `remappedJars/` |
+| Paper · Purpur · Folia | `cache/mojang_<v>.jar` y `versions/<v>/…jar` |
+| Otro nombre | cualquier `.jar` de la carpeta del servidor con los datos |
+
+Lo que **ningún jar de servidor** trae: las traducciones salvo `en_us` (están en
+la carpeta `assets` del launcher; ver `--assets-dir`) y las texturas (solo en
+el jar de cliente: hará falta para los futuros iconos de objetos).
