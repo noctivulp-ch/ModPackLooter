@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery"
@@ -47,6 +48,100 @@ type npc struct {
 	Sold     []stack `json:"TraderSold"`
 	Currency []stack `json:"TraderCurrency"`
 	Market   string  `json:"TraderMarket"`
+	// ForgeData holds data other mods attach to the NPC, such as shops.
+	ForgeData map[string]json.RawMessage `json:"ForgeData"`
+}
+
+// shop is a shop another mod stores in the NPC's ForgeData as a JSON string
+// (e.g. dochi_rpg_maker's "dochi_rpg_maker.shop.json": type npc_shop).
+type shop struct {
+	Title       string        `json:"title"`
+	Currency    string        `json:"currencyItem"`
+	CurrencyAlt string        `json:"currency"`
+	BuyEnabled  *bool         `json:"buyEnabled"`
+	SellEnabled bool          `json:"sellEnabled"`
+	Items       []shopProduct `json:"items"`
+	SellItems   []shopProduct `json:"sellItems"`
+}
+
+type shopProduct struct {
+	Item         string `json:"item"`
+	Count        int    `json:"count"`
+	Price        int    `json:"price"`
+	Name         string `json:"name"`
+	Currency     string `json:"currencyItem"`
+	CurrencyType string `json:"currencyType"`
+	Stock        int    `json:"stock"`
+	NBT          string `json:"nbt"`
+}
+
+// shopOffers reads every ForgeData entry named "*shop.json" that holds a
+// product list. The player pays price × currency for count × item; with
+// selling enabled, sellItems are bought from the player.
+func shopOffers(fd map[string]json.RawMessage) (offers []trades.Offer, title string) {
+	keys := make([]string, 0, len(fd))
+	for k := range fd {
+		if strings.HasSuffix(strings.ToLower(k), "shop.json") {
+			keys = append(keys, k)
+		}
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		var raw string
+		if json.Unmarshal(fd[k], &raw) != nil {
+			continue
+		}
+		var sh shop
+		if json.Unmarshal([]byte(raw), &sh) != nil || len(sh.Items)+len(sh.SellItems) == 0 {
+			continue
+		}
+		if title == "" {
+			title = sh.Title
+		}
+		currency := sh.Currency
+		if currency == "" {
+			currency = sh.CurrencyAlt
+		}
+		product := func(p shopProduct, selling bool) (trades.Offer, bool) {
+			item, err := domain.ParseResourceID(p.Item)
+			cur := p.Currency
+			if cur == "" || strings.EqualFold(p.CurrencyType, "inherit") {
+				cur = currency
+			}
+			money, err2 := domain.ParseResourceID(cur)
+			if err != nil || err2 != nil || p.Price <= 0 {
+				return trades.Offer{}, false
+			}
+			goods := trades.Stack{Item: item, Count: max(1, p.Count)}
+			pay := trades.Stack{Item: money, Count: p.Price}
+			o := trades.Offer{Buy: []trades.Stack{pay}, Sell: goods}
+			if selling {
+				o = trades.Offer{Buy: []trades.Stack{goods}, Sell: pay}
+			}
+			if p.Name != "" && p.NBT != "" {
+				o.Note = p.Name // a variant (ammo type, gun model…)
+			}
+			if p.Stock >= 0 {
+				o.Note = strings.TrimPrefix(o.Note+"; existencias: "+strconv.Itoa(p.Stock), "; ")
+			}
+			return o, true
+		}
+		if sh.BuyEnabled == nil || *sh.BuyEnabled {
+			for _, p := range sh.Items {
+				if o, ok := product(p, false); ok {
+					offers = append(offers, o)
+				}
+			}
+		}
+		if sh.SellEnabled {
+			for _, p := range sh.SellItems {
+				if o, ok := product(p, true); ok {
+					offers = append(offers, o)
+				}
+			}
+		}
+	}
+	return offers, title
 }
 
 // roleTrader is RoleType.TRADER in the CustomNPCs API: a trader has, per
@@ -61,7 +156,7 @@ func (Discoverer) Discover(_ context.Context, in discovery.Input, out *discovery
 	}
 	cat := &trades.Catalog{Key: "npcs", Name: "NPCs (CustomNPCs)", Order: 50, Confidence: domain.ConfidenceExact,
 		Intro: []string{
-			"NPCs guardados en el modpack (clones de CustomNPCs): lo que sueltan al morir y, si son comerciantes, lo que venden.",
+			"NPCs guardados en el modpack (clones de CustomNPCs): lo que sueltan al morir y, si son comerciantes o tienen una tienda de otro mod, lo que venden.",
 			"Los mercados que se crean dentro de un mundo solo se ven indicando ese mundo con --world.",
 		}}
 	// Shared markets live in the world (customnpcs/markets/<name>.json).
@@ -127,6 +222,13 @@ func (Discoverer) Discover(_ context.Context, in discovery.Input, out *discovery
 			sort.SliceStable(m.Drops, func(i, j int) bool { return m.Drops[i].Chance > m.Drops[j].Chance })
 			if offers := traderOffers(n); len(offers) > 0 {
 				m.Levels = []trades.Level{{Level: 1, Name: "Vende", Offers: offers}}
+			}
+			if offers, title := shopOffers(n.ForgeData); len(offers) > 0 {
+				name := "Tienda"
+				if title != "" {
+					name = "Tienda: " + title
+				}
+				m.Levels = append(m.Levels, trades.Level{Level: len(m.Levels) + 1, Name: name, Offers: offers})
 			}
 			if n.Role == roleTrader {
 				switch {

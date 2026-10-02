@@ -369,6 +369,7 @@ func TestTradesTab(t *testing.T) {
 		"Bandit.json": "{\n  \"Name\": \"npc.mymod.bandit.name\",\n  \"Role\": 0,\n  \"Health\": 40.0f,\n  \"ReturnToStart\": 0b,\n" +
 			"  \"NpcInv\": [ { \"Slot\": 0b, \"id\": \"mymod:money\", \"Count\": 5b }, { \"Slot\": 1b, \"id\": \"minecraft:bread\", \"Count\": 2b } ],\n" +
 			"  \"DropChance\": [ { \"Integer\": 100.0f, \"Slot\": 0 }, { \"Integer\": 25.0f, \"Slot\": 1 } ],\n  \"KilledTime\": 0L\n}\n",
+		"Shopkeeper.json": `{"Name": "Tendero", "Role": 0, "ForgeData": {"somemod.shop.json": "{\"type\":\"npc_shop\",\"title\":\"Tienda del tendero\",\"currencyItem\":\"mymod:money\",\"buyEnabled\":true,\"sellEnabled\":false,\"items\":[{\"item\":\"minecraft:apple\",\"count\":3,\"price\":7,\"stock\":-1,\"currencyType\":\"inherit\"},{\"item\":\"minecraft:diamond\",\"count\":1,\"price\":2,\"currencyItem\":\"minecraft:emerald\",\"stock\":4}]}"}}`,
 		"Merchant.json": "{\n  \"Name\": \"Mercader\",\n  \"Role\": 1,\n" +
 			"  \"TraderSold\": [ { \"Slot\": 0b, \"id\": \"minecraft:diamond\", \"Count\": 1b } ],\n" +
 			"  \"TraderCurrency\": [ { \"Slot\": 0b, \"id\": \"mymod:money\", \"Count\": 20b }, { \"Slot\": 18b, \"id\": \"minecraft:bread\", \"Count\": 2b } ]\n}\n",
@@ -411,6 +412,12 @@ func TestTradesTab(t *testing.T) {
 	for _, want := range []string{"20 × ", "Money", "2 × ", "Bread", "1 × ", "Diamond"} {
 		if !strings.Contains(merchant, want) {
 			t.Errorf("el mercader no contiene %q", want)
+		}
+	}
+	shop := read("tradeos/npcs/npc/shopkeeper/index.html")
+	for _, want := range []string{"Tienda: Tienda del tendero", "7 × ", "Apple", "existencias: 4"} {
+		if !strings.Contains(shop, want) {
+			t.Errorf("la tienda no contiene %q", want)
 		}
 	}
 	npc := read("tradeos/npcs/npc/bandit/index.html")
