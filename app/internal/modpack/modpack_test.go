@@ -177,3 +177,34 @@ func TestDedicatedServerLayout(t *testing.T) {
 		t.Errorf("mundo del servidor = %+v auto=%v", mp.World, mp.WorldAuto)
 	}
 }
+
+func TestServerUsesPrismAssets(t *testing.T) {
+	// A dedicated server has no assets: the Prism default folder is used.
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("APPDATA", "")
+	assets := filepath.Join(home, ".local", "share", "PrismLauncher", "assets")
+	for path, content := range map[string]string{
+		"indexes/5.json":    `{"objects":{"minecraft/lang/es_es.json":{"hash":"ab12cd"}}}`,
+		"objects/ab/ab12cd": `{"item.minecraft.diamond":"Diamante"}`,
+	} {
+		full := filepath.Join(assets, filepath.FromSlash(path))
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	in := testkit.NewInstance(t)
+	in.Jar("mods/a.jar", testkit.Files{"META-INF/mods.toml": testkit.ModsToml("a", "A", "[1.20.1,1.21)")})
+	in.Dir("", testkit.Files{"server.properties": "level-name=world\n"})
+	mp, err := Open(Options{Path: in.Root, Diagnostics: &domain.Diagnostics{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mp.Close()
+	if got := mp.Index.Lang("es_es", nil)["item.minecraft.diamond"]; got != "Diamante" {
+		t.Errorf("traducción desde los assets de Prism = %q", got)
+	}
+}
