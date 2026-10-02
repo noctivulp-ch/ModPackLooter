@@ -7,6 +7,21 @@
 </div>
 {{if $it.Unobtainable}}<section class="pozo pozo-dis"><p><strong>No se puede conseguir como loot en este modpack:</strong> todas sus fuentes están desactivadas. Abajo se muestran igualmente.</p></section>{{end}}
 
+{{if $it.Fishing}}
+<section class="pozo">
+  <h2>Se pesca</h2>
+  <ul class="links">
+  {{range $it.Fishing}}
+    <li><a href="{{rel $.Root .Source.URL}}">{{.Source.Name}}</a>{{if .Rarity}} <span class="meta">· {{.Rarity}}</span>{{end}}
+      {{if .Everywhere}}<span class="meta">· en cualquier bioma</span>{{else if .Places}}<span class="meta">· {{len .Places}} {{if eq (len .Places) 1}}bioma{{else}}biomas{{end}}:</span>
+        {{range $i, $p := .Places}}{{if lt $i 8}}{{if $i}}, {{end}}<a href="{{rel $.Root $p.URL}}">{{$p.Name}}</a>{{end}}{{end}}{{if gt (len .Places) 8}} y {{plus (len .Places) -8}} más{{end}}{{end}}
+      {{template "fishConds" .}}
+    </li>
+  {{end}}
+  </ul>
+</section>
+{{end}}
+{{if $it.Sources}}
 <section class="pozo">
   <h2>Dónde conseguirlo</h2>
   <ol class="best">
@@ -46,10 +61,11 @@
   </table>
   </div>
 </section>
+{{end}}
 
 <section class="pozo">
   <h2>Biomas donde puede aparecer</h2>
   {{if $it.Biomes}}{{template "biomeChips" (dict "Root" .Root "Biomes" $it.Biomes)}}
-  {{else}}<p class="empty">Sus fuentes no están ligadas a biomas conocidos (criaturas, pesca o tablas sin origen).</p>{{end}}
+  {{else if not $it.Fishing}}<p class="empty">Sus fuentes no están ligadas a biomas conocidos (criaturas, pesca o tablas sin origen).</p>{{else}}<p class="meta">Para la pesca, mira los biomas de arriba.</p>{{end}}
 </section>
 {{end}}

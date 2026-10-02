@@ -169,3 +169,6 @@ func (n *Namer) BiomeTag(id domain.ResourceID) string {
 	}
 	return Humanize(id.Path)
 }
+
+// Text returns the translation of a lang key, following the language chain.
+func (n *Namer) Text(key string) (string, bool) { return n.lookup(key) }

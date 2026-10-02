@@ -23,6 +23,7 @@ construye o se usa la app, queda escrita aquí**.
 | [13-diseno-del-sitio.md](13-diseno-del-sitio.md) | Diseño visual del sitio con Wulfenite UI, PC primero. |
 | [14-mundo-modelo-y-desactivadores.md](14-mundo-modelo-y-desactivadores.md) | `--world` y la puerta de desactivadores (seguro / posible). |
 | [15-pestanas-por-mod-y-lost-cities.md](15-pestanas-por-mod-y-lost-cities.md) | Pestañas dedicadas por mod (solo si está) y Lost Cities por capas; nombres desde `lang`. |
+| [16-pesca.md](16-pesca.md) | Pestaña de pesca: Starcatcher, Tide 2 y vanilla, por bioma y condiciones. |
 | [decisiones/](decisiones/) | Registro de decisiones de arquitectura (ADR). |
 
 ## Cómo documentamos decisiones
@@ -52,3 +53,4 @@ cambia, se crea una nueva que la **reemplaza** y se marca la antigua como
 | [0013](decisiones/0013-mundo-modelo.md) | Mundo modelo (`--world`) en lugar de un menú de creación de mundos. |
 | [0014](decisiones/0014-desactivadores-con-dos-niveles.md) | Desactivadores con dos niveles: desactivado / posiblemente desactivado. |
 | [0015](decisiones/0015-pestanas-por-mod.md) | Pestañas dedicadas por mod, solo si el mod está; nombres desde cualquier `lang`. |
+| [0016](decisiones/0016-pesca-por-fuente.md) | Pesca agrupada por sistema de pesca, cada uno con sus reglas. |

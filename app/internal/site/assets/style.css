@@ -368,6 +368,12 @@ details.tag[open] .chips { margin-top: 6px; }
   .best .meter { display: none; }
   .legend li { grid-template-columns: 1fr; gap: 0; }
   .hide-sm { display: none; }
+  /* Tablas apiladas: nombre y probabilidad arriba, condiciones debajo. */
+  .stack-sm thead { display: none; }
+  .stack-sm tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 10px 0; border-bottom: 1px solid color-mix(in srgb, var(--canto) 45%, transparent); }
+  table.data.stack-sm tbody tr + tr td { border-top: 0; }
+  .stack-sm td { display: block; padding: 0; border: 0; }
+  .stack-sm td:last-child { grid-column: 1 / -1; }
 }
 
 @media (prefers-reduced-motion: no-preference) {

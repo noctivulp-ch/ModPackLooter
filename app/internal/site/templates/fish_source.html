@@ -1,0 +1,60 @@
+{{define "content"}}
+{{$s := .Data}}
+<nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "pesca/"}}">Pesca</a></nav>
+<div class="page-head">
+  <h1>{{$s.Name}}</h1>
+  {{range $s.Intro}}<p class="lede">{{.}}</p>{{end}}
+</div>
+{{if $s.Warning}}<section class="pozo pozo-dis"><p>{{$s.Warning}}</p></section>{{end}}
+{{range $s.Everywhere}}{{template "fishGroup" (dict "Root" $.Root "G" .)}}{{end}}
+{{if $s.Biomes}}
+<h2 class="section-title">Por bioma <span class="count">{{len $s.Biomes}}</span></h2>
+<section class="pozo">
+  <div class="filters">
+    <label for="f-fbiomes" class="label">Filtrar</label>
+    <input id="f-fbiomes" type="search" class="ctl filter" data-filter="t-fbiomes" placeholder="Bioma o pez" autocomplete="off">
+  </div>
+  <div class="scroll">
+  <table class="data" id="t-fbiomes">
+    <thead><tr><th scope="col">Bioma</th><th scope="col" class="num">Capturas</th><th scope="col" class="hide-sm">Lo más común</th></tr></thead>
+    <tbody>
+    {{range $s.Biomes}}<tr>
+      <td><a href="{{rel $.Root .URL}}">{{.Name}}</a></td>
+      <td class="num">{{.Count}}</td>
+      <td class="hide-sm">{{range $i, $c := .Top}}{{if $i}}, {{end}}{{$c.Entry.Name}} ({{pct $c.Chance}}){{end}}</td>
+    </tr>{{end}}
+    </tbody>
+  </table>
+  </div>
+  <p class="empty filter-empty" hidden>Ningún bioma coincide con el filtro.</p>
+</section>
+{{end}}
+<h2 class="section-title">Todo lo que se puede pescar <span class="count">{{len $s.Entries}}</span></h2>
+<section class="pozo">
+  <div class="filters">
+    <label for="f-fentries" class="label">Filtrar</label>
+    <input id="f-fentries" type="search" class="ctl filter" data-filter="t-fentries" placeholder="Captura, bioma o condición" autocomplete="off">
+  </div>
+  <div class="scroll">
+  <table class="data" id="t-fentries">
+    <thead><tr><th scope="col">Captura</th><th scope="col">Tipo</th><th scope="col" class="num">Biomas</th><th scope="col">Condiciones</th></tr></thead>
+    <tbody>
+    {{range $s.Entries}}<tr>
+      <td>{{template "fishName" (dict "Root" $.Root "Item" .Item "Table" .Table "Name" .Name)}}{{if .Rarity}} <span class="meta">{{.Rarity}}</span>{{end}}</td>
+      <td>{{.Kind}}</td>
+      <td class="num">{{if .Places}}{{len .Places}}{{else}}—{{end}}</td>
+      <td>{{template "fishConds" .}}</td>
+    </tr>{{end}}
+    </tbody>
+  </table>
+  </div>
+  <p class="empty filter-empty" hidden>Nada coincide con el filtro.</p>
+</section>
+{{if $s.Unplaced}}
+<section class="pozo">
+  <h2>Sin bioma conocido <span class="count">{{len $s.Unplaced}}</span></h2>
+  <p class="meta">Sus condiciones no encajan con ningún bioma conocido del modpack (por ejemplo, dimensiones de mods sin mundo modelo).</p>
+  <ul class="chips">{{range $s.Unplaced}}<li>{{template "fishName" (dict "Root" $.Root "Item" .Item "Table" .Table "Name" .Name)}}</li>{{end}}</ul>
+</section>
+{{end}}
+{{end}}

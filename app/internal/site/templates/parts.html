@@ -61,3 +61,40 @@
 </div>{{end}}{{end}}{{end}}
 
 {{define "lcCrumbs"}}<nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "lostcities/"}}">Lost Cities</a>{{if .Sub}} / <a href="{{rel .Root .SubURL}}">{{.Sub}}</a>{{end}}</nav>{{end}}
+
+{{define "fishConds"}}{{with .}}{{if or .Fluids .Dimensions .Biomes .Conditions .Baits .Spawns .Inactive}}<ul class="notes">
+  {{if .Fluids}}<li>en {{.Fluids}}</li>{{end}}
+  {{if .Dimensions}}<li>{{.Dimensions}}</li>{{end}}
+  {{range .Biomes}}<li>{{.}}</li>{{end}}
+  {{range .Conditions}}<li>{{.}}</li>{{end}}
+  {{if .Baits}}<li>{{if .BaitOnly}}solo con cebo:{{else}}más con cebo:{{end}} {{join .Baits}}</li>{{end}}
+  {{if .Spawns}}<li class="warn-text">aparece {{.Spawns}} al pescarlo</li>{{end}}
+  {{range .Inactive}}<li class="meta" title="Sin efecto en este modpack">{{.}} (sin efecto)</li>{{end}}
+</ul>{{else}}<span class="meta">Sin condiciones</span>{{end}}{{end}}{{end}}
+
+{{define "fishCondsHere"}}{{with .}}{{if or .Conditions .Baits .Spawns .Inactive}}<ul class="notes">
+  {{range .Conditions}}<li>{{.}}</li>{{end}}
+  {{if .Baits}}<li>{{if .BaitOnly}}solo con cebo:{{else}}más con cebo:{{end}} {{join .Baits}}</li>{{end}}
+  {{if .Spawns}}<li class="warn-text">aparece {{.Spawns}} al pescarlo</li>{{end}}
+  {{range .Inactive}}<li class="meta" title="Sin efecto en este modpack">{{.}} (sin efecto)</li>{{end}}
+</ul>{{else}}<span class="meta">Siempre</span>{{end}}{{end}}{{end}}
+
+{{define "fishName"}}{{if .Item}}<a href="{{rel .Root .Item.URL}}">{{.Name}}</a>{{else if .Table}}<a href="{{rel .Root .Table.URL}}">{{.Name}}</a>{{else}}{{.Name}}{{end}}{{end}}
+
+{{define "fishGroup"}}{{$r := .Root}}{{with .G}}
+<section class="pozo">
+  <header class="pozo-head"><h3>{{.Title}}</h3>{{if .Note}}<p class="meta">{{.Note}}</p>{{end}}</header>
+  <div class="scroll">
+  <table class="data stack-sm">
+    <thead><tr><th scope="col">Captura</th><th scope="col" class="w-chance">Probabilidad</th><th scope="col">Condiciones</th></tr></thead>
+    <tbody>
+    {{range .Catches}}<tr>
+      <td>{{template "fishName" (dict "Root" $r "Item" .Entry.Item "Table" .Entry.Table "Name" .Entry.Name)}}{{if .Entry.Rarity}} <span class="meta">{{.Entry.Rarity}}</span>{{end}}{{if ne .Entry.Kind "Pez"}} <span class="meta">({{.Entry.Kind}})</span>{{end}}</td>
+      <td>{{if .Chance}}{{template "chance" .Chance}}{{else}}<span class="meta">{{.Note}}</span>{{end}}{{if .Bait}}<br><span class="meta">con {{.Bait}}</span>{{end}}{{if and .Chance .Note}}<br><span class="meta">{{.Note}}</span>{{end}}</td>
+      <td>{{template "fishCondsHere" .Entry}}</td>
+    </tr>{{end}}
+    </tbody>
+  </table>
+  </div>
+</section>
+{{end}}{{end}}

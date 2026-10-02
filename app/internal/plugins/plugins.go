@@ -9,7 +9,9 @@ import (
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/heuristics"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/lootr"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/lostcities"
+	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/starcatcher"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/templates"
+	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/tide"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/vanilla"
 )
 
@@ -19,6 +21,9 @@ func Discoverers() *discovery.Registry[discovery.Discoverer] {
 		templates.Discoverer{},
 		vanilla.Discoverer1_20{},
 		lostcities.Discoverer{},
+		starcatcher.Discoverer{},
+		tide.Discoverer{},
+		vanilla.Fishing{},
 		heuristics.NameMatching{},
 		generic.ByPath{},
 	)

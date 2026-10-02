@@ -30,6 +30,9 @@ const (
 	TypeLostCitiesPal   = "lostcities/palettes"
 	TypeLostCitiesParts = "lostcities/parts"
 	TypeStarcatcherFish = "starcatcher/fish"
+	TypeTideFish        = "fishing/fish"
+	TypeTideLoot        = "fishing/loot"
+	TypeTideCrate       = "fishing/crates"
 )
 
 // Layout maps the folder names of one range of Minecraft versions to the
@@ -80,6 +83,9 @@ func commonFolders() map[string]string {
 		"lostcities/scattered":      "lostcities/scattered",
 		"lostcities/styles":         "lostcities/styles",
 		"starcatcher/fish":          TypeStarcatcherFish,
+		"fishing/fish":              TypeTideFish,
+		"fishing/loot":              TypeTideLoot,
+		"fishing/crates":            TypeTideCrate,
 	}
 }
 
