@@ -43,8 +43,11 @@ type Diagnostics struct {
 	items []Diagnostic
 }
 
-// Add records a diagnostic.
+// Add records a diagnostic. It is a no-op on a nil receiver.
 func (d *Diagnostics) Add(level Level, stage, source, format string, args ...any) {
+	if d == nil {
+		return
+	}
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.items = append(d.items, Diagnostic{Level: level, Stage: stage, Source: source, Message: fmt.Sprintf(format, args...)})

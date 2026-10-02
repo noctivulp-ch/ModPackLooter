@@ -410,3 +410,6 @@ func (w *World) TemplatesWithLoot() []*Template {
 	}
 	return out
 }
+
+// BiomeTag resolves a biome tag.
+func (w *World) BiomeTag(id domain.ResourceID) []domain.ResourceID { return w.Biomes.Resolve(id) }

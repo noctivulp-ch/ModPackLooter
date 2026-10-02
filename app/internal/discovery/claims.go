@@ -18,6 +18,7 @@ type claimKey struct {
 type Claims struct {
 	byKey   map[claimKey]*domain.LootSource
 	byTable map[domain.ResourceID]domain.Confidence
+	owners  map[domain.Owner]domain.OwnerInfo
 }
 
 // NewClaims returns an empty claim set.
@@ -25,6 +26,7 @@ func NewClaims() *Claims {
 	return &Claims{
 		byKey:   map[claimKey]*domain.LootSource{},
 		byTable: map[domain.ResourceID]domain.Confidence{},
+		owners:  map[domain.Owner]domain.OwnerInfo{},
 	}
 }
 
@@ -35,10 +37,16 @@ func (c *Claims) Add(s domain.LootSource) {
 		if s.Confidence > existing.Confidence {
 			existing.Confidence = s.Confidence
 		}
+		if existing.Container == "" {
+			existing.Container = s.Container
+		}
+		existing.Share = max(existing.Share, s.Share)
 		existing.Evidence = append(existing.Evidence, s.Evidence...)
+		existing.Notes = append(existing.Notes, s.Notes...)
 	} else {
 		stored := s
 		stored.Evidence = append([]domain.Evidence(nil), s.Evidence...)
+		stored.Notes = append([]domain.Note(nil), s.Notes...)
 		c.byKey[key] = &stored
 	}
 	if prev, ok := c.byTable[s.LootTable]; !ok || s.Confidence > prev {
@@ -56,6 +64,29 @@ func (c *Claims) IsClaimed(table domain.ResourceID) bool {
 func (c *Claims) BestConfidence(table domain.ResourceID) (domain.Confidence, bool) {
 	conf, ok := c.byTable[table]
 	return conf, ok
+}
+
+// DeclareOwner registers an owner that is not described by game data.
+func (c *Claims) DeclareOwner(info domain.OwnerInfo) {
+	c.owners[info.Owner] = info
+}
+
+// Owners returns the declared owners, sorted by id.
+func (c *Claims) Owners() []domain.OwnerInfo {
+	out := make([]domain.OwnerInfo, 0, len(c.owners))
+	for _, o := range c.owners {
+		out = append(out, o)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Owner.ID.String() < out[j].Owner.ID.String() })
+	return out
+}
+
+// Annotate lets an enricher add notes to every source. fn may modify the
+// source's Notes only.
+func (c *Claims) Annotate(fn func(s domain.LootSource) []domain.Note) {
+	for _, s := range c.byKey {
+		s.Notes = append(s.Notes, fn(*s)...)
+	}
 }
 
 // Sources returns every claim in a deterministic order.
