@@ -332,6 +332,13 @@ main:focus { outline: none; }
 .biome-line { margin: 4px 0 4px; font-size: 0.8125rem; max-width: none; }
 .tech { margin-top: var(--gap-grupo); }
 
+/* La línea completa: de dónde sale a la probabilidad real. */
+.line { margin: 8px 0 0; font-size: 0.8125rem; line-height: 1.6; color: var(--texto-pozo); max-width: none; }
+.line .line-k { font-weight: 600; color: var(--texto-secundario); margin-right: 4px; }
+.line .sep { color: var(--metal); margin: 0 6px; font-weight: 700; }
+.line .total { font-size: 1rem; font-variant-numeric: tabular-nums; }
+.answer .line { margin-top: 12px; font-size: 0.875rem; }
+
 /* ---------------------------------------------------------------- Ficha: la respuesta */
 
 .answer {
@@ -530,6 +537,7 @@ td .label-v { color: var(--texto-secundario); font-size: 0.8125rem; }
   .finder-close kbd { display: none; }
   .item-title h1 { font-size: 1.875rem; }
   .place-head { flex-wrap: wrap; }
+  .line .step { white-space: normal; }
   h1 { font-size: 1.625rem; }
   .pozo { padding: 14px; }
   .answer { grid-template-columns: minmax(0, 1fr); padding: 16px; }

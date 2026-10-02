@@ -330,6 +330,7 @@ var funcs = template.FuncMap{
 		return root + url
 	},
 	"pct":   pct,
+	"fine":  fine,
 	"count": count,
 	"width": func(p float64) string { return fmt.Sprintf("%.1f%%", math.Max(1.5, math.Min(100, p*100))) },
 	"kind":  func(k domain.SourceKind) string { return kindLabels[k] },
@@ -475,23 +476,23 @@ func groupCreatures(cs []*Creature) []creatureGroup {
 }
 
 type biomeGroup struct {
-	Mod    *Mod
+	Label  string
 	Biomes []*Biome
 }
 
+// groupBiomes groups the biomes by dimension: dimension › biome ›
+// structure › container › item.
 func groupBiomes(biomes []*Biome) []biomeGroup {
-	var out []biomeGroup
-	idx := map[*Mod]int{}
+	by := map[string][]*Biome{}
 	for _, b := range biomes {
-		i, ok := idx[b.Mod]
-		if !ok {
-			i = len(out)
-			idx[b.Mod] = i
-			out = append(out, biomeGroup{Mod: b.Mod})
-		}
-		out[i].Biomes = append(out[i].Biomes, b)
+		by[b.Dimension] = append(by[b.Dimension], b)
 	}
-	sortRefs(out, func(g biomeGroup) Ref { return g.Mod.Ref })
+	var out []biomeGroup
+	for _, d := range dimensionOrder {
+		if len(by[d]) > 0 {
+			out = append(out, biomeGroup{Label: d, Biomes: by[d]})
+		}
+	}
 	return out
 }
 

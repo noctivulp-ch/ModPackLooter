@@ -1,10 +1,10 @@
 {{define "content"}}
 {{$b := .Data}}
-<nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "biomas/"}}">Biomas</a> / {{$b.Mod.Name}}</nav>
-<div class="page-head">
+<nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "biomas/"}}">Biomas</a> / {{$b.Dimension}}</nav>
+<header class="item-title">
   <h1>{{$b.Name}}</h1>
-  <p class="id">{{$b.ID}}</p>
-</div>
+  <p>{{$b.Dimension}} · {{$b.Mod.Name}} · {{len $b.Owners}} estructuras con loot · {{len $b.Creatures}} criaturas</p>
+</header>
 {{template "statusBox" $b.Status}}
 <div class="cols-2">
   <section class="pozo">
@@ -34,4 +34,19 @@
     </ul>
   </section>
 </div>
+{{if $b.Creatures}}
+<section class="pozo card" id="criaturas">
+  <header class="card-head"><h2>Criaturas que aparecen aquí <span class="count">{{len $b.Creatures}}</span></h2>
+  <p class="meta">La probabilidad es la de que, al aparecer una criatura de su tipo en este bioma, sea esta.</p></header>
+  <div class="scroll"><table class="data stack-sm">
+    <thead><tr><th scope="col">Criatura</th><th scope="col" class="w-chance">Probabilidad en su tipo</th><th scope="col">Tipo</th><th scope="col">Qué suelta</th></tr></thead>
+    <tbody>{{range $b.Creatures}}<tr>
+      <td><a href="{{rel $.Root .Creature.URL}}">{{.Creature.Name}}</a></td>
+      <td>{{template "chance" .Spawn.Share}}</td>
+      <td>{{.Spawn.Category}}</td>
+      <td>{{with .Creature.Table}}{{range $i, $d := .Drops}}{{if lt $i 5}}{{if $i}}, {{end}}<a href="{{rel $.Root $d.Item.URL}}">{{$d.Item.Name}}</a> <span class="meta">{{pct $d.Chance}}</span>{{end}}{{end}}{{if gt (len .Drops) 5}} <span class="meta">y {{plus (len .Drops) -5}} más</span>{{end}}{{end}}</td>
+    </tr>{{end}}</tbody>
+  </table></div>
+</section>
+{{end}}
 {{end}}

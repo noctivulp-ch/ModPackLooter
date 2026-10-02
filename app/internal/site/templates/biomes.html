@@ -1,21 +1,21 @@
 {{define "content"}}
 <div class="page-head">
   <h1>Biomas</h1>
-  <p class="lede">Biomas donde aparece al menos una estructura con loot.</p>
+  <p class="lede">Dimensión › bioma › estructura › contenedor › objeto. Cada bioma lleva a sus estructuras, sus criaturas y lo que se puede encontrar en ellas.</p>
 </div>
 <section class="pozo">
   <div class="filters">
-    <label for="f-biomes" class="label">Filtrar</label>
-    <input id="f-biomes" type="search" class="ctl filter" data-filter="t-biomes" placeholder="Bioma o mod" autocomplete="off">
+    <label for="f-biomes" class="sr-only">Filtrar biomas</label>
+    <input id="f-biomes" type="search" class="field filter" data-filter="t-biomes" placeholder="Bioma o mod" autocomplete="off">
   </div>
   <div class="scroll">
-  <table class="data" id="t-biomes">
-    <thead><tr><th scope="col">Bioma</th><th scope="col" class="num">Estructuras con loot</th></tr></thead>
+  <table class="data stack-sm" id="t-biomes">
+    <thead><tr><th scope="col">Bioma</th><th scope="col" class="num">Estructuras con loot</th><th scope="col" class="num">Criaturas</th><th scope="col" class="hide-sm">Mod</th></tr></thead>
     {{range .Data}}
     <tbody>
-      <tr class="group"><th scope="rowgroup" colspan="2">{{.Mod.Name}}</th></tr>
+      <tr class="group"><th scope="rowgroup" colspan="4">{{.Label}} <span class="count">{{len .Biomes}}</span></th></tr>
       {{range .Biomes}}
-      <tr><td><a href="{{rel $.Root .URL}}">{{.Name}}</a> {{template "status" .Status}}</td><td class="num">{{len .Owners}}</td></tr>
+      <tr><td><a href="{{rel $.Root .URL}}">{{.Name}}</a> {{template "status" .Status}}</td><td class="num">{{len .Owners}}</td><td class="num">{{len .Creatures}}</td><td class="hide-sm">{{.Mod.Name}}</td></tr>
       {{end}}
     </tbody>
     {{end}}

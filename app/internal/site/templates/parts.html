@@ -166,7 +166,8 @@
     <td><a href="{{rel $r .Merchant.URL}}">{{.Merchant.Name}}</a>{{if .Level}}<br><span class="meta">nivel {{.Level}}</span>{{end}}</td>
     <td>{{template "toffer" (dict "Root" $r "O" .Offer)}}{{if .Offer.MaxUses}}<br><span class="meta">{{.Offer.MaxUses}} usos antes de reponer</span>{{end}}{{if .Offer.Note}}<br><span class="meta">{{.Offer.Note}}</span>{{end}}</td>
     <td>{{template "chance" .Offer.Chance}}</td>
-    <td>{{if .Merchant.Creature}}<a href="{{rel $r .Merchant.Creature.URL}}">{{.Merchant.Creature.Name}}</a>: {{template "creatureWhere" (dict "Root" $r "C" .Merchant.Creature)}}{{else if .Merchant.Location}}{{.Merchant.Location}}{{else}}<span class="warn-text">No se sabe dónde aparece</span>{{end}}</td>
+    <td>{{if .Merchant.Creature}}<a href="{{rel $r .Merchant.Creature.URL}}">{{.Merchant.Creature.Name}}</a>: {{template "creatureWhere" (dict "Root" $r "C" .Merchant.Creature)}}{{else if .Merchant.Location}}{{.Merchant.Location}}{{else}}<span class="warn-text">No se sabe dónde aparece</span>{{end}}
+      {{template "line" (dict "Root" $r "L" .Line)}}</td>
   </tr>{{end}}
   </tbody>
 </table>
@@ -222,7 +223,8 @@
       <td>{{template "chance" .Chance}}{{if .Approx}} <span class="approx" title="Cálculo aproximado">≈</span>{{end}}</td>
       <td class="num">{{count .CountMin .CountMax}}</td>
       <td>{{if .Notes}}{{template "notes" .Notes}}{{else}}<span class="meta">ninguna</span>{{end}}</td>
-      <td>{{if .Table.Creature}}{{template "creatureWhere" (dict "Root" $r "C" .Table.Creature)}}{{else}}<span class="warn-text">No se sabe dónde aparece</span>{{end}}</td>
+      <td>{{if .Table.Creature}}{{template "creatureWhere" (dict "Root" $r "C" .Table.Creature)}}{{else}}<span class="warn-text">No se sabe dónde aparece</span>{{end}}
+        {{template "line" (dict "Root" $r "L" .Line)}}</td>
     </tr>{{end}}</tbody>
   </table></div>
   {{end}}
@@ -259,3 +261,7 @@
   {{if .Plain}}{{template "sources" (dict "Root" $r "Sources" .Plain)}}{{end}}
 </section>
 {{end}}{{end}}
+
+{{define "line"}}{{$r := .Root}}{{with .L}}<p class="line"><span class="line-k">Línea completa:</span>
+  {{range $i, $s := .Steps}}{{if $i}}<span class="sep" aria-hidden="true">›</span>{{end}}<span class="step">{{if $s.URL}}<a href="{{rel $r $s.URL}}">{{$s.Label}}</a>{{else}}{{$s.Label}}{{end}}{{if $s.Chance}} <strong>{{pct $s.Chance}}</strong>{{end}}{{if $s.Detail}} <span class="meta">{{$s.Detail}}</span>{{end}}</span>{{end}}
+  <span class="sep" aria-hidden="true">=</span> <strong class="total">{{fine .Total}}</strong> <span class="meta">{{.Unit}}</span></p>{{end}}{{end}}
