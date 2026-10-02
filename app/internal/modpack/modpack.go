@@ -15,6 +15,7 @@ import (
 
 	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
 	"github.com/EnierAragon/ModPackLooter/app/internal/mcversion"
+	"github.com/EnierAragon/ModPackLooter/app/internal/names"
 	"github.com/EnierAragon/ModPackLooter/app/internal/resources"
 )
 
@@ -27,6 +28,8 @@ type Options struct {
 	MCVersion    string
 	Loader       string
 	Datapacks    []string // extra datapack folders or zips
+	AssetsDir    string   // launcher assets folder (for vanilla translations)
+	Lang         string   // language for names; empty = the game's (options.txt), else es_es
 	Diagnostics  *domain.Diagnostics
 }
 
@@ -36,6 +39,8 @@ type Modpack struct {
 	MCVersion     mcversion.Version
 	Loader        domain.Loader
 	VersionSource string // how the version was detected, for the report
+	Lang          string // language used for names, e.g. "es_ar"
+	LangSource    string // "--lang", "options.txt" or "por defecto"
 	Mods          []Mod
 	Index         *resources.Index
 	HasVanilla    bool
@@ -80,6 +85,7 @@ func Open(opts Options) (*Modpack, error) {
 		return nil, err
 	}
 	mp := &Modpack{Root: root}
+	mp.Lang, mp.LangSource = detectLang(root, opts.Lang)
 
 	modPacks, err := mp.loadMods(diags)
 	if err != nil {
@@ -101,6 +107,9 @@ func Open(opts Options) (*Modpack, error) {
 		mp.HasVanilla = true
 	} else {
 		diags.Add(domain.LevelWarning, stage, "", "no se encontró el jar de Minecraft %s: el loot vanilla no se incluirá. Usa --minecraft-jar <ruta>", mp.MCVersion)
+	}
+	if langs := mp.loadAssetLangs(opts.AssetsDir, mp.Lang, diags); langs != nil {
+		packs = append(packs, langs)
 	}
 	packs = append(packs, modPacks...)
 	packs = append(packs, mp.loadDatapacks(opts.Datapacks, diags)...)
@@ -422,4 +431,20 @@ func (mp *Modpack) loadScripts(diags *domain.Diagnostics) resources.Pack {
 		return nil
 	}
 	return dp
+}
+
+// detectLang picks the language for names: the explicit one, the language the
+// player uses in this instance (options.txt), or the default.
+func detectLang(root, explicit string) (string, string) {
+	if explicit != "" {
+		return names.NormalizeLang(explicit), "--lang"
+	}
+	if data, err := os.ReadFile(filepath.Join(root, "options.txt")); err == nil {
+		for _, line := range strings.Split(string(data), "\n") {
+			if v, ok := strings.CutPrefix(strings.TrimSpace(line), "lang:"); ok && strings.TrimSpace(v) != "" {
+				return names.NormalizeLang(v), "options.txt"
+			}
+		}
+	}
+	return names.DefaultLang, "por defecto"
 }

@@ -1,0 +1,33 @@
+{{define "content"}}
+{{$b := .Data}}
+<nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "biomas/"}}">Biomas</a> / {{$b.Mod.Name}}</nav>
+<div class="page-head">
+  <h1>{{$b.Name}}</h1>
+  <p class="id">{{$b.ID}}</p>
+</div>
+<div class="grid">
+  <section class="pozo">
+    <h2>Estructuras con loot <span class="count">{{len $b.Owners}}</span></h2>
+    <ul class="links">
+    {{range $b.Owners}}<li><a href="{{rel $.Root .URL}}">{{.Name}}</a> <span class="meta">{{.Mod.Name}} · {{len .Uses}} {{if eq (len .Uses) 1}}tabla{{else}}tablas{{end}}</span></li>{{end}}
+    </ul>
+  </section>
+  <section class="pozo">
+    <h2>Lo más fácil de encontrar aquí</h2>
+    <div class="scroll">
+    <table class="data">
+      <thead><tr><th scope="col">Objeto</th><th scope="col" class="w-chance">Probabilidad</th><th scope="col">Dónde</th></tr></thead>
+      <tbody>
+      {{range $b.Top}}
+        <tr>
+          <td><a href="{{rel $.Root .Item.URL}}">{{.Item.Name}}</a></td>
+          <td>{{template "chance" .Source.Effective}}</td>
+          <td><a href="{{rel $.Root .Source.Owner.URL}}">{{.Source.Owner.Name}}</a></td>
+        </tr>
+      {{end}}
+      </tbody>
+    </table>
+    </div>
+  </section>
+</div>
+{{end}}

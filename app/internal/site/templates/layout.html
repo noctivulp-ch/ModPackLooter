@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="{{.M.HTMLLang}}" data-metal="{{.M.Metal}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}}{{if ne .Title .M.Title}} · {{.M.Title}}{{end}}</title>
+<meta name="generator" content="ModPackLooter {{.M.AppVersion}}">
+<link rel="stylesheet" href="{{.Root}}assets/style.css">
+<script>
+try {
+  var mode = localStorage.getItem("mpl-mode"), metal = localStorage.getItem("mpl-metal");
+  if (mode) document.documentElement.dataset.mode = mode;
+  if (metal) document.documentElement.dataset.metal = metal;
+} catch (e) {}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+<header class="topbar">
+  <a class="brand" href="{{rel .Root ""}}">{{.M.Title}}</a>
+  <div class="search" role="search">
+    <label class="sr-only" for="q">Buscar en el sitio</label>
+    <input id="q" type="search" placeholder="Buscar objeto, estructura o bioma" autocomplete="off" spellcheck="false"
+           aria-controls="results" aria-expanded="false" data-root="{{.Root}}">
+    <kbd class="hint" aria-hidden="true">/</kbd>
+    <ul id="results" role="listbox" hidden></ul>
+  </div>
+  <div class="prefs">
+    <button type="button" id="mode" class="ctl" aria-label="Cambiar entre modo claro y oscuro">Modo</button>
+    <label class="sr-only" for="metal">Metal</label>
+    <select id="metal" class="ctl">
+      {{range metals}}<option value="{{.}}">{{if eq . "oro"}}Oro{{else if eq . "jade"}}Jade{{else}}Peltre{{end}}</option>{{end}}
+    </select>
+  </div>
+</header>
+<div class="shell">
+  <nav class="rail" aria-label="Secciones">
+    <a href="{{rel .Root ""}}"{{if eq .Nav "inicio"}} aria-current="page"{{end}}>Inicio</a>
+    <a href="{{rel .Root "objetos/"}}"{{if eq .Nav "objetos"}} aria-current="page"{{end}}>Objetos</a>
+    <a href="{{rel .Root "estructuras/"}}"{{if eq .Nav "estructuras"}} aria-current="page"{{end}}>Estructuras</a>
+    <a href="{{rel .Root "biomas/"}}"{{if eq .Nav "biomas"}} aria-current="page"{{end}}>Biomas</a>
+    <a href="{{rel .Root "fuentes/"}}"{{if eq .Nav "fuentes"}} aria-current="page"{{end}}>Otras fuentes</a>
+    <a href="{{rel .Root "mods/"}}"{{if eq .Nav "mods"}} aria-current="page"{{end}}>Mods</a>
+    <a href="{{rel .Root "acerca/"}}"{{if eq .Nav "acerca"}} aria-current="page"{{end}}>Acerca</a>
+  </nav>
+  <main id="main" tabindex="-1">
+{{template "content" .}}
+  </main>
+</div>
+<footer class="foot">
+  Minecraft {{.M.Pack.MCVersion}} · {{.M.Pack.Loader}} · {{.M.Pack.Mods}} mods · generado con ModPackLooter {{.M.AppVersion}}
+</footer>
+<script src="{{.Root}}assets/search-index.js"></script>
+<script src="{{.Root}}assets/app.js"></script>
+</body>
+</html>

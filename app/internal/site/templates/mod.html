@@ -1,0 +1,28 @@
+{{define "content"}}
+{{$m := .Data}}
+<nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "mods/"}}">Mods</a></nav>
+<div class="page-head">
+  <h1>{{$m.Name}}</h1>
+  <p class="id">{{$m.ID.Namespace}}{{if $m.Version}} · versión {{$m.Version}}{{end}}</p>
+</div>
+<div class="grid">
+  {{if $m.Structures}}
+  <section class="pozo">
+    <h2>Estructuras <span class="count">{{len $m.Structures}}</span></h2>
+    <ul class="links">{{range $m.Structures}}<li><a href="{{rel $.Root .URL}}">{{.Name}}</a></li>{{end}}</ul>
+  </section>
+  {{end}}
+  {{if $m.Tables}}
+  <section class="pozo">
+    <h2>Tablas de loot <span class="count">{{len $m.Tables}}</span></h2>
+    <ul class="links">{{range $m.Tables}}<li><a href="{{rel $.Root .URL}}">{{.Name}}</a> <span class="meta">{{kind .Kind}}</span></li>{{end}}</ul>
+  </section>
+  {{end}}
+</div>
+{{if $m.Items}}
+<section class="pozo">
+  <h2>Objetos <span class="count">{{len $m.Items}}</span></h2>
+  <ul class="links cols">{{range $m.Items}}<li><a href="{{rel $.Root .URL}}">{{.Name}}</a></li>{{end}}</ul>
+</section>
+{{end}}
+{{end}}

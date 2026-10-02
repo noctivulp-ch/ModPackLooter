@@ -1,0 +1,30 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>Estructuras</h1>
+  <p class="lede">Estructuras y construcciones con loot, agrupadas por mod.</p>
+</div>
+<section class="pozo">
+  <div class="filters">
+    <label for="f-owners" class="label">Filtrar</label>
+    <input id="f-owners" type="search" class="ctl filter" data-filter="t-owners" placeholder="Estructura o mod" autocomplete="off">
+  </div>
+  <div class="scroll">
+  <table class="data" id="t-owners">
+    <thead><tr><th scope="col">Estructura</th><th scope="col" class="num">Tablas</th><th scope="col" class="num">Biomas</th></tr></thead>
+    {{range .Data}}
+    <tbody>
+      <tr class="group"><th scope="rowgroup" colspan="3">{{.Mod.Name}}</th></tr>
+      {{range .Owners}}
+      <tr>
+        <td><a href="{{rel $.Root .URL}}">{{.Name}}</a></td>
+        <td class="num">{{len .Uses}}</td>
+        <td class="num">{{if .Biomes}}{{len .Biomes}}{{else}}—{{end}}</td>
+      </tr>
+      {{end}}
+    </tbody>
+    {{end}}
+  </table>
+  </div>
+  <p class="empty filter-empty" hidden>Ninguna estructura coincide con el filtro.</p>
+</section>
+{{end}}

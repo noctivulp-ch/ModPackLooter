@@ -115,3 +115,32 @@ func TestOpenFindsGameDirInsidePrismInstance(t *testing.T) {
 		t.Error("no debería encontrar vanilla en una instancia sintética")
 	}
 }
+
+func TestVanillaTranslationsFromLauncherAssets(t *testing.T) {
+	in := testkit.NewInstance(t)
+	in.Jar("mods/a.jar", testkit.Files{"META-INF/mods.toml": testkit.ModsToml("a", "A", "[1.20.1,1.21)")})
+	in.Dir("assets", testkit.Files{
+		"indexes/5.json":    `{"objects":{"minecraft/lang/es_es.json":{"hash":"ab12cd"},"minecraft/lang/es_ar.json":{"hash":"ef34"},"minecraft/lang/fr_fr.json":{"hash":"aa99"}}}`,
+		"objects/ab/ab12cd": `{"item.minecraft.diamond":"Diamante"}`,
+		"objects/ef/ef34":   `{"item.minecraft.potato":"Papa"}`,
+		"objects/aa/aa99":   `{"item.minecraft.diamond":"Diamant"}`,
+	})
+	in.Dir("", testkit.Files{"options.txt": "version:3465\nlang:es_ar\n"})
+	mp, err := Open(Options{Path: in.Root, Diagnostics: &domain.Diagnostics{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mp.Close()
+	if mp.Lang != "es_ar" || mp.LangSource != "options.txt" {
+		t.Errorf("idioma = %s (%s)", mp.Lang, mp.LangSource)
+	}
+	if got := mp.Index.Lang("es_es", nil)["item.minecraft.diamond"]; got != "Diamante" {
+		t.Errorf("traducción vanilla es_es = %q", got)
+	}
+	if got := mp.Index.Lang("es_ar", nil)["item.minecraft.potato"]; got != "Papa" {
+		t.Errorf("traducción vanilla es_ar = %q", got)
+	}
+	if len(mp.Index.Lang("fr_fr", nil)) != 0 {
+		t.Error("no deben cargarse idiomas de otra familia")
+	}
+}

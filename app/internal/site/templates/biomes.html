@@ -1,0 +1,26 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>Biomas</h1>
+  <p class="lede">Biomas donde aparece al menos una estructura con loot.</p>
+</div>
+<section class="pozo">
+  <div class="filters">
+    <label for="f-biomes" class="label">Filtrar</label>
+    <input id="f-biomes" type="search" class="ctl filter" data-filter="t-biomes" placeholder="Bioma o mod" autocomplete="off">
+  </div>
+  <div class="scroll">
+  <table class="data" id="t-biomes">
+    <thead><tr><th scope="col">Bioma</th><th scope="col" class="num">Estructuras con loot</th></tr></thead>
+    {{range .Data}}
+    <tbody>
+      <tr class="group"><th scope="rowgroup" colspan="2">{{.Mod.Name}}</th></tr>
+      {{range .Biomes}}
+      <tr><td><a href="{{rel $.Root .URL}}">{{.Name}}</a></td><td class="num">{{len .Owners}}</td></tr>
+      {{end}}
+    </tbody>
+    {{end}}
+  </table>
+  </div>
+  <p class="empty filter-empty" hidden>Ningún bioma coincide con el filtro.</p>
+</section>
+{{end}}

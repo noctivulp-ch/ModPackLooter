@@ -1,28 +1,22 @@
 // Command modpacklooter is the composition root: it wires the concrete
-// adapters and discoverers into the core and hands control to the CLI.
+// plugins into the core and hands control to the CLI.
 package main
 
 import (
-	"fmt"
 	"os"
 
+	"github.com/EnierAragon/ModPackLooter/app/internal/analysis"
 	"github.com/EnierAragon/ModPackLooter/app/internal/cli"
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery"
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/generic"
+	"github.com/EnierAragon/ModPackLooter/app/internal/plugins"
 )
 
 // version is set at build time with -ldflags "-X main.version=…".
 var version = "dev"
 
 func main() {
-	registry := discovery.NewRegistry[discovery.Discoverer](
-		// Specific, relational and heuristic discoverers are registered here
-		// as they are implemented. The generic fallback always runs last.
-		generic.ByPath{},
-	)
-	root := cli.NewRootCommand(cli.Deps{Version: version, Discovery: registry})
-	if err := root.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, "error:", err)
-		os.Exit(1)
+	deps := cli.Deps{
+		Version:  version,
+		Analyzer: analysis.Analyzer{Discoverers: plugins.Discoverers(), Enrichers: plugins.Enrichers()},
 	}
+	os.Exit(cli.Main(deps, os.Args[1:]))
 }
