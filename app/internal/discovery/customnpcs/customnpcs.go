@@ -46,7 +46,13 @@ type npc struct {
 	} `json:"DropChance"`
 	Sold     []stack `json:"TraderSold"`
 	Currency []stack `json:"TraderCurrency"`
+	Market   string  `json:"TraderMarket"`
 }
+
+// roleTrader is RoleType.TRADER in the CustomNPCs API: a trader has, per
+// slot, two currencies and a sold item (IRoleTrader.getCurrency1/2,
+// getSold), or uses a shared market (getMarket).
+const roleTrader = 1
 
 func (Discoverer) Discover(_ context.Context, in discovery.Input, out *discovery.Claims) error {
 	dirs := [][2]string{{filepath.Join(in.Files.RootDir(), "customnpcs", "clones"), "customnpcs/clones"}}
@@ -58,6 +64,22 @@ func (Discoverer) Discover(_ context.Context, in discovery.Input, out *discovery
 			"NPCs guardados en el modpack (clones de CustomNPCs): lo que sueltan al morir y, si son comerciantes, lo que venden.",
 			"Los mercados que se crean dentro de un mundo solo se ven indicando ese mundo con --world.",
 		}}
+	// Shared markets live in the world (customnpcs/markets/<name>.json).
+	markets := map[string]*npc{}
+	if w := in.Files.Level(); w != nil {
+		dir := filepath.Join(w.Path, "customnpcs", "markets")
+		entries, _ := os.ReadDir(dir)
+		for _, e := range entries {
+			data, err := os.ReadFile(filepath.Join(dir, e.Name()))
+			if err != nil {
+				continue
+			}
+			var mk npc
+			if json.Unmarshal(CleanSNBT(data), &mk) == nil {
+				markets[strings.ToLower(strings.TrimSuffix(e.Name(), filepath.Ext(e.Name())))] = &mk
+			}
+		}
+	}
 	seen := map[string]bool{}
 	for _, d := range dirs {
 		_ = filepath.WalkDir(d[0], func(path string, e os.DirEntry, err error) error {
@@ -106,7 +128,17 @@ func (Discoverer) Discover(_ context.Context, in discovery.Input, out *discovery
 			if offers := traderOffers(n); len(offers) > 0 {
 				m.Levels = []trades.Level{{Level: 1, Name: "Vende", Offers: offers}}
 			}
-			if len(m.Drops) == 0 && len(m.Levels) == 0 {
+			if n.Role == roleTrader {
+				switch {
+				case n.Market != "" && markets[strings.ToLower(n.Market)] != nil:
+					m.Levels = []trades.Level{{Level: 1, Name: "Vende (mercado " + n.Market + ")", Offers: traderOffers(*markets[strings.ToLower(n.Market)])}}
+				case n.Market != "":
+					m.Note = "Comerciante del mercado «" + n.Market + "»: sus tradeos se guardan en el mundo (indícalo con --world)."
+				case len(m.Levels) == 0:
+					m.Note = "Comerciante sin tradeos guardados en su archivo."
+				}
+			}
+			if len(m.Drops) == 0 && len(m.Levels) == 0 && m.Note == "" {
 				return nil
 			}
 			cat.Merchants = append(cat.Merchants, m)
@@ -123,8 +155,8 @@ func (Discoverer) Discover(_ context.Context, in discovery.Input, out *discovery
 	return nil
 }
 
-// traderOffers pairs CustomNPCs' trader slots: sold slot i costs the
-// currency in slots i and i+18.
+// traderOffers pairs CustomNPCs' trader slots: sold slot i costs
+// currency 1 (slot i) and currency 2 (slot i+18).
 func traderOffers(n npc) []trades.Offer {
 	cost := map[int]stack{}
 	for _, c := range n.Currency {

@@ -369,6 +369,9 @@ func TestTradesTab(t *testing.T) {
 		"Bandit.json": "{\n  \"Name\": \"npc.mymod.bandit.name\",\n  \"Role\": 0,\n  \"Health\": 40.0f,\n  \"ReturnToStart\": 0b,\n" +
 			"  \"NpcInv\": [ { \"Slot\": 0b, \"id\": \"mymod:money\", \"Count\": 5b }, { \"Slot\": 1b, \"id\": \"minecraft:bread\", \"Count\": 2b } ],\n" +
 			"  \"DropChance\": [ { \"Integer\": 100.0f, \"Slot\": 0 }, { \"Integer\": 25.0f, \"Slot\": 1 } ],\n  \"KilledTime\": 0L\n}\n",
+		"Merchant.json": "{\n  \"Name\": \"Mercader\",\n  \"Role\": 1,\n" +
+			"  \"TraderSold\": [ { \"Slot\": 0b, \"id\": \"minecraft:diamond\", \"Count\": 1b } ],\n" +
+			"  \"TraderCurrency\": [ { \"Slot\": 0b, \"id\": \"mymod:money\", \"Count\": 20b }, { \"Slot\": 18b, \"id\": \"minecraft:bread\", \"Count\": 2b } ]\n}\n",
 	})
 	res, err := plugins.Analyzer().Run(context.Background(), modpack.Options{Path: in.Root}, nil)
 	if err != nil {
@@ -402,6 +405,12 @@ func TestTradesTab(t *testing.T) {
 	for _, want := range []string{"Lo vende", "Granjero", "Lo sueltan NPCs", "Bandido", "25 %"} {
 		if !strings.Contains(bread, want) {
 			t.Errorf("el pan no contiene %q", want)
+		}
+	}
+	merchant := read("tradeos/npcs/npc/merchant/index.html")
+	for _, want := range []string{"20 × ", "Money", "2 × ", "Bread", "1 × ", "Diamond"} {
+		if !strings.Contains(merchant, want) {
+			t.Errorf("el mercader no contiene %q", want)
 		}
 	}
 	npc := read("tradeos/npcs/npc/bandit/index.html")

@@ -532,6 +532,9 @@ func (ScriptMentions) Detect(_ context.Context, in discovery.Input, out *discove
 	scan("kubejs/server_scripts", jsExt, "KubeJS")
 	scan("kubejs/startup_scripts", jsExt, "KubeJS")
 	scan("scripts", map[string]bool{".zs": true}, "CraftTweaker")
+	// CustomNPCs scripts can react to trades (RoleEvent.TraderEvent) and
+	// change NPC drops.
+	scan("customnpcs/scripts", jsExt, "CustomNPCs (scripts)")
 	return nil
 }
 

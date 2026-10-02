@@ -27,9 +27,15 @@ modpack (con sus reemplazos y modificadores), así que se enlaza su página.
   mundo modelo). Están en SNBT con forma de JSON (`5b`, `1.0f`, saltos de
   línea dentro de textos): se limpian antes de leerlos.
 - Drops: `NpcInv` con la probabilidad de `DropChance` por ranura.
-- Comerciantes: ranuras `TraderSold` con su precio en `TraderCurrency`
-  (ranuras i e i+18). Los mercados creados dentro de un mundo solo se ven con
-  `--world`.
+- Comerciantes (`Role` = 1, `RoleType.TRADER` en la
+  [API de scripting](https://goodbird-git.github.io/CNPC-Unofficial-1.20.1-ScriptingDoc/)):
+  por ranura, dos monedas y un objeto vendido (`IRoleTrader.getCurrency1/2`,
+  `getSold`), guardados como `TraderCurrency` (ranuras i e i+18) y
+  `TraderSold`. Si usan un mercado compartido (`getMarket`, `TraderMarket`), se
+  lee de `customnpcs/markets/<nombre>.json` del mundo indicado con `--world`;
+  sin mundo se avisa en la página del NPC.
+- Los scripts de CustomNPCs (`customnpcs/scripts`) entran en el genérico de
+  scripts de la capa de cambios (pueden reaccionar a `RoleEvent.TraderEvent`).
 - El nombre del NPC puede ser una clave de idioma (`npc.mod.bandit.name`).
 
 ## Cambios de mods
