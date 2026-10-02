@@ -34,6 +34,11 @@ modpack (con sus reemplazos y modificadores), así que se enlaza su página.
   `TraderSold`. Si usan un mercado compartido (`getMarket`, `TraderMarket`), se
   lee de `customnpcs/markets/<nombre>.json` del mundo indicado con `--world`;
   sin mundo se avisa en la página del NPC.
+- Tiendas de otros mods guardadas en el NPC: cualquier entrada de `ForgeData`
+  cuyo nombre termina en `shop.json` y trae una lista de productos (p. ej.
+  dochi_rpg_maker, `type: npc_shop`): objeto, cantidad, precio y moneda del
+  producto (o la de la tienda si es `inherit`), variante (nombre) y existencias.
+  En DeceasedCraft son 11 NPCs con 179 productos.
 - Los scripts de CustomNPCs (`customnpcs/scripts`) entran en el genérico de
   scripts de la capa de cambios (pueden reaccionar a `RoleEvent.TraderEvent`).
 - El nombre del NPC puede ser una clave de idioma (`npc.mod.bandit.name`).
