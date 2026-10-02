@@ -215,6 +215,20 @@ func buildCreatures(res *analysis.Result, m *Model, namer *names.Namer, modOf fu
 	}
 	for _, c := range creatures {
 		m.Creatures = append(m.Creatures, c)
+		for _, n := range c.Natural {
+			if n.Biome != nil {
+				n.Biome.Creatures = append(n.Biome.Creatures, BiomeCreature{Creature: c, Spawn: n})
+			}
+		}
+	}
+	for _, b := range m.Biomes {
+		sort.SliceStable(b.Creatures, func(i, j int) bool {
+			x, y := b.Creatures[i].Spawn, b.Creatures[j].Spawn
+			if x.Category != y.Category {
+				return x.Category < y.Category
+			}
+			return x.Share > y.Share
+		})
 	}
 	sortRefs(m.Creatures, func(c *Creature) Ref { return c.Ref })
 }

@@ -29,6 +29,8 @@ type WayPlace struct {
 	Chance float64 // 0 when the chance is not known
 	Detail string
 	Way    *Way
+	// Line is the chain from a biome to the item, for mobs and merchants.
+	Line *Line
 }
 
 // More returns how many places are beyond the first n.
@@ -172,6 +174,20 @@ func buildWays(it *Item, namer *names.Namer) {
 	it.Top = nil
 	if len(it.Ways) > 0 {
 		it.Top = it.Ways[0].Places[0]
+		switch it.Top.Way.Key {
+		case "criaturas":
+			for _, s := range it.Sources {
+				if s.Table.Creature != nil && s.Table.Creature.URL == it.Top.URL && s.Effective == it.Top.Chance {
+					it.Top.Line = s.Line()
+				}
+			}
+		case "tradeo":
+			for _, t := range it.Sells() {
+				if t.Merchant.URL == it.Top.URL && t.Offer.Chance == it.Top.Chance && it.Top.Line == nil {
+					it.Top.Line = t.Line()
+				}
+			}
+		}
 	}
 }
 

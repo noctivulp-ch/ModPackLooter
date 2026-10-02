@@ -15,6 +15,7 @@
   <p class="where{{if not .Chance}} wide{{end}}"><a href="{{rel $.Root .URL}}">{{.Name}}</a>
     <span class="how">{{.Way.Title}}{{if .Detail}} · {{.Detail}}{{end}}</span></p>
   {{if .Chance}}<div class="bar" aria-hidden="true"><span style="--w: {{width .Chance}}"></span></div>{{end}}
+  {{with .Line}}<div class="wide">{{template "line" (dict "Root" $.Root "L" .)}}</div>{{end}}
   {{if gt (len $it.Cards) 1}}<p class="also">Todas las formas: {{range $i, $c := $it.Cards}}{{if $i}} · {{end}}<a href="#{{$c.Key}}">{{$c.Title}}</a>{{end}}</p>{{end}}
 </section>
 {{else}}{{if not $it.Variants}}{{if not $it.Buys}}<section class="pozo"><p class="empty">No hay fuentes conocidas para este objeto.</p></section>{{end}}{{end}}

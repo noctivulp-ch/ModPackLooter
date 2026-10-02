@@ -7,6 +7,7 @@ import (
 	"github.com/EnierAragon/ModPackLooter/app/internal/analysis"
 	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
 	"github.com/EnierAragon/ModPackLooter/app/internal/names"
+	"github.com/EnierAragon/ModPackLooter/app/internal/resources"
 )
 
 // Ref is a link to a page of the site. URL is relative to the site root.
@@ -136,10 +137,19 @@ type Drop struct {
 // Biome lists the owners that can generate in it.
 type Biome struct {
 	Ref
-	Mod    *Mod
-	Owners []*Owner
-	Top    []BiomeItem // best items obtainable in the biome
-	Status domain.Status
+	Mod       *Mod
+	Dimension string // "Mundo normal", "Nether", "End" or "Otras dimensiones"
+	Owners    []*Owner
+	Top       []BiomeItem // best items obtainable in the biome
+	Status    domain.Status
+	// Creatures are the mobs that spawn in it naturally.
+	Creatures []BiomeCreature
+}
+
+// BiomeCreature is a mob that spawns in a biome.
+type BiomeCreature struct {
+	Creature *Creature
+	Spawn    CreatureBiome
 }
 
 // BiomeItem is an item and its best source within a biome.
@@ -410,11 +420,12 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 	// Owners: structures from data, owners declared by discoverers, templates.
 	owners := map[domain.Owner]*Owner{}
 	biomes := map[domain.ResourceID]*Biome{}
+	dimensionOf := biomeDimensions(res)
 	biomeOf := func(id domain.ResourceID) *Biome {
 		if b, ok := biomes[id]; ok {
 			return b
 		}
-		b := &Biome{Ref: Ref{ID: id, Name: namer.Biome(id), URL: "biomas/" + idPath(id) + "/"}, Mod: modOf(id.Namespace)}
+		b := &Biome{Ref: Ref{ID: id, Name: namer.Biome(id), URL: "biomas/" + idPath(id) + "/"}, Mod: modOf(id.Namespace), Dimension: dimensionOf(id)}
 		b.Status = res.Status(domain.Target{Kind: domain.TargetBiome, ID: id})
 		biomes[id] = b
 		return b
@@ -574,6 +585,11 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		t.Mod.Tables = append(t.Mod.Tables, t)
 	}
 	sortRefs(m.Tables, func(t *Table) Ref { return t.Ref })
+	// Every biome of the pack has a page: it leads to its structures,
+	// creatures and fishing.
+	for _, id := range res.Resources.IDs(resources.TypeBiome) {
+		biomeOf(id)
+	}
 	for _, b := range biomes {
 		sortRefs(b.Owners, func(o *Owner) Ref { return o.Ref })
 		b.Top = topItems(b.Owners, 300)

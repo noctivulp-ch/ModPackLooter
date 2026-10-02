@@ -59,6 +59,25 @@ lista, filtra y lleva a las fichas.
 Si aparece una pregunta nueva del jugador que ninguna ficha contesta completa, se
 crea una ficha maestra nueva con este mismo criterio.
 
+### La jerarquía: dimensión › bioma › estructura › contenedor › objeto
+
+Un objeto viene en un contenedor (un cofre, una criatura que lo suelta o un
+comerciante que lo vende), el contenedor está en una estructura y la estructura en
+un bioma de una dimensión. El **objeto** es la ficha principal; los
+**contenedores** importan por lo que tienen, y las **estructuras** porque es adonde
+el jugador va a buscar algo. Los biomas se agrupan por dimensión y llevan a sus
+estructuras y a sus criaturas.
+
+### La línea completa
+
+Cuando cada eslabón tiene probabilidad, la ficha multiplica la cadena y muestra la
+**probabilidad real** con su unidad. Por ejemplo: «Mundo normal › Taiga de pinos ›
+Aldeano zombi 4,6 % de las apariciones de tipo hostil › Aldeano (al convertirlo) ›
+Bibliotecario lo ofrece 1,8 % = 0,083 % · 1 de cada 1.200, por cada criatura
+hostil que aparece en la Taiga de pinos». Se usa el bioma donde la criatura es más
+probable. Las probabilidades pequeñas se muestran con dos cifras significativas y
+como «1 de cada N».
+
 ### La ficha de objeto
 
 1. **Título** destacado y, debajo, la **carta héroe**: la forma más probable de

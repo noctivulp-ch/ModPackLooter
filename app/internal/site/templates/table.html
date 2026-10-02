@@ -1,22 +1,22 @@
 {{define "content"}}
 {{$t := .Data}}
 <nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "fuentes/"}}">Tablas de loot</a> / <a href="{{rel .Root $t.Mod.URL}}">{{$t.Mod.Name}}</a></nav>
-<div class="page-head">
+<header class="item-title">
   <h1>{{$t.Name}}</h1>
-  <p class="id">{{$t.ID}} · {{kind $t.Kind}}{{if $t.Approx}} · cálculo aproximado{{end}}</p>
-</div>
+  <p>{{kind $t.Kind}} · {{$t.Mod.Name}} · {{len $t.Drops}} objetos{{if $t.Approx}} · cálculo aproximado{{end}}{{if $t.Creature}} · lo que suelta <a href="{{rel .Root $t.Creature.URL}}">{{$t.Creature.Name}}</a>{{end}}</p>
+</header>
 {{if $t.Changes}}
 <section class="pozo">
   <h2>Cambios de mods</h2>
   <ul class="links">{{range $t.Changes}}<li>{{template "change" (dict "Root" $.Root "C" .)}}</li>{{end}}</ul>
 </section>
 {{end}}
-<section class="pozo">
-  <h2>Qué contiene</h2>
+<section class="pozo card">
+  <header class="card-head"><h2>Qué contiene <span class="count">{{len $t.Drops}}</span></h2><p class="meta">Probabilidad de encontrar cada objeto {{if eq $t.Kind "entity"}}al matarla{{else}}en un contenedor con esta tabla{{end}}.</p></header>
   {{template "drops" (dict "Root" .Root "Drops" $t.Drops)}}
 </section>
-<section class="pozo">
-  <h2>Dónde se usa</h2>
+<section class="pozo card">
+  <header class="card-head"><h2>Dónde está</h2></header>
   <ul class="links">
   {{range $t.Uses}}
     <li>
@@ -27,4 +27,5 @@
   {{end}}
   </ul>
 </section>
+<p class="id tech">{{$t.ID}}</p>
 {{end}}

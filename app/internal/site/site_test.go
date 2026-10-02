@@ -476,7 +476,7 @@ func TestCreaturePages(t *testing.T) {
 		t.Error("remove_spawns debe quitar el desierto")
 	}
 	flesh := read("objetos/minecraft/rotten_flesh/index.html")
-	for _, want := range []string{"La forma más probable", "Lo sueltan criaturas", "Zombi", "aparece en 1 bioma"} {
+	for _, want := range []string{"La forma más probable", "Lo sueltan criaturas", "Zombi", "aparece en 1 bioma", "Línea completa", "por cada criatura hostil que aparece en Llanura"} {
 		if !strings.Contains(flesh, want) {
 			t.Errorf("la carne podrida no contiene %q", want)
 		}
