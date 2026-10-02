@@ -1,7 +1,8 @@
 # 04 · Arquitectura
 
-> Este documento es independiente del lenguaje. Las tecnologías concretas se
-> decidirán en [07-tecnologias.md](07-tecnologias.md).
+> Este documento es independiente del lenguaje. La implementación será en Go
+> ([ADR-0005](decisiones/0005-lenguaje-go.md)); en Go los puertos son
+> interfaces pequeñas definidas por el paquete que las consume.
 
 ## Estilo: hexagonal (puertos y adaptadores)
 
@@ -69,12 +70,15 @@ probar por separado y, más adelante, cachear.
 
 | Puerto | Responsabilidad | Adaptadores previstos |
 |---|---|---|
-| `ModpackSource` | Descubrir los paquetes de recursos de un modpack. | Carpeta de instancia, `.zip` CurseForge, `.mrpack`, servidor. |
+| `ModpackSource` | Descubrir los paquetes de recursos de un modpack. | Carpeta de instancia, `.zip` CurseForge, `.mrpack`, servidor, volcado del mod (futuro, [ADR-0004](decisiones/0004-app-externa-con-volcador-opcional.md)). |
 | `ResourceProvider` | Listar/leer archivos de un paquete. | Carpeta, zip/jar. |
 | `LootTableParser` | Convertir JSON en `LootTable`. | Por rango de versiones de MC. |
 | `StructureParser` | Leer definiciones de estructura y pools. | Por rango de versiones. |
 | `StructureTemplateReader` | Extraer contenedores con `LootTable` de `.nbt`. | Lector NBT. |
 | `TagRepository` | Resolver tags de biomas y objetos. | Desde los datos fusionados. |
+| `ProcessorListParser` | Leer processor lists (`append_loot`). | Por rango de versiones. |
+| `SpawnSource` | Mobs por bioma (spawners + biome modifiers). | Vanilla, Forge, NeoForge. |
+| `KnowledgeBase` | Loot de estructuras generadas por código. | Tabla incluida por versión. |
 | `LootModifierSource` | Aportar modificaciones extra al loot. | GLM, KubeJS, CraftTweaker (fases futuras). |
 | `LocalizationProvider` | Traducir IDs a nombres. | Archivos `lang`. |
 | `IconProvider` | Obtener/generar el icono de un objeto. | Texturas de `assets/`. |

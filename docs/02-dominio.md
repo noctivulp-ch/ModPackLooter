@@ -43,7 +43,22 @@ Y en `assets/<namespace>/`:
 | `lang/*.json` | Nombres traducidos de objetos, estructuras y biomas. |
 | `textures/item/`, `models/item/` | Iconos de los objetos. |
 
-## 3. Cómo se llega de un objeto a un bioma
+## 3. La loot table como pivote
+
+Casi todas las fuentes de loot del juego (cofres, barriles, bóvedas, arena
+sospechosa, vagonetas con cofre, mobs, pesca, regalos de gameplay) terminan
+apuntando a una **loot table**. Por eso el modelo gira en torno a ella:
+
+1. Se reúnen **todas** las loot tables (vanilla + mods + datapacks).
+2. Se buscan **todos los sitios que las referencian**: plantillas NBT,
+   processor lists, entidades, condiciones, tabla de conocimiento, overrides.
+3. Cada referencia se convierte en una `LootSource`, que a su vez se asocia a
+   estructuras y biomas.
+4. Las loot tables **sin ninguna referencia** se muestran igualmente,
+   clasificadas por su tipo/ruta (`chests/`, `entities/`, `gameplay/`…) y
+   marcadas como “origen no determinado”.
+
+## 4. Cómo se llega de un objeto a un bioma
 
 ```
 Objeto ──aparece en──▶ Entrada de loot ──pertenece a──▶ Tabla de loot
@@ -58,16 +73,29 @@ Pasos de resolución:
 1. **Estructura → piezas.** Se recorren los `template_pool` desde el
    `start_pool` de la estructura (de forma recursiva por los conectores
    jigsaw) o, para estructuras clásicas, se usan las piezas conocidas.
-2. **Pieza → tablas de loot.** Se lee cada `.nbt` y se buscan bloques con
-   entidad (`chest`, `barrel`, `trapped_chest`, `vault`, `suspicious_sand`,
-   `dispenser`…) que tengan `LootTable`. También spawners y entidades con
-   `DeathLootTable`.
+2. **Pieza → tablas de loot.** Se lee cada `.nbt` y se buscan:
+   - bloques con entidad (`chest`, `barrel`, `trapped_chest`, `vault`,
+     `suspicious_sand`, `dispenser`…) con `LootTable`;
+   - entidades guardadas en la plantilla (p. ej. `chest_minecart`) con
+     `LootTable`, y mobs con `DeathLootTable`;
+   - **processor lists** del pool (`worldgen/processor_list`) con reglas
+     `block_entity_modifier` de tipo `minecraft:append_loot`, que asignan loot
+     al generar;
+   - **data markers** (bloques de estructura con `Metadata`), que se
+     resuelven con la tabla de conocimiento o con overrides.
 3. **Estructura → biomas.** El campo `biomes` (ID, lista o `#tag`) se expande
    resolviendo tags de forma recursiva, incluidos los añadidos por otros mods.
 4. **Tabla → objetos.** Se recorren pools y entradas; las entradas de tipo
    `loot_table` (tablas anidadas), `tag` y `alternatives`/`group` se expanden.
 5. **Modificadores.** Se aplican Global Loot Modifiers, datapacks y scripts
    reconocidos sobre las tablas resultantes.
+
+6. **Entidades → biomas.** Los `spawners` del JSON de cada bioma y los
+   *biome modifiers* `add_spawns` de Forge/NeoForge indican dónde aparece
+   cada mob; con eso su loot table se asocia a biomas.
+7. **Condiciones de la propia tabla.** Una condición `location_check` con
+   bioma o estructura (p. ej. la pesca en la jungla) también crea una
+   asociación con ese bioma o estructura.
 
 ### Casos que no se pueden resolver estáticamente
 
@@ -77,28 +105,32 @@ Pasos de resolución:
 
 Para estos casos la app usará, en este orden:
 
-1. **Heurísticas** marcadas como tales (p. ej. una tabla
+1. **Tabla de conocimiento vanilla** por versión: estructuras clásicas
+   generadas por código (mineshaft, fortaleza, stronghold, templos,
+   naufragios…).
+2. **Heurísticas** marcadas como tales (p. ej. una tabla
    `examplemod:chests/ruined_tower` se asocia a la estructura
    `examplemod:ruined_tower` por nombre).
-2. **Overrides manuales** en el archivo de configuración del proyecto.
-3. Si nada aplica: la fuente aparece como **“origen no determinado”**.
+3. **Overrides manuales** en el archivo de configuración del proyecto.
+4. Si nada aplica: la fuente aparece como **“origen no determinado”**.
 
-Cada relación guarda su **nivel de confianza**: `exacta`, `heurística` o
-`manual`, y el sitio lo muestra.
+Cada relación guarda su **nivel de confianza**: `exacta`, `conocida`,
+`heurística` o `manual`, y el sitio lo muestra.
 
-## 4. Tipos de fuente de loot
+## 5. Tipos de fuente de loot
 
 | Tipo | Ejemplo | ¿Asociable a bioma? |
 |---|---|---|
 | Cofre de estructura | Templo del desierto | Sí, vía estructura. |
 | Bóveda / dispensador / barril | Trial Chambers | Sí, vía estructura. |
 | Arqueología | Arena sospechosa en ruinas | Sí, vía estructura. |
-| Entidad (drop de mob) | Wither Skeleton | Parcialmente (spawns por bioma, fase futura). |
-| Pesca | Tesoro de pesca | No (global, salvo condiciones). |
+| Vagoneta con cofre | Mina abandonada | Sí, vía estructura. |
+| Entidad (drop de mob) | Wither Skeleton | Sí, vía spawns del bioma y biome modifiers. |
+| Pesca | Tesoro de pesca | Global, salvo condiciones `location_check`. |
 | Gameplay | Regalos de aldeanos, gato | No. |
 | Bloque | Drops al romper | No (fuera del MVP). |
 
-## 5. Probabilidades
+## 6. Probabilidades
 
 Para cada objeto en una tabla se calculan, cuando sea posible:
 
@@ -111,7 +143,7 @@ Para cada objeto en una tabla se calculan, cuando sea posible:
 Condiciones o funciones no soportadas no se ignoran en silencio: la cifra se
 marca como **aproximada**.
 
-## 6. Modelo de dominio (borrador)
+## 7. Modelo de dominio (borrador)
 
 | Entidad | Atributos principales |
 |---|---|

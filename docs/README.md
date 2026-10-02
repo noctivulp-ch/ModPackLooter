@@ -14,7 +14,10 @@ construye o se usa la app, queda escrita aquí**.
 | [04-arquitectura.md](04-arquitectura.md) | Arquitectura desacoplada, capas, puertos y aplicación de SOLID. |
 | [05-cli.md](05-cli.md) | Interfaz de línea de comandos (y cómo encaja la futura TUI). |
 | [06-alcance-y-hoja-de-ruta.md](06-alcance-y-hoja-de-ruta.md) | MVP, fases siguientes y riesgos conocidos. |
-| [07-tecnologias.md](07-tecnologias.md) | **Pendiente de discutir.** Criterios y preguntas abiertas. |
+| [07-tecnologias.md](07-tecnologias.md) | Comparativa de lenguajes y pila elegida (Go). |
+| [08-investigacion-app-externa-vs-mod.md](08-investigacion-app-externa-vs-mod.md) | Investigación: app externa frente a mod multicargador/multiversión. |
+| [09-versiones-y-cargadores.md](09-versiones-y-cargadores.md) | Diferencias de formato 1.20.1 → 26.3 y entre Forge/NeoForge/Fabric. |
+| [10-proceso-de-pruebas-y-entrega.md](10-proceso-de-pruebas-y-entrega.md) | Ciclo de review con el modpack real, releases y GitHub/GitLab Pages. |
 | [decisiones/](decisiones/) | Registro de decisiones de arquitectura (ADR). |
 
 ## Cómo documentamos decisiones
@@ -24,3 +27,16 @@ archivo numerado en [`decisiones/`](decisiones/) creado a partir de la
 [plantilla](decisiones/0000-plantilla.md). Una decisión nunca se borra: si
 cambia, se crea una nueva que la **reemplaza** y se marca la antigua como
 `Reemplazada por ADR-XXXX`.
+
+## Decisiones registradas
+
+| ADR | Decisión |
+|---|---|
+| [0001](decisiones/0001-documentar-decisiones-con-adr.md) | Documentar decisiones con ADR en `docs/`. |
+| [0002](decisiones/0002-cli-primero-nucleo-independiente.md) | CLI primero, con un núcleo independiente de la interfaz. |
+| [0003](decisiones/0003-salida-sitio-estatico.md) | La salida principal es un sitio web estático. |
+| [0004](decisiones/0004-app-externa-con-volcador-opcional.md) | App externa; mod volcador opcional en el futuro. |
+| [0005](decisiones/0005-lenguaje-go.md) | Implementar la app en Go. |
+| [0006](decisiones/0006-rango-de-versiones-y-cargadores.md) | 1.20.1 → 26.3; Forge y NeoForge primero, Fabric después. |
+| [0007](decisiones/0007-distribucion-y-publicacion.md) | GitHub Releases + sitio compatible con GitHub/GitLab Pages. |
+| [0008](decisiones/0008-ciclo-de-iteracion-con-modpack-real.md) | Ciclo de review con DeseacedCraft BetaCerrada. |

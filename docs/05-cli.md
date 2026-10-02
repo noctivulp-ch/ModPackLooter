@@ -25,6 +25,10 @@ modpacklooter serve ./site
 
 # Crea un archivo de configuración comentado en el directorio actual
 modpacklooter init
+
+# Además genera el workflow para publicar en GitHub Pages o GitLab Pages
+modpacklooter init --ci github
+modpacklooter init --ci gitlab
 ```
 
 ## Opciones comunes
@@ -33,6 +37,8 @@ modpacklooter init
 |---|---|
 | `--mc-version <v>` | Fuerza la versión de Minecraft si no se detecta. |
 | `--minecraft-jar <ruta>` | Jar de vanilla para incluir loot, nombres e iconos base. |
+| `--download-vanilla` | Descarga el jar vanilla del manifiesto oficial de Mojang y lo guarda en caché. |
+| `--loader forge\|neoforge\|fabric` | Fuerza el cargador si no se detecta. |
 | `--lang <código>` | Idioma de los nombres (`es_es`, `en_us`…). |
 | `--config <archivo>` | Archivo de configuración del proyecto. |
 | `--include-mod / --exclude-mod` | Filtrar mods. |
