@@ -7,17 +7,17 @@ import (
 
 func TestFromNBT(t *testing.T) {
 	cases := map[string]string{
-		`{StoredEnchantments: [{id:"minecraft:mending",lvl:1s}]}`:                     "enchantment:minecraft:mending@1",
-		`{StoredEnchantments:[{lvl:3s,id:"tacz_eo:firepower"}]}`:                       "enchantment:tacz_eo:firepower@3",
-		`{StoredEnchantments:[{id:"a:x",lvl:1s},{id:"a:b",lvl:2s}]}`:                   "enchantment:a:b,a:x",
-		`{Potion:"minecraft:healing"}`:                                                 "potion:minecraft:healing",
-		`{Potion: "strong_healing"}`:                                                   "potion:minecraft:strong_healing",
-		`{GunFireMode:"AUTO",GunId:"tacz:ump45",HasBulletInBarrel:0b}`:                 "nbt:GunId=tacz:ump45",
-		`{AmmoId:"tacz:308"}`:                                                          "nbt:AmmoId=tacz:308",
+		`{StoredEnchantments: [{id:"minecraft:mending",lvl:1s}]}`:                       "enchantment:minecraft:mending@1",
+		`{StoredEnchantments:[{lvl:3s,id:"tacz_eo:firepower"}]}`:                        "enchantment:tacz_eo:firepower@3",
+		`{StoredEnchantments:[{id:"a:x",lvl:1s},{id:"a:b",lvl:2s}]}`:                    "enchantment:a:b,a:x",
+		`{Potion:"minecraft:healing"}`:                                                  "potion:minecraft:healing",
+		`{Potion: "strong_healing"}`:                                                    "potion:minecraft:strong_healing",
+		`{GunFireMode:"AUTO",GunId:"tacz:ump45",HasBulletInBarrel:0b}`:                  "nbt:GunId=tacz:ump45",
+		`{AmmoId:"tacz:308"}`:                                                           "nbt:AmmoId=tacz:308",
 		`{pages:['{"text":"x"}'],title:"lore.deceasedcraft.note_7.title",author:"Ana"}`: "title:lore.deceasedcraft.note_7.title",
-		`{blueprint: "molds"}`:                                                         "nbt:blueprint=molds",
-		`{"AttachmentId":"bf1:marksman_scope"}`:                                        "nbt:AttachmentId=bf1:marksman_scope",
-		`{Enchantments:[{id:"minecraft:sharpness",lvl:5s}]}`:                           "enchantment:minecraft:sharpness@5",
+		`{blueprint: "molds"}`:                                                          "nbt:blueprint=molds",
+		`{"AttachmentId":"bf1:marksman_scope"}`:                                         "nbt:AttachmentId=bf1:marksman_scope",
+		`{Enchantments:[{id:"minecraft:sharpness",lvl:5s}]}`:                            "enchantment:minecraft:sharpness@5",
 	}
 	for in, want := range cases {
 		v, ok := FromNBT(in)
