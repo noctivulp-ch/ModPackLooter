@@ -41,6 +41,25 @@ type Item struct {
 	// Trades sell or buy the item; NPCDrops are NPCs that drop it.
 	Trades   []*TradeRef
 	NPCDrops []*NPCDrop
+	// Variant is set on variant pages (an enchanted book's enchantment…);
+	// Base is then the plain item. Variants are the plain item's variants.
+	Variant  domain.Variant
+	Label    string // what makes the variant special, e.g. "Reparación"
+	Base     *Item
+	Variants []*Item
+	// Aka are other names to search by (English name…).
+	Aka []string
+	// LCBuildings are Lost Cities buildings that can hold the item.
+	LCBuildings []LCHaulRef
+	// Ways summarise how to get it, most likely first; Top is the best.
+	Ways []*Way
+	Top  *WayPlace
+}
+
+// LCHaulRef links an item to a Lost Cities building that can hold it.
+type LCHaulRef struct {
+	Building *LCBuilding
+	Haul     HaulItem
 }
 
 // ItemSource is one way to get an item.
@@ -69,6 +88,8 @@ type Owner struct {
 	Uses       []*TableUse
 	Template   bool
 	Status     domain.Status
+	// Haul is "¿Qué hay aquí?": every item of its containers.
+	Haul []HaulItem
 }
 
 // TableUse is a loot table used by an owner.
@@ -315,13 +336,39 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		return md
 	}
 
-	items := map[domain.ResourceID]*Item{}
+	items := map[itemKey]*Item{}
+	english := englishNamer(res, opts)
 	itemOf := func(id domain.ResourceID) *Item {
-		if it, ok := items[id]; ok {
+		if it, ok := items[itemKey{id: id}]; ok {
 			return it
 		}
 		it := &Item{Ref: Ref{ID: id, Name: namer.Item(id), URL: "objetos/" + idPath(id) + "/"}, Mod: modOf(id.Namespace)}
-		items[id] = it
+		if english != nil {
+			if en := english.Item(id); en != it.Name {
+				it.Aka = append(it.Aka, en)
+			}
+		}
+		items[itemKey{id: id}] = it
+		return it
+	}
+	// variantOf returns the page of a useful variant of an item.
+	variantOf := func(id domain.ResourceID, v domain.Variant) *Item {
+		if v.IsZero() {
+			return itemOf(id)
+		}
+		if it, ok := items[itemKey{id, v}]; ok {
+			return it
+		}
+		base := itemOf(id)
+		it := &Item{Ref: Ref{ID: id, URL: base.URL + variantSlug(v) + "/"}, Mod: base.Mod, Variant: v, Base: base}
+		it.Name, it.Label = variantName(namer, base.Name, id, v)
+		if english != nil {
+			if en, _ := variantName(english, english.Item(id), id, v); en != it.Name {
+				it.Aka = append(it.Aka, en)
+			}
+		}
+		base.Variants = append(base.Variants, it)
+		items[itemKey{id, v}] = it
 		return it
 	}
 
@@ -331,10 +378,13 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 			return t
 		}
 		t := &Table{Ref: Ref{ID: id, Name: names.Humanize(id.Path), URL: "tablas/" + idPath(id) + "/"}, Mod: modOf(id.Namespace), Kind: kind}
+		if kind == domain.KindEntity {
+			t.Name = namer.Entity(entityOf(id))
+		}
 		if lt := res.Tables[id]; lt != nil {
 			t.Approx = lt.Approximate
 			for _, d := range lt.Drops {
-				t.Drops = append(t.Drops, Drop{Item: itemOf(d.Item), Chance: d.Chance, CountMin: d.CountMin, CountMax: d.CountMax, Notes: translateNotes(d.Notes, namer), Approx: d.Approximate})
+				t.Drops = append(t.Drops, Drop{Item: variantOf(d.Item, d.Variant), Chance: d.Chance, CountMin: d.CountMin, CountMax: d.CountMax, Notes: translateNotes(d.Notes, namer), Approx: d.Approximate})
 			}
 		}
 		tables[id] = t
@@ -440,7 +490,21 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		}
 	}
 
-	// Collect and sort everything for deterministic output.
+	// Collect and sort everything for deterministic output. listItem adds an
+	// item (and the plain item of a variant) to the lists once.
+	listed := map[*Item]bool{}
+	var listItem func(it *Item)
+	listItem = func(it *Item) {
+		if listed[it] {
+			return
+		}
+		listed[it] = true
+		m.Items = append(m.Items, it)
+		it.Mod.Items = append(it.Mod.Items, it)
+		if it.Base != nil {
+			listItem(it.Base)
+		}
+	}
 	for _, it := range items {
 		if len(it.Sources) == 0 {
 			continue
@@ -475,11 +539,15 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 			}
 		}
 		sortRefs(it.Biomes, func(b *Biome) Ref { return b.Ref })
-		m.Items = append(m.Items, it)
-		it.Mod.Items = append(it.Mod.Items, it)
+		listItem(it)
 	}
 	sortRefs(m.Items, func(i *Item) Ref { return i.Ref })
 	for _, o := range owners {
+		h := newHaul()
+		for _, u := range o.Uses {
+			h.add(u.Table, u.Share, 0)
+		}
+		o.Haul = h.list()
 		m.Owners = append(m.Owners, o)
 		o.Mod.Structures = append(o.Mod.Structures, o)
 		sortUses(o.Uses)
@@ -541,27 +609,38 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		return a.ID.String() < b.ID.String()
 	})
 	buildLostCities(res, m, namer)
-	ensureItem := func(id domain.ResourceID) *Item {
-		// Fished items may have no loot source: add them to the lists.
-		if it, ok := items[id]; ok && (len(it.Sources) > 0 || len(it.Fishing) > 0) {
-			return it
-		}
-		it := itemOf(id)
-		m.Items = append(m.Items, it)
-		md := it.Mod
-		md.Items = append(md.Items, it)
-		listed := false
-		for _, x := range m.Mods {
-			listed = listed || x == md
-		}
-		if !listed {
-			m.Mods = append(m.Mods, md)
+	ensureVariant := func(id domain.ResourceID, v domain.Variant) *Item {
+		// Fished or traded items may have no loot source: list them too.
+		it := variantOf(id, v)
+		listItem(it)
+		for _, md := range []*Mod{it.Mod} {
+			known := false
+			for _, x := range m.Mods {
+				known = known || x == md
+			}
+			if !known {
+				m.Mods = append(m.Mods, md)
+			}
 		}
 		return it
 	}
+	ensureItem := func(id domain.ResourceID) *Item { return ensureVariant(id, domain.Variant{}) }
 	buildFishing(res, m, namer, ensureItem)
 	buildChanges(res, m, namer, ensureItem)
-	buildTrades(res, m, namer, ensureItem)
+	buildTrades(res, m, namer, ensureVariant)
+	for _, it := range m.Items {
+		sortRefs(it.Variants, func(v *Item) Ref { return v.Ref })
+	}
+	if m.LostCities != nil {
+		for _, b := range m.LostCities.Buildings {
+			for _, h := range b.Haul {
+				h.Item.LCBuildings = append(h.Item.LCBuildings, LCHaulRef{Building: b, Haul: h})
+			}
+		}
+	}
+	for _, it := range m.Items {
+		buildWays(it, namer)
+	}
 	sortRefs(m.Items, func(i *Item) Ref { return i.Ref })
 	sortRefs(m.Mods, func(md *Mod) Ref { return md.Ref })
 	for _, md := range m.Mods {

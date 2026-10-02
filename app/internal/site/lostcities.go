@@ -104,6 +104,7 @@ type LCBuilding struct {
 	Styles     []*LCStyle
 	Containers int
 	Tables     []*Table // every loot table the building can hold
+	Haul       []HaulItem
 }
 
 // LCPart is a floor or section of a building with loot containers.
@@ -190,6 +191,7 @@ func buildLostCities(res *analysis.Result, m *Model, namer *names.Namer) {
 		x := &LCBuilding{Multi: b.Multi}
 		x.Ref = Ref{ID: b.ID, Name: namer.Asset("building", b.ID), URL: "lostcities/edificios/" + idPath(b.ID) + "/"}
 		buildings[b] = x
+		h := newHaul()
 		seenTable := map[*Table]bool{}
 		addTable := func(t *Table) {
 			if t != nil && !seenTable[t] {
@@ -201,6 +203,7 @@ func buildLostCities(res *analysis.Result, m *Model, namer *names.Namer) {
 			child := building(c)
 			x.Children = append(x.Children, child)
 			x.Containers += child.Containers
+			h.merge(child.Haul)
 			for _, t := range child.Tables {
 				addTable(t)
 			}
@@ -231,6 +234,7 @@ func buildLostCities(res *analysis.Result, m *Model, namer *names.Namer) {
 					}
 					choice.Detail = strings.Join(detail, " · ")
 					addTable(choice.Table)
+					h.add(choice.Table, ch.Share, c.Count)
 					box.Choices = append(box.Choices, choice)
 				}
 				x.Containers += c.Count
@@ -239,6 +243,7 @@ func buildLostCities(res *analysis.Result, m *Model, namer *names.Namer) {
 			x.Parts = append(x.Parts, part)
 		}
 		sortRefs(x.Tables, func(t *Table) Ref { return t.Ref })
+		x.Haul = h.list()
 		return x
 	}
 
@@ -362,14 +367,14 @@ func lcSearch(m *Model) []searchEntry {
 	}
 	var out []searchEntry
 	for _, s := range m.LostCities.Styles {
-		out = append(out, searchEntry{"l", s.Name, s.ID.String(), s.URL + "index.html", "Estilo de ciudad"})
+		out = append(out, searchEntry{Type: "l", Name: s.Name, ID: s.ID.String(), URL: s.URL + "index.html", Sub: "Estilo de ciudad", Keys: "Lost Cities", Mod: s.ID.Namespace})
 	}
 	for _, b := range m.LostCities.Buildings {
 		sub := "Edificio"
 		if b.Multi {
 			sub = "Edificio múltiple"
 		}
-		out = append(out, searchEntry{"l", b.Name, b.ID.String(), b.URL + "index.html", sub})
+		out = append(out, searchEntry{Type: "l", Name: b.Name, ID: b.ID.String(), URL: b.URL + "index.html", Sub: sub, Keys: "Lost Cities", Mod: b.ID.Namespace})
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	return out

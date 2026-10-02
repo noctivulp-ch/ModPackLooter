@@ -66,14 +66,17 @@ type Stack struct {
 	Count     int
 	Max       int
 	Enchanted bool
-	Note      string
+	// Variant is the useful variant sold (a gun model, a potion…).
+	Variant domain.Variant
+	Note    string
 }
 
 // Drop is an item an NPC drops when killed.
 type Drop struct {
-	Item   domain.ResourceID
-	Count  int
-	Chance float64
+	Item    domain.ResourceID
+	Variant domain.Variant
+	Count   int
+	Chance  float64
 }
 
 // Emerald is the vanilla currency.

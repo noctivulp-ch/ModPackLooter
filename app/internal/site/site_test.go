@@ -321,8 +321,12 @@ func TestEnchantNotes(t *testing.T) {
 		"data/minecraft/loot_tables/gameplay/fishing/treasure.json": `{"type":"minecraft:fishing","pools":[{"rolls":1,"entries":[
 			{"type":"minecraft:item","name":"minecraft:book","functions":[{"function":"minecraft:enchant_with_levels","levels":15.0,"treasure":false}]},
 			{"type":"minecraft:item","name":"minecraft:bow","functions":[{"function":"minecraft:enchant_with_levels","levels":{"type":"minecraft:uniform","min":20,"max":39},"treasure":true}]},
-			{"type":"minecraft:item","name":"minecraft:fishing_rod","functions":[{"function":"minecraft:enchant_randomly","enchantments":["minecraft:mending","minecraft:lure"]}]}]}]}`,
-		"assets/minecraft/lang/es_es.json": `{"enchantment.minecraft.mending":"Reparación","enchantment.minecraft.frost_walker":"Paso helado","enchantment.minecraft.lure":"Atracción"}`,
+			{"type":"minecraft:item","name":"minecraft:fishing_rod","functions":[{"function":"minecraft:enchant_randomly","enchantments":["minecraft:mending","minecraft:lure"]}]},
+			{"type":"minecraft:item","name":"minecraft:enchanted_book","functions":[{"function":"minecraft:set_nbt","tag":"{StoredEnchantments:[{id:\"minecraft:mending\",lvl:1s}]}"}]},
+			{"type":"minecraft:item","name":"minecraft:potion","functions":[{"function":"minecraft:set_nbt","tag":"{Potion:\"minecraft:strong_healing\"}"}]}]}]}`,
+		"assets/minecraft/lang/es_es.json": `{"enchantment.minecraft.mending":"Reparación","enchantment.minecraft.frost_walker":"Paso helado","enchantment.minecraft.lure":"Atracción",
+			"item.minecraft.enchanted_book":"Libro encantado","item.minecraft.fishing_rod":"Caña de pescar","item.minecraft.potion.effect.healing":"Poción de curación","enchantment.level.1":"I"}`,
+		"assets/minecraft/lang/en_us.json": `{"enchantment.minecraft.mending":"Mending","item.minecraft.enchanted_book":"Enchanted Book"}`,
 	})
 	res, err := plugins.Analyzer().
 		Run(context.Background(), modpack.Options{Path: in.Root}, nil)
@@ -342,11 +346,21 @@ func TestEnchantNotes(t *testing.T) {
 	for _, want := range []string{
 		"Encantado (nivel 15, sin encantamientos de tesoro: no da Reparación, Paso helado ni maldiciones)",
 		"Encantado (nivel 20–39, puede dar encantamientos de tesoro como Reparación)",
-		"Encantado al azar con: Reparación, Atracción",
+		// Each useful variant is its own item.
+		"Caña de pescar: Reparación", "Caña de pescar: Atracción",
+		"Libro encantado: Reparación I", "Poción de curación II",
 	} {
 		if !strings.Contains(page, want) {
 			t.Errorf("la tabla de tesoro no contiene %q", want)
 		}
+	}
+	book, err := os.ReadFile(filepath.Join(out, "objetos/minecraft/enchanted_book/enchantment-minecraft_mending_1/index.html"))
+	if err != nil || !strings.Contains(string(book), "Libro encantado: Reparación I") {
+		t.Errorf("falta la página de la variante: %v", err)
+	}
+	index, _ := os.ReadFile(filepath.Join(out, "assets/search-index.js"))
+	if !strings.Contains(string(index), "Enchanted Book: Mending I") {
+		t.Error("el índice debe permitir buscar por el nombre en inglés")
 	}
 	// Overriding a table is a change: listed in "Cambios de mods".
 	changes, err := os.ReadFile(filepath.Join(out, "cambios/index.html"))

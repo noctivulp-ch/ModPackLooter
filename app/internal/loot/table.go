@@ -15,6 +15,8 @@ import (
 // Drop is an item a table can produce.
 type Drop struct {
 	Item domain.ResourceID `json:"item"`
+	// Variant is the useful variant of the item (enchantment, potion…).
+	Variant domain.Variant `json:"variant,omitempty"`
 	// Chance of getting at least one stack when the table is rolled once.
 	Chance float64 `json:"chance"`
 	// CountMin/CountMax is the stack size range of a single occurrence.
@@ -147,6 +149,7 @@ func (r *Resolver) Resolve(id domain.ResourceID) (*Table, bool, error) {
 // outcome is what one weighted candidate produces when chosen.
 type outcome struct {
 	item     domain.ResourceID
+	variant  domain.Variant
 	prob     float64 // chance the candidate yields the item once chosen
 	countMin float64
 	countMax float64
@@ -160,6 +163,12 @@ type candidate struct {
 	outcomes []outcome
 }
 
+// dropKey tells drops apart: the same item in two variants is two drops.
+type dropKey struct {
+	item    domain.ResourceID
+	variant domain.Variant
+}
+
 type accum struct {
 	notMiss  float64 // probability of never getting the item, across pools
 	expected float64
@@ -171,7 +180,7 @@ type accum struct {
 
 func (r *Resolver) resolveRaw(id domain.ResourceID, raw rawTable) *Table {
 	t := &Table{ID: id, Type: short(raw.Type)}
-	acc := map[domain.ResourceID]*accum{}
+	acc := map[dropKey]*accum{}
 	for _, pool := range raw.Pools {
 		poolChance, poolNotes, exact := conditionChance(pool.Conditions)
 		if !exact {
@@ -193,15 +202,16 @@ func (r *Resolver) resolveRaw(id domain.ResourceID, raw rawTable) *Table {
 			continue
 		}
 		// Per-roll chance and expected amount of each item in this pool.
-		perRoll := map[domain.ResourceID]float64{}
+		perRoll := map[dropKey]float64{}
 		for _, c := range cands {
 			pc := c.weight / total
 			for _, o := range c.outcomes {
-				perRoll[o.item] = 1 - (1-perRoll[o.item])*(1-pc*o.prob)
-				a := acc[o.item]
+				k := dropKey{o.item, o.variant}
+				perRoll[k] = 1 - (1-perRoll[k])*(1-pc*o.prob)
+				a := acc[k]
 				if a == nil {
 					a = &accum{notMiss: 1, countMin: math.Inf(1), notes: map[string]bool{}}
-					acc[o.item] = a
+					acc[k] = a
 				}
 				a.expected += poolChance * rolls.Mean * pc * o.mean
 				a.countMin = math.Min(a.countMin, o.countMin)
@@ -221,8 +231,8 @@ func (r *Resolver) resolveRaw(id domain.ResourceID, raw rawTable) *Table {
 			acc[item].notMiss *= 1 - poolChance*hit
 		}
 	}
-	for item, a := range acc {
-		d := Drop{Item: item, Chance: 1 - a.notMiss, CountMin: a.countMin, CountMax: a.countMax, Expected: a.expected, Approximate: a.approx}
+	for k, a := range acc {
+		d := Drop{Item: k.item, Variant: k.variant, Chance: 1 - a.notMiss, CountMin: a.countMin, CountMax: a.countMax, Expected: a.expected, Approximate: a.approx}
 		for n := range a.notes {
 			d.Notes = append(d.Notes, n)
 		}
@@ -233,7 +243,10 @@ func (r *Resolver) resolveRaw(id domain.ResourceID, raw rawTable) *Table {
 		if t.Drops[i].Chance != t.Drops[j].Chance {
 			return t.Drops[i].Chance > t.Drops[j].Chance
 		}
-		return t.Drops[i].Item.String() < t.Drops[j].Item.String()
+		if t.Drops[i].Item != t.Drops[j].Item {
+			return t.Drops[i].Item.String() < t.Drops[j].Item.String()
+		}
+		return t.Drops[i].Variant.String() < t.Drops[j].Variant.String()
 	})
 	return t
 }
@@ -257,8 +270,25 @@ func (r *Resolver) candidates(t *Table, e rawEntry) []candidate {
 		t.Approximate = true
 	}
 	notes := append(condNotes, fnNotes...)
-	mk := func(item domain.ResourceID) outcome {
-		return outcome{item: item, prob: condP, countMin: count.Min, countMax: count.Max, mean: condP * count.Mean, notes: notes, approx: !exact || fnApprox}
+	// mk expands an item into its variants (a random enchanted book is one
+	// outcome per enchantment, each with its share of the chance).
+	mk := func(id domain.ResourceID) []outcome {
+		item, shares, used := r.variantsOf(id, e.Functions)
+		kept := notes
+		if len(used) > 0 {
+			kept = nil
+			for _, n := range notes {
+				if name, _, _ := strings.Cut(n, "|"); !used[name] {
+					kept = append(kept, n)
+				}
+			}
+		}
+		out := make([]outcome, 0, len(shares))
+		for _, sh := range shares {
+			out = append(out, outcome{item: item, variant: sh.v, prob: condP * sh.p, countMin: count.Min, countMax: count.Max,
+				mean: condP * count.Mean * sh.p, notes: kept, approx: !exact || fnApprox})
+		}
+		return out
 	}
 
 	switch short(e.Type) {
@@ -267,7 +297,7 @@ func (r *Resolver) candidates(t *Table, e rawEntry) []candidate {
 		if err != nil {
 			return nil
 		}
-		return []candidate{{weight: weight, outcomes: []outcome{mk(id)}}}
+		return []candidate{{weight: weight, outcomes: mk(id)}}
 	case "tag":
 		tagID, err := domain.ParseResourceID(e.Name)
 		if err != nil {
@@ -281,13 +311,13 @@ func (r *Resolver) candidates(t *Table, e rawEntry) []candidate {
 		if e.Expand {
 			out := make([]candidate, 0, len(items))
 			for _, it := range items {
-				out = append(out, candidate{weight: weight, outcomes: []outcome{mk(it)}})
+				out = append(out, candidate{weight: weight, outcomes: mk(it)})
 			}
 			return out
 		}
 		c := candidate{weight: weight}
 		for _, it := range items {
-			c.outcomes = append(c.outcomes, mk(it))
+			c.outcomes = append(c.outcomes, mk(it)...)
 		}
 		return []candidate{c}
 	case "loot_table":
@@ -298,7 +328,7 @@ func (r *Resolver) candidates(t *Table, e rawEntry) []candidate {
 		c := candidate{weight: weight}
 		for _, d := range nested.Drops {
 			c.outcomes = append(c.outcomes, outcome{
-				item: d.Item, prob: condP * d.Chance, countMin: d.CountMin, countMax: d.CountMax,
+				item: d.Item, variant: d.Variant, prob: condP * d.Chance, countMin: d.CountMin, countMax: d.CountMax,
 				mean: condP * d.Expected, notes: append(append([]string(nil), notes...), d.Notes...),
 				approx: d.Approximate || nested.Approximate || !exact,
 			})
