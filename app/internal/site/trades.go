@@ -2,6 +2,7 @@ package site
 
 import (
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/EnierAragon/ModPackLooter/app/internal/analysis"
@@ -88,9 +89,18 @@ type NPCDrop struct {
 	Chance   float64
 }
 
+var enchantedBookID = domain.MustParseResourceID("minecraft:enchanted_book")
+
+// Enchantments villagers never sell.
+var untradeable = map[domain.ResourceID]bool{
+	domain.MustParseResourceID("minecraft:soul_speed"):  true,
+	domain.MustParseResourceID("minecraft:swift_sneak"): true,
+}
+
 var barterTable = domain.MustParseResourceID("minecraft:gameplay/piglin_bartering")
 
-func buildTrades(res *analysis.Result, m *Model, namer *names.Namer, itemOf func(domain.ResourceID) *Item) {
+func buildTrades(res *analysis.Result, m *Model, namer *names.Namer, variantOf func(domain.ResourceID, domain.Variant) *Item) {
+	itemOf := func(id domain.ResourceID) *Item { return variantOf(id, domain.Variant{}) }
 	var cats []*trades.Catalog
 	for key, v := range res.Extras {
 		if c, ok := v.(*trades.Catalog); ok && strings.HasPrefix(key, trades.ExtraPrefix) {
@@ -108,8 +118,14 @@ func buildTrades(res *analysis.Result, m *Model, namer *names.Namer, itemOf func
 		return
 	}
 	sort.Slice(cats, func(i, j int) bool { return cats[i].Order < cats[j].Order })
+	var tradeable []domain.ResourceID
+	for _, e := range res.Resources.Enchantments() {
+		if !untradeable[e] {
+			tradeable = append(tradeable, e)
+		}
+	}
 	stack := func(s trades.Stack) TradeStack {
-		return TradeStack{Item: itemOf(s.Item), Count: s.Count, Max: s.Max, Enchanted: s.Enchanted}
+		return TradeStack{Item: variantOf(s.Item, s.Variant), Count: s.Count, Max: s.Max, Enchanted: s.Enchanted}
 	}
 	for _, c := range cats {
 		tc := &TradeCatalog{Ref: Ref{Name: c.Name, URL: "tradeos/" + c.Key + "/"}, Intro: c.Intro, Known: c.Confidence == domain.ConfidenceKnown, Confidence: c.Confidence}
@@ -146,6 +162,17 @@ func buildTrades(res *analysis.Result, m *Model, namer *names.Namer, itemOf func
 					tm.Offers++
 					if to.Sell.Item.ID != trades.Emerald {
 						to.Sell.Item.Trades = append(to.Sell.Item.Trades, &TradeRef{Merchant: tm, Level: l.Name, Offer: to, Sells: true})
+					}
+					// A random enchanted book is each tradeable enchantment
+					// with an equal share.
+					if o.Sell.Item == enchantedBookID && o.Sell.Enchanted && o.Sell.Variant.IsZero() {
+						for _, e := range tradeable {
+							v := to
+							v.Chance = to.Chance / float64(len(tradeable))
+							v.Sell.Item = variantOf(o.Sell.Item, domain.Variant{Kind: domain.VariantEnchantment, Value: e.String()})
+							v.Note = "uno al azar entre " + strconv.Itoa(len(tradeable)) + " encantamientos comerciables; el nivel también es al azar"
+							v.Sell.Item.Trades = append(v.Sell.Item.Trades, &TradeRef{Merchant: tm, Level: l.Name, Offer: v, Sells: true})
+						}
 					}
 					for _, b := range to.Buy {
 						if b.Item.ID != trades.Emerald {

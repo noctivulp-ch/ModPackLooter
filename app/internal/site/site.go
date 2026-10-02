@@ -188,6 +188,10 @@ type searchEntry struct {
 	ID   string `json:"i"`
 	URL  string `json:"u"`
 	Sub  string `json:"s,omitempty"`
+	// Keys are other words to find it by: English name, variant, mod.
+	Keys string `json:"k,omitempty"`
+	// Mod is the namespace, for "@mod" filters.
+	Mod string `json:"m,omitempty"`
 }
 
 func (r *renderer) writeAssets(m *Model) error {
@@ -206,21 +210,17 @@ func (r *renderer) writeAssets(m *Model) error {
 	}
 	var idx []searchEntry
 	for _, it := range m.Items {
-		sub := it.Mod.Name
-		if len(it.Sources) > 0 {
-			sub += " · mejor " + pct(it.Best)
-		}
-		idx = append(idx, searchEntry{"o", it.Name, it.ID.String(), it.URL + "index.html", sub})
+		idx = append(idx, itemEntry(it))
 	}
 	for _, o := range m.Owners {
-		idx = append(idx, searchEntry{"e", o.Name, o.ID.String(), o.URL + "index.html", o.Mod.Name})
+		idx = append(idx, searchEntry{Type: "e", Name: o.Name, ID: o.ID.String(), URL: o.URL + "index.html", Sub: o.Mod.Name, Keys: o.Mod.Name, Mod: o.ID.Namespace})
 	}
 	for _, b := range m.Biomes {
-		idx = append(idx, searchEntry{"b", b.Name, b.ID.String(), b.URL + "index.html", b.Mod.Name})
+		idx = append(idx, searchEntry{Type: "b", Name: b.Name, ID: b.ID.String(), URL: b.URL + "index.html", Sub: b.Mod.Name, Keys: b.Mod.Name, Mod: b.ID.Namespace})
 	}
 	idx = append(idx, lcSearch(m)...)
 	for _, md := range m.Mods {
-		idx = append(idx, searchEntry{"m", md.Name, md.ID.Namespace, md.URL + "index.html", ""})
+		idx = append(idx, searchEntry{Type: "m", Name: md.Name, ID: md.ID.Namespace, URL: md.URL + "index.html", Mod: md.ID.Namespace})
 	}
 	data, err := json.Marshal(idx)
 	if err != nil {
@@ -248,6 +248,21 @@ func (r *renderer) writeAssets(m *Model) error {
 	}
 	// GitHub Pages: serve folders starting with "_" too.
 	return os.WriteFile(filepath.Join(r.out, ".nojekyll"), nil, 0o644)
+}
+
+func itemEntry(it *Item) searchEntry {
+	e := searchEntry{Type: "o", Name: it.Name, ID: it.ID.String(), URL: it.URL + "index.html", Mod: it.ID.Namespace}
+	if !it.Variant.IsZero() {
+		e.ID += " " + it.Variant.Value
+	}
+	e.Sub = it.Mod.Name
+	if it.Top != nil && it.Top.Chance > 0 {
+		e.Sub += " · " + pct(it.Top.Chance) + " " + it.Top.Way.Unit
+	} else if len(it.Variants) > 0 {
+		e.Sub += fmt.Sprintf(" · %d variantes", len(it.Variants))
+	}
+	e.Keys = strings.Join(append(append([]string(nil), it.Aka...), it.Label, it.Mod.Name), " · ")
+	return e
 }
 
 // pct formats a probability the Spanish way: "23 %", "4,5 %", "0,3 %", "<0,1 %".

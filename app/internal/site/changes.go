@@ -77,7 +77,9 @@ func buildChanges(res *analysis.Result, m *Model, namer *names.Namer, itemOf fun
 	}
 	items := map[domain.ResourceID]*Item{}
 	for _, it := range m.Items {
-		items[it.ID] = it
+		if it.Variant.IsZero() {
+			items[it.ID] = it
+		}
 	}
 	item := func(id domain.ResourceID) *Item {
 		if it, ok := items[id]; ok {
