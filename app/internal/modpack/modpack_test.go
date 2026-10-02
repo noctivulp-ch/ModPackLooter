@@ -208,3 +208,40 @@ func TestServerUsesPrismAssets(t *testing.T) {
 		t.Errorf("traducción desde los assets de Prism = %q", got)
 	}
 }
+
+func TestServerVanillaLocations(t *testing.T) {
+	data := testkit.Files{"data/minecraft/loot_tables/chests/igloo_chest.json": `{"pools":[]}`}
+	cases := map[string]string{
+		"forge":      "libraries/net/minecraft/server/1.20.1-20230612.114412/server-1.20.1-20230612.114412-extra.jar",
+		"neoforge":   "libraries/net/neoforged/minecraft-server-patched/21.1.77/minecraft-server-patched-21.1.77.jar",
+		"fabric":     ".fabric/server/1.20.1-server.jar",
+		"quilt":      ".quilt/server/1.20.1-server.jar",
+		"paper":      "cache/mojang_1.20.1.jar",
+		"vanilla":    "versions/1.20.1/server-1.20.1.jar",
+		"renombrado": "minecraft-1.20.1-server.jar",
+	}
+	for name, path := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Setenv("HOME", t.TempDir())
+			in := testkit.NewInstance(t)
+			in.Jar("mods/a.jar", testkit.Files{"META-INF/mods.toml": testkit.ModsToml("a", "A", "[1.20.1,1.21)")})
+			// A loader's launcher renamed server.jar: no game data inside.
+			in.Jar("server.jar", testkit.Files{"META-INF/MANIFEST.MF": "Main-Class: launcher"})
+			in.Jar(path, data)
+			diags := &domain.Diagnostics{}
+			mp, err := Open(Options{Path: in.Root, MCVersion: "1.20.1", Diagnostics: diags})
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer mp.Close()
+			if !mp.HasVanilla {
+				t.Fatalf("no encontró los datos vanilla en %s", path)
+			}
+			for _, d := range diags.Items() {
+				if d.Level == domain.LevelWarning {
+					t.Errorf("aviso inesperado: %+v", d)
+				}
+			}
+		})
+	}
+}
