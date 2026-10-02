@@ -57,3 +57,15 @@ func TestDecodeRejectsCorruptData(t *testing.T) {
 		t.Error("una longitud enorme debe rechazarse sin reservar memoria")
 	}
 }
+
+func TestDecodeGzipWithoutTrailer(t *testing.T) {
+	full := gzipBytes(Encode(Compound{"LootTable": "minecraft:chests/x"}))
+	// Drop the CRC32 and size trailer, as some structure editors do.
+	got, err := Decode(full[:len(full)-8])
+	if err != nil || got.String("LootTable") != "minecraft:chests/x" {
+		t.Fatalf("gzip sin cola: %v %v", got, err)
+	}
+	if _, err := Decode(full[:len(full)/2]); err == nil {
+		t.Error("un documento realmente cortado debe seguir fallando")
+	}
+}
