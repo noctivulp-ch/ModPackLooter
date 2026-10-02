@@ -31,6 +31,8 @@ menos de 5 segundos** y entender el resultado sin conocimientos técnicos.
 /biomas/                Biomas agrupados por dimensión
 /biomas/<id>/           Ficha de bioma
 /fuentes/               Otras fuentes (mobs, pesca, arqueología, gameplay)
+/lostcities/            Lost Cities por capas (solo si el mod está, ver doc 15)
+/pesca/                 Pesca por sistema, bioma y condiciones (doc 16)
 /mods/<id>/             Resumen de lo que aporta cada mod
 /tablas/<id>/           Vista técnica de una tabla de loot (para creadores)
 /acerca/                Modpack analizado, versión, fecha y diagnósticos
@@ -74,7 +76,11 @@ menos de 5 segundos** y entender el resultado sin conocimientos técnicos.
 
 - Interfaz del sitio traducible (español e inglés al inicio).
 - Nombres de objetos/estructuras/biomas tomados de los archivos `lang` de los
-  mods en el idioma elegido, con *fallback* a inglés y luego al ID.
+  mods en el idioma elegido, con *fallback* clave por clave: idioma pedido →
+  variante principal (`es_es`) → otras variantes (`es_mx`, `es_ar`…) → `en_us` →
+  ID legible. Un valor vacío cuenta como ausente. Lo que no tiene clave estándar
+  (estilos y edificios de Lost Cities…) se busca en cualquier clave que lo nombre
+  (ver [doc 15](15-pestanas-por-mod-y-lost-cities.md)).
 
 ## Personalización (para creadores de modpacks)
 

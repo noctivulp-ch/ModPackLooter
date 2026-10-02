@@ -208,7 +208,7 @@ func (m mention) detect(in discovery.Input, out *discovery.Disablements) {
 					if m.window > 0 {
 						context = strings.Join(lines[max(0, i-m.window):i+1], "\n")
 					} else {
-						context = governingKey(lines, i)
+						context = GoverningKey(lines, i)
 					}
 					word := disableWords.FindString(context)
 					if word == "" {
@@ -237,8 +237,8 @@ var (
 	reYAMLKey = regexp.MustCompile(`^\s*([A-Za-z0-9_.\-]+)\s*:(\s|$)`)
 )
 
-// keyOf returns the key a config line assigns, if any.
-func keyOf(line string) string {
+// KeyOf returns the key a config line assigns, if any.
+func KeyOf(line string) string {
 	for _, re := range []*regexp.Regexp{reTomlKey, reJSONKey, reYAMLKey} {
 		if m := re.FindStringSubmatch(line); m != nil {
 			return m[1]
@@ -247,19 +247,19 @@ func keyOf(line string) string {
 	return ""
 }
 
-// governingKey returns the key that owns line i: its own key, or the key of
+// GoverningKey returns the key that owns line i: its own key, or the key of
 // the list it belongs to (walking up until the list opens), plus a comment
 // right above that key.
-func governingKey(lines []string, i int) string {
+func GoverningKey(lines []string, i int) string {
 	j := i
-	key := keyOf(lines[i])
+	key := KeyOf(lines[i])
 	for key == "" && j > 0 && i-j < 200 {
 		j--
 		trimmed := strings.TrimSpace(lines[j])
 		if strings.HasPrefix(trimmed, "]") || strings.HasPrefix(trimmed, "}") {
 			return "" // the value is not inside the block above
 		}
-		key = keyOf(lines[j])
+		key = KeyOf(lines[j])
 	}
 	if key == "" {
 		return ""

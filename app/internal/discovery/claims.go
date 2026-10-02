@@ -19,6 +19,7 @@ type Claims struct {
 	byKey   map[claimKey]*domain.LootSource
 	byTable map[domain.ResourceID]domain.Confidence
 	owners  map[domain.Owner]domain.OwnerInfo
+	extras  map[string]any
 }
 
 // NewClaims returns an empty claim set.
@@ -27,6 +28,7 @@ func NewClaims() *Claims {
 		byKey:   map[claimKey]*domain.LootSource{},
 		byTable: map[domain.ResourceID]domain.Confidence{},
 		owners:  map[domain.Owner]domain.OwnerInfo{},
+		extras:  map[string]any{},
 	}
 }
 
@@ -110,3 +112,12 @@ func (c *Claims) Sources() []domain.LootSource {
 	})
 	return out
 }
+
+// Attach stores data a discoverer found beyond loot sources (for example the
+// Lost Cities hierarchy), keyed by the discoverer ID. Outputs that know the
+// key may show it in a dedicated section; the rest ignore it. Nothing is
+// attached when the mod is absent, so those sections do not appear.
+func (c *Claims) Attach(key string, v any) { c.extras[key] = v }
+
+// Extras returns the attached data.
+func (c *Claims) Extras() map[string]any { return c.extras }

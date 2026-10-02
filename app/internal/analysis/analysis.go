@@ -4,6 +4,7 @@
 package analysis
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 
@@ -30,6 +31,7 @@ type Analyzer struct {
 	Discoverers *discovery.Registry[discovery.Discoverer]
 	Enrichers   *discovery.Registry[discovery.Enricher]
 	Disablers   *discovery.Registry[discovery.Disabler]
+	Changes     *discovery.Registry[discovery.ChangeDetector]
 }
 
 // Result is everything an output (site, report, query) needs.
@@ -48,6 +50,11 @@ type Result struct {
 	Statuses     map[domain.Target]domain.Status
 	Diagnostics  *domain.Diagnostics
 	Resources    *Resources
+	// Extras holds data attached by discoverers (see discovery.Claims.Attach).
+	Extras map[string]any
+	// Changes are modifications of loot sources by mods, scripts or configs.
+	Changes         []domain.Change
+	ChangeDetectors []string
 }
 
 // Close releases the modpack files.
@@ -102,6 +109,17 @@ func (a Analyzer) Run(ctx context.Context, opts modpack.Options, progress Progre
 	dis, failures := discovery.Detect(ctx, disPlan, in)
 	report(diags, "desactivadores", failures)
 
+	progress.Stage("Buscando mods que cambian loot, tradeos y pesca")
+	var chPlan discovery.Plan[discovery.ChangeDetector]
+	if a.Changes != nil {
+		if chPlan, err = a.Changes.Plan(target); err != nil {
+			mp.Close()
+			return nil, err
+		}
+	}
+	changes, failures := discovery.DetectChanges(ctx, chPlan, in)
+	report(diags, "cambios", failures)
+
 	progress.Stage("Calculando probabilidades")
 	resolver := loot.NewResolver(res)
 	tables := map[domain.ResourceID]*loot.Table{}
@@ -122,7 +140,10 @@ func (a Analyzer) Run(ctx context.Context, opts modpack.Options, progress Progre
 	result := &Result{
 		Modpack: mp, Sources: claims.Sources(), Owners: claims.Owners(),
 		Structures: world.Structures(), Tables: tables, Diagnostics: diags, Resources: res,
-		Disablements: dis.Items(),
+		Disablements: dis.Items(), Extras: claims.Extras(), Changes: changes.Items(),
+	}
+	for _, d := range chPlan.Steps {
+		result.ChangeDetectors = append(result.ChangeDetectors, d.Descriptor().ID)
 	}
 	result.Statuses = statuses(dis, result.Structures, result.Owners)
 	for _, d := range disPlan.Steps {
@@ -190,11 +211,12 @@ type Resources struct {
 	ix    *resources.Index
 	diags *domain.Diagnostics
 	tags  map[string]*worldgen.Tags
+	langs map[string]map[string]string
 }
 
 // NewResources wraps an index.
 func NewResources(ix *resources.Index, diags *domain.Diagnostics) *Resources {
-	return &Resources{ix: ix, diags: diags, tags: map[string]*worldgen.Tags{}}
+	return &Resources{ix: ix, diags: diags, tags: map[string]*worldgen.Tags{}, langs: map[string]map[string]string{}}
 }
 
 // Index returns the underlying index.
@@ -221,6 +243,27 @@ func (r *Resources) Tag(typ string, id domain.ResourceID) []domain.ResourceID {
 	return t.Resolve(id)
 }
 
+func (r *Resources) Providers(typ string, id domain.ResourceID) []discovery.Provider {
+	var out []discovery.Provider
+	for _, e := range r.ix.All(typ, id) {
+		e := e
+		out = append(out, discovery.Provider{Pack: e.Pack.Name(), Kind: e.Pack.Kind(), Read: func() ([]byte, error) {
+			data, err := e.Read()
+			return bytes.TrimPrefix(data, []byte{0xEF, 0xBB, 0xBF}), err
+		}})
+	}
+	return out
+}
+
+func (r *Resources) Lang(code string) map[string]string {
+	if l, ok := r.langs[code]; ok {
+		return l
+	}
+	l := r.ix.Lang(code, nil)
+	r.langs[code] = l
+	return l
+}
+
 func (r *Resources) LootTableJSON(id domain.ResourceID) ([]byte, bool, error) {
 	e, ok := r.ix.Lookup(resources.TypeLootTable, id)
 	if !ok {
@@ -230,7 +273,8 @@ func (r *Resources) LootTableJSON(id domain.ResourceID) ([]byte, bool, error) {
 	if err != nil {
 		return nil, true, fmt.Errorf("%s: %w", e, err)
 	}
-	return data, true, nil
+	// Some mods save their JSON with a UTF-8 byte order mark.
+	return bytes.TrimPrefix(data, []byte{0xEF, 0xBB, 0xBF}), true, nil
 }
 
 func (r *Resources) ItemTag(id domain.ResourceID) []domain.ResourceID {

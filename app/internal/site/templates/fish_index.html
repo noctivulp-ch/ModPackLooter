@@ -1,0 +1,17 @@
+{{define "content"}}
+{{$f := .Data}}
+<div class="page-head">
+  <h1>Pesca</h1>
+  <p class="lede">Qué se puede pescar, con qué sistema, en qué bioma y bajo qué condiciones. Elige primero con qué caña pescas.</p>
+</div>
+<div class="grid">
+{{range $f.Sources}}
+  <section class="pozo">
+    <h2><a href="{{rel $.Root .URL}}">{{.Name}}</a></h2>
+    {{range .Intro}}<p class="meta">{{.}}</p>{{end}}
+    {{if .Warning}}<p class="warn-text">{{.Warning}}</p>{{end}}
+    <p>{{len .Entries}} capturas{{if .Biomes}} · {{len .Biomes}} biomas{{end}}</p>
+  </section>
+{{end}}
+</div>
+{{end}}

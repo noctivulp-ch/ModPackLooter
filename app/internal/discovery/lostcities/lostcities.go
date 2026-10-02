@@ -59,6 +59,9 @@ func (Discoverer) Discover(_ context.Context, in discovery.Input, out *discovery
 			}
 		}
 	}
+	if m := BuildModel(in); m.HasContent() {
+		out.Attach(ID, m)
+	}
 	if len(used) == 0 {
 		return nil
 	}

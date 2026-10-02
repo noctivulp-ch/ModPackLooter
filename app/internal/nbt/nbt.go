@@ -70,17 +70,29 @@ func decompress(data []byte) ([]byte, error) {
 			return nil, fmt.Errorf("nbt: gzip: %w", err)
 		}
 		defer zr.Close()
-		return io.ReadAll(zr)
+		return readTolerant(zr)
 	case len(data) >= 2 && data[0] == 0x78:
 		zr, err := zlib.NewReader(bytes.NewReader(data))
 		if err != nil {
 			return nil, fmt.Errorf("nbt: zlib: %w", err)
 		}
 		defer zr.Close()
-		return io.ReadAll(zr)
+		return readTolerant(zr)
 	default:
 		return data, nil
 	}
+}
+
+// readTolerant reads a compressed stream. Some tools write gzip files
+// without the final checksum; the game reads them anyway (it stops once the
+// NBT document ends), so a truncated stream is accepted if it produced data.
+// The NBT decoder still rejects documents that are actually incomplete.
+func readTolerant(r io.Reader) ([]byte, error) {
+	out, err := io.ReadAll(r)
+	if errors.Is(err, io.ErrUnexpectedEOF) && len(out) > 0 {
+		return out, nil
+	}
+	return out, err
 }
 
 var errShort = errors.New("nbt: datos truncados")

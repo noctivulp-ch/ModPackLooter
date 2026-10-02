@@ -51,3 +51,59 @@
   {{if not .Disabled}}<p class="meta">Es un aviso: la app encontró indicios, pero no puede confirmarlo.</p>{{end}}
 </section>
 {{end}}{{end}}
+
+{{define "lcTerm"}}{{if .T.Biome}}<a href="{{rel .Root .T.Biome.URL}}">{{.T.Name}}</a>{{else if .T.Members}}<details class="tag"><summary>Grupo «{{.T.Name}}» · {{len .T.Members}} biomas</summary>{{template "biomeChips" (dict "Root" .Root "Biomes" .T.Members)}}</details>{{else if .T.Tag}}<span title="{{.T.ID}}">Grupo «{{.T.Name}}»</span>{{else}}{{.T.Name}}{{end}}{{end}}
+
+{{define "lcBiomes"}}{{$r := .Root}}{{with .B}}{{if .Everywhere}}<span class="meta">Cualquier bioma</span>{{else}}<div class="lc-biomes">
+  {{if .Any}}<div><span class="meta">En cualquiera de:</span> <ul class="chips">{{range .Any}}<li>{{template "lcTerm" (dict "Root" $r "T" .)}}</li>{{end}}</ul></div>{{end}}
+  {{if .All}}<div><span class="meta">Que sea a la vez:</span> <ul class="chips">{{range .All}}<li>{{template "lcTerm" (dict "Root" $r "T" .)}}</li>{{end}}</ul></div>{{end}}
+  {{if .Excluding}}<div><span class="meta">Excepto:</span> <ul class="chips">{{range .Excluding}}<li>{{template "lcTerm" (dict "Root" $r "T" .)}}</li>{{end}}</ul></div>{{end}}
+</div>{{end}}{{end}}{{end}}
+
+{{define "lcCrumbs"}}<nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "lostcities/"}}">Lost Cities</a>{{if .Sub}} / <a href="{{rel .Root .SubURL}}">{{.Sub}}</a>{{end}}</nav>{{end}}
+
+{{define "fishConds"}}{{with .}}{{if or .Fluids .Dimensions .Biomes .Conditions .Baits .Spawns .Inactive}}<ul class="notes">
+  {{if .Fluids}}<li>en {{.Fluids}}</li>{{end}}
+  {{if .Dimensions}}<li>{{.Dimensions}}</li>{{end}}
+  {{range .Biomes}}<li>{{.}}</li>{{end}}
+  {{range .Conditions}}<li>{{.}}</li>{{end}}
+  {{if .Baits}}<li>{{if .BaitOnly}}solo con cebo:{{else}}más con cebo:{{end}} {{join .Baits}}</li>{{end}}
+  {{if .Spawns}}<li class="warn-text">aparece {{.Spawns}} al pescarlo</li>{{end}}
+  {{range .Inactive}}<li class="meta" title="Sin efecto en este modpack">{{.}} (sin efecto)</li>{{end}}
+</ul>{{else}}<span class="meta">Sin condiciones</span>{{end}}{{end}}{{end}}
+
+{{define "fishCondsHere"}}{{with .}}{{if or .Conditions .Baits .Spawns .Inactive}}<ul class="notes">
+  {{range .Conditions}}<li>{{.}}</li>{{end}}
+  {{if .Baits}}<li>{{if .BaitOnly}}solo con cebo:{{else}}más con cebo:{{end}} {{join .Baits}}</li>{{end}}
+  {{if .Spawns}}<li class="warn-text">aparece {{.Spawns}} al pescarlo</li>{{end}}
+  {{range .Inactive}}<li class="meta" title="Sin efecto en este modpack">{{.}} (sin efecto)</li>{{end}}
+</ul>{{else}}<span class="meta">Siempre</span>{{end}}{{end}}{{end}}
+
+{{define "fishName"}}{{if .Item}}<a href="{{rel .Root .Item.URL}}">{{.Name}}</a>{{else if .Table}}<a href="{{rel .Root .Table.URL}}">{{.Name}}</a>{{else}}{{.Name}}{{end}}{{end}}
+
+{{define "fishGroup"}}{{$r := .Root}}{{with .G}}
+<section class="pozo">
+  <header class="pozo-head"><h3>{{.Title}}</h3>{{if .Note}}<p class="meta">{{.Note}}</p>{{end}}</header>
+  <div class="scroll">
+  <table class="data stack-sm">
+    <thead><tr><th scope="col">Captura</th><th scope="col" class="w-chance">Probabilidad</th><th scope="col">Condiciones</th></tr></thead>
+    <tbody>
+    {{range .Catches}}<tr>
+      <td>{{template "fishName" (dict "Root" $r "Item" .Entry.Item "Table" .Entry.Table "Name" .Entry.Name)}}{{if .Entry.Rarity}} <span class="meta">{{.Entry.Rarity}}</span>{{end}}{{if ne .Entry.Kind "Pez"}} <span class="meta">({{.Entry.Kind}})</span>{{end}}</td>
+      <td>{{if .Chance}}{{template "chance" .Chance}}{{else}}<span class="meta">{{.Note}}</span>{{end}}{{if .Bait}}<br><span class="meta">con {{.Bait}}</span>{{end}}{{if and .Chance .Note}}<br><span class="meta">{{.Note}}</span>{{end}}</td>
+      <td>{{template "fishCondsHere" .Entry}}</td>
+    </tr>{{end}}
+    </tbody>
+  </table>
+  </div>
+</section>
+{{end}}{{end}}
+
+{{define "change"}}{{$r := .Root}}{{with .C}}<span class="dis {{if .Sure}}dis-cert{{else}}dis-maybe{{end}}" title="{{if .Sure}}Leído de datos o de un script que la app entiende{{else}}Indicio: la app no sabe el efecto exacto{{end}}">{{if .Sure}}Seguro{{else}}Posible{{end}}</span>
+<strong>{{.Effect}}</strong>{{if .Items}} {{range $i, $it := .Items}}{{if $i}}, {{end}}<a href="{{rel $r $it.URL}}">{{$it.Name}}</a>{{end}}{{end}}{{if .With}} por {{range $i, $it := .With}}{{if $i}}, {{end}}<a href="{{rel $r $it.URL}}">{{$it.Name}}</a>{{end}}{{end}}{{if .Inject}} el loot de <a href="{{rel $r .Inject.URL}}">{{.Inject.Name}}</a>{{end}}{{if .Chance}} <span class="meta">({{pct .Chance}})</span>{{end}}
+<span class="meta">· {{.Mod}}</span>
+{{if .Detail}}<br><span class="meta">{{.Detail}}</span>{{end}}{{end}}{{end}}
+
+{{define "tstack"}}{{$r := .Root}}{{with .S}}<span class="tstack">{{if .Max}}{{.Count}}–{{.Max}}{{else}}{{.Count}}{{end}} × <a href="{{rel $r .Item.URL}}">{{.Item.Name}}</a>{{if .Enchanted}} <span class="meta">(encantado)</span>{{end}}</span>{{end}}{{end}}
+
+{{define "toffer"}}{{$r := .Root}}{{with .O}}{{range $i, $b := .Buy}}{{if $i}} + {{end}}{{template "tstack" (dict "Root" $r "S" $b)}}{{end}} <span aria-label="a cambio de">→</span> {{template "tstack" (dict "Root" $r "S" .Sell)}}{{end}}{{end}}

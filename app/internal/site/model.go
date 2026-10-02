@@ -34,6 +34,13 @@ type Item struct {
 	Biomes  []*Biome // biomes of the owners that can give the item
 	// Unobtainable is true when every source is certainly disabled.
 	Unobtainable bool
+	// Fishing lists the fishing systems that can give the item.
+	Fishing []*FishEntry
+	// Changes are mods adding or removing the item somewhere.
+	Changes []*Change
+	// Trades sell or buy the item; NPCDrops are NPCs that drop it.
+	Trades   []*TradeRef
+	NPCDrops []*NPCDrop
 }
 
 // ItemSource is one way to get an item.
@@ -80,11 +87,12 @@ type TableUse struct {
 // Table is a loot table page.
 type Table struct {
 	Ref
-	Mod    *Mod
-	Kind   domain.SourceKind
-	Drops  []Drop
-	Uses   []*TableUse
-	Approx bool
+	Mod     *Mod
+	Kind    domain.SourceKind
+	Drops   []Drop
+	Uses    []*TableUse
+	Approx  bool
+	Changes []*Change // modifications by mods, scripts or configs
 }
 
 // Drop is a row of a loot table.
@@ -146,6 +154,14 @@ type Model struct {
 	// Disabled lists the disabled targets for the about page.
 	Disabled  []DisabledRow
 	WorldName string
+	// Sections are the tabs of mods present in the pack (Lost Cities…).
+	Sections   []Section
+	LostCities *LostCities
+	Fishing    *Fishing
+	Changes    []*ChangeSection
+	Trades     *Trades
+
+	tradeChanges []*Change
 }
 
 // DisabledRow is a disabled structure, biome or mob, for the about page.
@@ -192,11 +208,54 @@ var noteText = map[string]string{
 	"random_chance_with_looting": "Más con Botín",
 }
 
-func translateNotes(in []string) []string {
+// detailedNote explains loot functions that carry parameters.
+func detailedNote(n string, namer *names.Namer) (string, bool) {
+	parts := strings.Split(n, "|")
+	switch parts[0] {
+	case "enchant_with_levels":
+		if len(parts) != 4 {
+			return "", false
+		}
+		lv := parts[1]
+		if parts[2] != parts[1] {
+			lv = parts[1] + "–" + parts[2]
+		}
+		mending := enchantName(namer, "minecraft:mending")
+		if parts[3] == "true" {
+			return "Encantado (nivel " + lv + ", puede dar encantamientos de tesoro como " + mending + ")", true
+		}
+		return "Encantado (nivel " + lv + ", sin encantamientos de tesoro: no da " + mending + ", " + enchantName(namer, "minecraft:frost_walker") + " ni maldiciones)", true
+	case "enchant_randomly":
+		if len(parts) != 2 {
+			return "", false
+		}
+		var list []string
+		for _, e := range strings.Split(parts[1], ",") {
+			list = append(list, enchantName(namer, e))
+		}
+		return "Encantado al azar con: " + strings.Join(list, ", "), true
+	}
+	return "", false
+}
+
+func enchantName(namer *names.Namer, id string) string {
+	if rid, err := domain.ParseResourceID(strings.TrimPrefix(id, "#")); err == nil {
+		if v, ok := namer.Text("enchantment." + rid.Namespace + "." + rid.Path); ok {
+			return v
+		}
+		return names.Humanize(rid.Path)
+	}
+	return id
+}
+
+func translateNotes(in []string, namer *names.Namer) []string {
 	seen := map[string]bool{}
 	var out []string
 	for _, n := range in {
 		t, ok := noteText[n]
+		if !ok {
+			t, ok = detailedNote(n, namer)
+		}
 		if !ok {
 			t = names.Humanize(n)
 		}
@@ -275,7 +334,7 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		if lt := res.Tables[id]; lt != nil {
 			t.Approx = lt.Approximate
 			for _, d := range lt.Drops {
-				t.Drops = append(t.Drops, Drop{Item: itemOf(d.Item), Chance: d.Chance, CountMin: d.CountMin, CountMax: d.CountMax, Notes: translateNotes(d.Notes), Approx: d.Approximate})
+				t.Drops = append(t.Drops, Drop{Item: itemOf(d.Item), Chance: d.Chance, CountMin: d.CountMin, CountMax: d.CountMax, Notes: translateNotes(d.Notes, namer), Approx: d.Approximate})
 			}
 		}
 		tables[id] = t
@@ -481,6 +540,33 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		}
 		return a.ID.String() < b.ID.String()
 	})
+	buildLostCities(res, m, namer)
+	ensureItem := func(id domain.ResourceID) *Item {
+		// Fished items may have no loot source: add them to the lists.
+		if it, ok := items[id]; ok && (len(it.Sources) > 0 || len(it.Fishing) > 0) {
+			return it
+		}
+		it := itemOf(id)
+		m.Items = append(m.Items, it)
+		md := it.Mod
+		md.Items = append(md.Items, it)
+		listed := false
+		for _, x := range m.Mods {
+			listed = listed || x == md
+		}
+		if !listed {
+			m.Mods = append(m.Mods, md)
+		}
+		return it
+	}
+	buildFishing(res, m, namer, ensureItem)
+	buildChanges(res, m, namer, ensureItem)
+	buildTrades(res, m, namer, ensureItem)
+	sortRefs(m.Items, func(i *Item) Ref { return i.Ref })
+	sortRefs(m.Mods, func(md *Mod) Ref { return md.Ref })
+	for _, md := range m.Mods {
+		sortRefs(md.Items, func(i *Item) Ref { return i.Ref })
+	}
 	return m
 }
 

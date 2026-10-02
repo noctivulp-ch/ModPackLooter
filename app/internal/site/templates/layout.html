@@ -40,7 +40,8 @@ try {
     <a href="{{rel .Root "estructuras/"}}"{{if eq .Nav "estructuras"}} aria-current="page"{{end}}>Estructuras</a>
     <a href="{{rel .Root "biomas/"}}"{{if eq .Nav "biomas"}} aria-current="page"{{end}}>Biomas</a>
     <a href="{{rel .Root "fuentes/"}}"{{if eq .Nav "fuentes"}} aria-current="page"{{end}}>Otras fuentes</a>
-    <a href="{{rel .Root "mods/"}}"{{if eq .Nav "mods"}} aria-current="page"{{end}}>Mods</a>
+    {{range .M.Sections}}<a href="{{rel $.Root .URL}}"{{if eq $.Nav .Nav}} aria-current="page"{{end}}>{{.Label}}</a>
+    {{end}}<a href="{{rel .Root "mods/"}}"{{if eq .Nav "mods"}} aria-current="page"{{end}}>Mods</a>
     <a href="{{rel .Root "acerca/"}}"{{if eq .Nav "acerca"}} aria-current="page"{{end}}>Acerca</a>
   </nav>
   <main id="main" tabindex="-1">
