@@ -272,6 +272,19 @@ a.sub { color: var(--texto-secundario); }
 .conf-warn { color: var(--error); }
 .conf-none { color: var(--texto-secundario); }
 
+/* Desactivado: símbolo + texto, nunca solo color. */
+.dis {
+  display: inline-flex; gap: 4px; align-items: center; white-space: nowrap;
+  font-size: 0.75rem; font-weight: 600; padding: 1px 8px;
+  border: 1px solid currentColor; border-radius: var(--radio-pozo);
+}
+.dis-cert { color: var(--error); }
+.dis-maybe { color: var(--texto-pozo); border-style: dashed; }
+h2 .dis { font-size: 0.875rem; }
+.pozo-dis { border-color: var(--error); }
+tr.off td, tr.off a { color: var(--texto-secundario); }
+tr.off .meter > span { background: var(--texto-secundario); }
+
 .notes, .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .notes li {
   font-size: 0.75rem; padding: 2px 8px;

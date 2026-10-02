@@ -40,6 +40,7 @@ cual a GitHub Pages o GitLab Pages.
 | `--metal` | Acento visual de Wulfenite UI: `oro`, `jade` o `peltre`. |
 | `--lang` | Idioma de los nombres (`es_es`, `es_ar`, `en_us`…). Por defecto el del juego (`options.txt`) o `es_es`; si falta una traducción se usa otra variante del mismo idioma y luego inglés. |
 | `--minecraft-jar` | Jar de Minecraft vanilla (o carpeta con `data/`). Se busca solo en CurseForge, Prism y el launcher oficial. |
+| `--world` | Mundo modelo creado con el modpack (carpeta con `level.dat` o nombre dentro de `saves/`): usa sus biomas reales, sus datapacks y sus configs de servidor (p. ej. el perfil de Lost Cities). Sin él se usan los valores por defecto del pack (`defaultconfigs/`). |
 | `--assets-dir` | Carpeta `assets` del launcher, para traducir los nombres vanilla. |
 | `--mc-version`, `--loader` | Fuerzan la versión y el cargador si no se detectan. |
 | `--datapack` | Datapack extra (carpeta o `.zip`); repetible. |
@@ -55,6 +56,9 @@ Los avisos y el progreso van a *stderr*; el resultado, a *stdout*.
 - **Lost Cities**: paletas y condiciones de loot con su peso.
 - **Lootr**: loot por jugador, *refresh*, *decay* y exclusiones según su configuración.
 - Heurística por nombre y, al final, todas las tablas restantes clasificadas por su ruta.
+- **Desactivados** (seguro / posible): estructuras sin `structure_set`, biomas inexistentes en el
+  mundo modelo, Biome Replacer, Structurify, InControl, perfil de Lost Cities y menciones en
+  configs y scripts de KubeJS.
 
 ## Desarrollo
 

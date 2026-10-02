@@ -15,7 +15,7 @@
   {{range $t.Uses}}
     <li>
       {{if .Owner}}<a href="{{rel $.Root .Owner.URL}}">{{.Owner.Name}}</a>{{else}}Origen no determinado{{end}}
-      <span class="meta">{{if .Container}}{{short .Container}} · {{end}}{{if .Share}}{{pct .Share}} de sus contenedores · {{end}}{{template "conf" .Confidence}}</span>
+      <span class="meta">{{if .Container}}{{short .Container}} · {{end}}{{if .Share}}{{pct .Share}} de sus contenedores · {{end}}{{template "conf" .Confidence}}</span> {{template "status" .Status}}
       {{template "notes" .Notes}}
     </li>
   {{end}}

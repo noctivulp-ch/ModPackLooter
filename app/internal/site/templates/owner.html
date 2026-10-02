@@ -6,6 +6,7 @@
   <p class="id">{{$o.ID}}</p>
 </div>
 
+{{template "statusBox" $o.Status}}
 <section class="pozo">
   <h2>Dónde aparece</h2>
   {{if $o.BiomesNote}}<p>{{$o.BiomesNote}}</p>{{end}}

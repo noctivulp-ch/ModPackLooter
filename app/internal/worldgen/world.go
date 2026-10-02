@@ -413,3 +413,31 @@ func (w *World) TemplatesWithLoot() []*Template {
 
 // BiomeTag resolves a biome tag.
 func (w *World) BiomeTag(id domain.ResourceID) []domain.ResourceID { return w.Biomes.Resolve(id) }
+
+// StructureSets maps each structure to the structure sets that place it.
+// Structures absent from the map are not placed by any set.
+func (w *World) StructureSets() map[domain.ResourceID][]domain.ResourceID {
+	out := map[domain.ResourceID][]domain.ResourceID{}
+	for _, id := range w.ix.IDs(resources.TypeStructureSet) {
+		e, _ := w.ix.Lookup(resources.TypeStructureSet, id)
+		var raw struct {
+			Structures []struct {
+				Structure string  `json:"structure"`
+				Weight    float64 `json:"weight"`
+			} `json:"structures"`
+		}
+		if err := e.ReadJSON(&raw); err != nil {
+			w.warn(e, "structure set ilegible: %v", err)
+			continue
+		}
+		for _, s := range raw.Structures {
+			if sid, err := domain.ParseResourceID(s.Structure); err == nil {
+				out[sid] = append(out[sid], id)
+			}
+		}
+	}
+	return out
+}
+
+// HasStructureSets reports whether any structure set was loaded at all.
+func (w *World) HasStructureSets() bool { return w.ix.Count(resources.TypeStructureSet) > 0 }

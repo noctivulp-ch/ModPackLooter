@@ -38,7 +38,7 @@ func buildSite(t *testing.T) string {
 		"data/towers/loot_tables/blocks/brick.json":     `{"type":"minecraft:block","pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"towers:brick"}]}]}`,
 		"assets/towers/lang/es_es.json":                 `{"item.towers.key":"Llave <rúnica>","biome.towers.ash_fields":"Campos de ceniza"}`,
 	})
-	res, err := analysis.Analyzer{Discoverers: plugins.Discoverers(), Enrichers: plugins.Enrichers()}.
+	res, err := analysis.Analyzer{Discoverers: plugins.Discoverers(), Enrichers: plugins.Enrichers(), Disablers: plugins.Disablers()}.
 		Run(context.Background(), modpack.Options{Path: in.Root}, nil)
 	if err != nil {
 		t.Fatal(err)

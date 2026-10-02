@@ -5,11 +5,12 @@
   <h1>{{$b.Name}}</h1>
   <p class="id">{{$b.ID}}</p>
 </div>
+{{template "statusBox" $b.Status}}
 <div class="grid">
   <section class="pozo">
     <h2>Estructuras con loot <span class="count">{{len $b.Owners}}</span></h2>
     <ul class="links">
-    {{range $b.Owners}}<li><a href="{{rel $.Root .URL}}">{{.Name}}</a> <span class="meta">{{.Mod.Name}} · {{len .Uses}} {{if eq (len .Uses) 1}}tabla{{else}}tablas{{end}}</span></li>{{end}}
+    {{range $b.Owners}}<li><a href="{{rel $.Root .URL}}">{{.Name}}</a> {{template "status" .Status}} <span class="meta">{{.Mod.Name}} · {{len .Uses}} {{if eq (len .Uses) 1}}tabla{{else}}tablas{{end}}</span></li>{{end}}
     </ul>
   </section>
   <section class="pozo">

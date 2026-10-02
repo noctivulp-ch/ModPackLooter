@@ -21,6 +21,7 @@ construye o se usa la app, queda escrita aquí**.
 | [11-lootr.md](11-lootr.md) | Cómo funciona Lootr y cómo se soporta. |
 | [12-arquitectura-de-descubrimiento.md](12-arquitectura-de-descubrimiento.md) | Puerta de enganche: descubridores encadenados, reclamaciones y genérico final. |
 | [13-diseno-del-sitio.md](13-diseno-del-sitio.md) | Diseño visual del sitio con Wulfenite UI, PC primero. |
+| [14-mundo-modelo-y-desactivadores.md](14-mundo-modelo-y-desactivadores.md) | `--world` y la puerta de desactivadores (seguro / posible). |
 | [decisiones/](decisiones/) | Registro de decisiones de arquitectura (ADR). |
 
 ## Cómo documentamos decisiones
@@ -47,3 +48,5 @@ cambia, se crea una nueva que la **reemplaza** y se marca la antigua como
 | [0010](decisiones/0010-descubrimiento-por-ganchos-encadenados.md) | Descubrimiento con piezas enganchables encadenadas y genérico final. |
 | [0011](decisiones/0011-guias-de-diseno-de-interfaces.md) | Guías de referencia: impeccable (sitio) y tui-architect (CLI/TUI). |
 | [0012](decisiones/0012-sitio-con-wulfenite-ui.md) | El sitio usa Wulfenite UI; PC primero, móvil aceptable; español por defecto. |
+| [0013](decisiones/0013-mundo-modelo.md) | Mundo modelo (`--world`) en lugar de un menú de creación de mundos. |
+| [0014](decisiones/0014-desactivadores-con-dos-niveles.md) | Desactivadores con dos niveles: desactivado / posiblemente desactivado. |

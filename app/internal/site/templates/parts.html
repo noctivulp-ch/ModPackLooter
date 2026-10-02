@@ -33,7 +33,7 @@
     <p class="meta">
       {{kind .Use.Kind}}{{if .Use.Container}} · {{short .Use.Container}}{{end}}
       {{if .Use.Share}} · se usa en el {{pct .Use.Share}} de estos contenedores{{end}}
-      · {{template "conf" .Use.Confidence}}
+      · {{template "conf" .Use.Confidence}} {{template "status" .Use.Status}}
     </p>
     {{template "notes" .Use.Notes}}
   </header>
@@ -41,3 +41,13 @@
   {{if .Use.Evidence}}<details class="evidence"><summary>Cómo se encontró</summary><ul>{{range .Use.Evidence}}<li>{{.}}</li>{{end}}</ul><p class="id">{{.Use.Table.ID}}</p></details>{{end}}
 </section>
 {{end}}
+
+{{define "status"}}{{if .Certainty}}<span class="dis {{if .Disabled}}dis-cert{{else}}dis-maybe{{end}}" title="{{join .Reasons}}"><span aria-hidden="true">{{if .Disabled}}⊘{{else}}⚠{{end}}</span> {{if .Disabled}}Desactivado{{else}}Posiblemente desactivado{{end}}</span>{{end}}{{end}}
+
+{{define "statusBox"}}{{if .Certainty}}
+<section class="pozo pozo-dis">
+  <h2>{{template "status" .}}</h2>
+  <ul class="plain">{{range .Reasons}}<li>{{.}}</li>{{end}}</ul>
+  {{if not .Disabled}}<p class="meta">Es un aviso: la app encontró indicios, pero no puede confirmarlo.</p>{{end}}
+</section>
+{{end}}{{end}}

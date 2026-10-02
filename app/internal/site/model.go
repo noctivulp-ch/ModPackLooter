@@ -32,6 +32,8 @@ type Item struct {
 	Sources []*ItemSource // best first
 	Best    float64
 	Biomes  []*Biome // biomes of the owners that can give the item
+	// Unobtainable is true when every source is certainly disabled.
+	Unobtainable bool
 }
 
 // ItemSource is one way to get an item.
@@ -47,6 +49,7 @@ type ItemSource struct {
 	Confidence domain.Confidence
 	Notes      []string
 	Approx     bool
+	Status     domain.Status
 }
 
 // Owner is a structure, feature or template that holds loot.
@@ -58,6 +61,7 @@ type Owner struct {
 	BiomesNote string
 	Uses       []*TableUse
 	Template   bool
+	Status     domain.Status
 }
 
 // TableUse is a loot table used by an owner.
@@ -70,6 +74,7 @@ type TableUse struct {
 	Confidence domain.Confidence
 	Notes      []string
 	Evidence   []string
+	Status     domain.Status
 }
 
 // Table is a loot table page.
@@ -98,6 +103,7 @@ type Biome struct {
 	Mod    *Mod
 	Owners []*Owner
 	Top    []BiomeItem // best items obtainable in the biome
+	Status domain.Status
 }
 
 // BiomeItem is an item and its best source within a biome.
@@ -136,6 +142,18 @@ type Model struct {
 	Diagnostics []domain.Diagnostic
 	Plan        []string
 	Enrichments []string
+	Disablers   []string
+	// Disabled lists the disabled targets for the about page.
+	Disabled  []DisabledRow
+	WorldName string
+}
+
+// DisabledRow is a disabled structure, biome or mob, for the about page.
+type DisabledRow struct {
+	Kind   domain.TargetKind
+	Ref    *Ref
+	ID     domain.ResourceID
+	Status domain.Status
 }
 
 func idPath(id domain.ResourceID) string {
@@ -204,6 +222,10 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		Lang: opts.Lang, HTMLLang: "es", LangSource: res.Modpack.LangSource,
 		Unowned:     map[domain.SourceKind][]*TableUse{},
 		Diagnostics: res.Diagnostics.Items(), Plan: res.Plan, Enrichments: res.Enrichments,
+		Disablers: res.Disablers,
+	}
+	if res.Modpack.World != nil {
+		m.WorldName = res.Modpack.World.Name
 	}
 	mp := res.Modpack
 	m.Pack = PackInfo{
@@ -268,6 +290,7 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 			return b
 		}
 		b := &Biome{Ref: Ref{ID: id, Name: namer.Biome(id), URL: "biomas/" + idPath(id) + "/"}, Mod: modOf(id.Namespace)}
+		b.Status = res.Status(domain.Target{Kind: domain.TargetBiome, ID: id})
 		biomes[id] = b
 		return b
 	}
@@ -294,6 +317,7 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		} else {
 			biomeIDs = structureBiomes[o.ID]
 		}
+		x.Status = res.Status(domain.Target{Kind: domain.TargetStructure, ID: o.ID})
 		if o.Kind == domain.OwnerTemplate {
 			x.Template = true
 			x.Name = "Plantilla " + names.Humanize(o.ID.Path)
@@ -328,8 +352,12 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		if s.Owner.Kind != domain.OwnerNone {
 			owner = ownerOf(s.Owner)
 			use.Owner = owner
+			use.Status = owner.Status
 			owner.Uses = append(owner.Uses, use)
 		} else {
+			if s.Kind == domain.KindEntity {
+				use.Status = res.Status(domain.Target{Kind: domain.TargetEntity, ID: entityOf(s.LootTable)})
+			}
 			m.Unowned[s.Kind] = append(m.Unowned[s.Kind], use)
 		}
 		for _, d := range t.Drops {
@@ -337,10 +365,14 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 			if s.Share > 0 {
 				eff *= s.Share
 			}
+			if use.Status.Disabled() {
+				eff = 0
+			}
 			src := &ItemSource{
 				Table: t, Kind: s.Kind, Owner: owner, Chance: d.Chance, Share: s.Share, Effective: eff,
 				CountMin: d.CountMin, CountMax: d.CountMax, Confidence: s.Confidence,
 				Notes: append(append([]string(nil), d.Notes...), use.Notes...), Approx: d.Approx,
+				Status: use.Status,
 			}
 			d.Item.Sources = append(d.Item.Sources, src)
 			if eff > d.Item.Best {
@@ -354,8 +386,18 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		if len(it.Sources) == 0 {
 			continue
 		}
+		it.Unobtainable = true
+		for _, src := range it.Sources {
+			if !src.Status.Disabled() {
+				it.Unobtainable = false
+				break
+			}
+		}
 		sort.SliceStable(it.Sources, func(i, j int) bool {
 			a, b := it.Sources[i], it.Sources[j]
+			if a.Status.Disabled() != b.Status.Disabled() {
+				return b.Status.Disabled()
+			}
 			if a.Effective != b.Effective {
 				return a.Effective > b.Effective
 			}
@@ -408,7 +450,44 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 	for k := range m.Unowned {
 		sort.Slice(m.Unowned[k], func(i, j int) bool { return m.Unowned[k][i].Table.ID.String() < m.Unowned[k][j].Table.ID.String() })
 	}
+	for t, st := range res.Statuses {
+		if st.Certainty == 0 {
+			continue
+		}
+		row := DisabledRow{Kind: t.Kind, ID: t.ID, Status: st}
+		switch t.Kind {
+		case domain.TargetStructure:
+			if o, ok := owners[domain.Owner{Kind: domain.OwnerStructure, ID: t.ID}]; ok {
+				row.Ref = &o.Ref
+			}
+		case domain.TargetBiome:
+			if b, ok := biomes[t.ID]; ok {
+				row.Ref = &b.Ref
+			}
+		case domain.TargetEntity:
+			if tb, ok := tables[domain.ResourceID{Namespace: t.ID.Namespace, Path: "entities/" + t.ID.Path}]; ok {
+				row.Ref = &tb.Ref
+			}
+		}
+		m.Disabled = append(m.Disabled, row)
+	}
+	sort.Slice(m.Disabled, func(i, j int) bool {
+		a, b := m.Disabled[i], m.Disabled[j]
+		if a.Status.Certainty != b.Status.Certainty {
+			return a.Status.Certainty > b.Status.Certainty
+		}
+		if a.Kind != b.Kind {
+			return a.Kind < b.Kind
+		}
+		return a.ID.String() < b.ID.String()
+	})
 	return m
+}
+
+// entityOf maps "ns:entities/zombie" to the entity "ns:zombie".
+func entityOf(table domain.ResourceID) domain.ResourceID {
+	path := strings.TrimPrefix(strings.TrimPrefix(table.Path, "entities/"), "entity/")
+	return domain.ResourceID{Namespace: table.Namespace, Path: path}
 }
 
 func sortRefs[T any](s []T, ref func(T) Ref) {
@@ -434,6 +513,9 @@ func sortUses(uses []*TableUse) {
 func topItems(owners []*Owner, limit int) []BiomeItem {
 	best := map[*Item]*ItemSource{}
 	for _, o := range owners {
+		if o.Status.Disabled() {
+			continue
+		}
 		for _, u := range o.Uses {
 			for _, d := range u.Table.Drops {
 				eff := d.Chance

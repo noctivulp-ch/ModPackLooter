@@ -29,6 +29,7 @@ func (NoProgress) Stage(string) {}
 type Analyzer struct {
 	Discoverers *discovery.Registry[discovery.Discoverer]
 	Enrichers   *discovery.Registry[discovery.Enricher]
+	Disablers   *discovery.Registry[discovery.Disabler]
 }
 
 // Result is everything an output (site, report, query) needs.
@@ -40,8 +41,13 @@ type Result struct {
 	Tables      map[domain.ResourceID]*loot.Table
 	Plan        []string // discoverer IDs in execution order
 	Enrichments []string
-	Diagnostics *domain.Diagnostics
-	Resources   *Resources
+	Disablers   []string
+	// Disablements lists every report of the disabler gate; Statuses combines
+	// them per target (structures also inherit "all biomes disabled").
+	Disablements []domain.Disablement
+	Statuses     map[domain.Target]domain.Status
+	Diagnostics  *domain.Diagnostics
+	Resources    *Resources
 }
 
 // Close releases the modpack files.
@@ -85,6 +91,17 @@ func (a Analyzer) Run(ctx context.Context, opts modpack.Options, progress Progre
 	}
 	report(diags, "enrichment", discovery.Enrich(ctx, enrichPlan, in, claims))
 
+	progress.Stage("Buscando estructuras y criaturas desactivadas")
+	var disPlan discovery.Plan[discovery.Disabler]
+	if a.Disablers != nil {
+		if disPlan, err = a.Disablers.Plan(target); err != nil {
+			mp.Close()
+			return nil, err
+		}
+	}
+	dis, failures := discovery.Detect(ctx, disPlan, in)
+	report(diags, "desactivadores", failures)
+
 	progress.Stage("Calculando probabilidades")
 	resolver := loot.NewResolver(res)
 	tables := map[domain.ResourceID]*loot.Table{}
@@ -105,6 +122,11 @@ func (a Analyzer) Run(ctx context.Context, opts modpack.Options, progress Progre
 	result := &Result{
 		Modpack: mp, Sources: claims.Sources(), Owners: claims.Owners(),
 		Structures: world.Structures(), Tables: tables, Diagnostics: diags, Resources: res,
+		Disablements: dis.Items(),
+	}
+	result.Statuses = statuses(dis, result.Structures, result.Owners)
+	for _, d := range disPlan.Steps {
+		result.Disablers = append(result.Disablers, d.Descriptor().ID)
 	}
 	for _, d := range plan.Steps {
 		result.Plan = append(result.Plan, d.Descriptor().ID)
@@ -114,6 +136,47 @@ func (a Analyzer) Run(ctx context.Context, opts modpack.Options, progress Progre
 	}
 	return result, nil
 }
+
+// statuses combines disablements per target. A structure whose biomes are
+// all certainly disabled is certainly disabled too.
+func statuses(dis *discovery.Disablements, structures []worldgen.Structure, owners []domain.OwnerInfo) map[domain.Target]domain.Status {
+	out := map[domain.Target]domain.Status{}
+	for _, d := range dis.Items() {
+		if _, done := out[d.Target]; !done {
+			out[d.Target] = dis.Status(d.Target)
+		}
+	}
+	biomesOf := map[domain.ResourceID][]domain.ResourceID{}
+	for _, s := range structures {
+		biomesOf[s.ID] = s.Biomes
+	}
+	for _, o := range owners {
+		biomesOf[o.Owner.ID] = o.Biomes
+	}
+	for id, biomes := range biomesOf {
+		if len(biomes) == 0 {
+			continue
+		}
+		all := true
+		for _, b := range biomes {
+			if !out[domain.Target{Kind: domain.TargetBiome, ID: b}].Disabled() {
+				all = false
+				break
+			}
+		}
+		if all {
+			t := domain.Target{Kind: domain.TargetStructure, ID: id}
+			st := out[t]
+			st.Certainty = domain.Certainly
+			st.Reasons = append(st.Reasons, "todos sus biomas están desactivados")
+			out[t] = st
+		}
+	}
+	return out
+}
+
+// Status returns the combined disablement status of a target.
+func (r *Result) Status(t domain.Target) domain.Status { return r.Statuses[t] }
 
 func report(diags *domain.Diagnostics, stage string, failures []discovery.Failure) {
 	for _, f := range failures {

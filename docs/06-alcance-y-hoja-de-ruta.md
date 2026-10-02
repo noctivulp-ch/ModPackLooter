@@ -30,9 +30,9 @@ Objetivo: un sitio útil para un modpack real de una sola versión.
 - **NeoForge 1.21.1** (carpetas en singular, componentes de item).
 - Global Loot Modifiers (Forge/NeoForge).
 - Overrides manuales vía archivo de configuración.
-- **Mods y configs que desactivan estructuras o spawns** (datapacks que vacían
-  `structure_set`, Structurify, InControl, KubeJS…), de forma genérica, no por mod.
-  Referencia: el port público del usuario a 1.21.1
+- ✅ **Mundo modelo** (`--world`) y **desactivadores** con dos niveles (ver doc 14).
+  Pendiente: spawns de mobs por bioma, datapacks integrados en jars, criterios de
+  bioma de Structurify. Referencia para 1.21.1: el port público del usuario
   (`gitlab.com/nf1190525/deceasedcraft-revulpe-dev`).
 - Interfaz del sitio traducible (hoy solo los nombres siguen el idioma; la interfaz está
   en español).
