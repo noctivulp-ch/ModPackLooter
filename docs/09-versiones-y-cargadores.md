@@ -4,7 +4,10 @@ Meta: **1.20.1 → 26.3**. Prioridad de cargadores: **Forge y NeoForge**;
 **Fabric** en el futuro. Decisión: [ADR-0006](decisiones/0006-rango-de-versiones-y-cargadores.md).
 
 > Las filas marcadas con *(verificar)* se confirmarán con fixtures reales antes
-> de implementar el adaptador correspondiente.
+> de implementar el adaptador correspondiente. Fuentes oficiales consultadas (sus
+> sitios web están bloqueados en el entorno de desarrollo, pero su código fuente
+> es público en GitHub): `neoforged/Documentation` y `MinecraftForge/Documentation`
+> (rama 1.20.1). La de Fabric (`FabricMC/fabric-docs`) se consultará al soportarlo.
 
 ## Diferencias de formato que importan a la app
 
@@ -28,9 +31,9 @@ forzar con `--mc-version`.
 
 | Aspecto | Forge | NeoForge | Fabric (futuro) |
 |---|---|---|---|
-| Metadatos del mod | `META-INF/mods.toml` | `META-INF/mods.toml` (≤1.20.4) → `META-INF/neoforge.mods.toml` *(verificar desde qué versión)* | `fabric.mod.json` |
-| Global Loot Modifiers | `data/forge/loot_modifiers/global_loot_modifiers.json` + `data/<ns>/loot_modifiers/*.json` | Igual con namespace `neoforge` (en 1.20.1, `forge`) *(verificar)* | No existe; los mods usan eventos en código → no visibles. |
-| Biome modifiers (spawns) | `data/<ns>/forge/biome_modifier/` | `data/<ns>/neoforge/biome_modifier/` *(verificar)* | API de Fabric en código. |
+| Metadatos del mod | `META-INF/mods.toml` | `META-INF/mods.toml` (≤1.20.4) → `META-INF/neoforge.mods.toml` (desde 1.20.5/1.20.6, verificado en la documentación de NeoForge) | `fabric.mod.json` |
+| Global Loot Modifiers | Lista en `data/forge/loot_modifiers/global_loot_modifiers.json` (solo en el namespace `forge`) + cada modificador en `data/<ns>/loot_modifiers/*.json` (verificado, docs Forge 1.20.1) | Igual con `forge` hasta 1.20.4; desde 1.21 la lista va en `data/neoforge/loot_modifiers/global_loot_modifiers.json` (verificado, docs NeoForge) | No existe; los mods usan eventos en código → no visibles. |
+| Biome modifiers (spawns) | `data/<ns>/forge/biome_modifier/` (verificado en el jar de Lost Cities 1.20) | `data/<ns>/neoforge/biome_modifier/` (verificado, docs NeoForge) | API de Fabric en código. |
 | Jar-in-jar | `META-INF/jarjar/` | `META-INF/jarjar/` | `META-INF/jars/` |
 
 > Los mods incluidos dentro de otros (jar-in-jar) también pueden aportar

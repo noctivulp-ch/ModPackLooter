@@ -20,6 +20,7 @@ construye o se usa la app, queda escrita aquí**.
 | [10-proceso-de-pruebas-y-entrega.md](10-proceso-de-pruebas-y-entrega.md) | Ciclo de review con el modpack real, releases y GitHub/GitLab Pages. |
 | [11-lootr.md](11-lootr.md) | Cómo funciona Lootr y cómo se soporta. |
 | [12-arquitectura-de-descubrimiento.md](12-arquitectura-de-descubrimiento.md) | Puerta de enganche: descubridores encadenados, reclamaciones y genérico final. |
+| [13-diseno-del-sitio.md](13-diseno-del-sitio.md) | Diseño visual del sitio con Wulfenite UI, PC primero. |
 | [decisiones/](decisiones/) | Registro de decisiones de arquitectura (ADR). |
 
 ## Cómo documentamos decisiones
@@ -45,3 +46,4 @@ cambia, se crea una nueva que la **reemplaza** y se marca la antigua como
 | [0009](decisiones/0009-estructura-del-repositorio.md) | Monorepo: `app/` (Go) y `mod/` (futuro mod). |
 | [0010](decisiones/0010-descubrimiento-por-ganchos-encadenados.md) | Descubrimiento con piezas enganchables encadenadas y genérico final. |
 | [0011](decisiones/0011-guias-de-diseno-de-interfaces.md) | Guías de referencia: impeccable (sitio) y tui-architect (CLI/TUI). |
+| [0012](decisiones/0012-sitio-con-wulfenite-ui.md) | El sitio usa Wulfenite UI; PC primero, móvil aceptable; español por defecto. |

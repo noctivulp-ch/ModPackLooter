@@ -167,6 +167,20 @@ plan := reg.Plan(target) // filtra por versión/cargador/mods y ordena
 `plan` se puede imprimir (`modpacklooter scan --explain`) para ver qué piezas
 se ejecutarán y en qué orden. Es útil para depurar las reviews.
 
+## 2.7 Implementado (1.20.x)
+
+| Puerta | Plugin | Fase | Aplica a |
+|---|---|---|---|
+| Descubrimiento | `structure-templates` | específica (100) | todas |
+| Descubrimiento | `vanilla-knowledge` | específica (90) | `>=1.20 <1.21` |
+| Descubrimiento | `lostcities` | específica (80) | mod `lostcities` |
+| Descubrimiento | `name-matching` | heurística | todas |
+| Descubrimiento | `generic-by-path` | genérica | todas |
+| Enriquecimiento | `lootr` | específica | `>=1.20 <1.21` + mod `lootr` |
+
+Todos se registran en `app/internal/plugins/plugins.go`. `modpacklooter plan`
+muestra el orden para cualquier versión, cargador y lista de mods.
+
 ## 3. Cómo se aplica SOLID
 
 | Principio | En la puerta de descubrimiento |

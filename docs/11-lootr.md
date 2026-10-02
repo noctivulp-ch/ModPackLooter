@@ -88,3 +88,16 @@ variantes para 1.20.1 y 26.x.
 - Leer los tags `lootr:*` de los datos fusionados en 26.x.
 - Si no hay configuración, se usan los valores por defecto del mod de esa
   versión.
+
+## Implementación (1.20.1, Lootr 0.7.x)
+
+Verificado en el código de la rama `1.20.1`:
+
+- Convierte `minecraft:chest`, `barrel`, `trapped_chest`, `shulker_box`, los cofres de Quark
+  (`convert_quark`), los bloques de los tags `forge:chests/wooden` y `forge:chests/trapped`
+  (`convert_wooden_chests`, `convert_trapped_chests`), `additional_chests` y las vagonetas con
+  cofre (`convert_mineshafts`). **Los dispensadores no se convierten.**
+- *Refresh* y *decay* se aplican por `*_all`, por tabla y por mod. **Por estructura no**: ese
+  código está comentado en la versión 1.20.1.
+- Las claves están en la raíz del TOML en 1.20.1 y agrupadas en secciones (`[conversion]`,
+  `[whitelist]`…) en 1.21+; el lector las busca sin importar la sección.
