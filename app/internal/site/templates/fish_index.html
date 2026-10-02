@@ -4,6 +4,22 @@
   <h1>Pesca</h1>
   <p class="lede">Qué se puede pescar, con qué sistema, en qué bioma y bajo qué condiciones. Elige primero con qué caña pescas.</p>
 </div>
+{{if $f.Spots}}
+<section class="pozo card">
+  <header class="card-head"><h2>Pescar en un bioma</h2><p class="meta">Dimensión › bioma › caña › condición › captura. Cada bioma junta todas las cañas.</p></header>
+  <div class="filters"><label class="sr-only" for="f-spots">Filtrar biomas</label>
+    <input id="f-spots" type="search" class="field filter" data-filter="t-spots" placeholder="Bioma" autocomplete="off"></div>
+  <div class="scroll"><table class="data stack-sm" id="t-spots">
+    <thead><tr><th scope="col">Bioma</th><th scope="col" class="num">Cañas</th><th scope="col" class="num">Capturas</th></tr></thead>
+    {{range $f.SpotGroups}}<tbody>
+      <tr class="group"><th scope="rowgroup" colspan="3">{{.Label}} <span class="count">{{len .Spots}}</span></th></tr>
+      {{range .Spots}}<tr><td><a href="{{rel $.Root .URL}}">{{.Name}}</a></td><td class="num">{{len .Rods}}</td><td class="num">{{.Count}}</td></tr>{{end}}
+    </tbody>{{end}}
+  </table></div>
+  <p class="empty filter-empty" hidden>Ningún bioma coincide.</p>
+</section>
+<h2 class="section-title">Cañas</h2>
+{{end}}
 <div class="grid">
 {{range $f.Sources}}
   <section class="pozo">

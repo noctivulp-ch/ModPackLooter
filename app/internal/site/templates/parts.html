@@ -107,3 +107,161 @@
 {{define "tstack"}}{{$r := .Root}}{{with .S}}<span class="tstack">{{if .Max}}{{.Count}}–{{.Max}}{{else}}{{.Count}}{{end}} × <a href="{{rel $r .Item.URL}}">{{.Item.Name}}</a>{{if .Enchanted}} <span class="meta">(encantado)</span>{{end}}</span>{{end}}{{end}}
 
 {{define "toffer"}}{{$r := .Root}}{{with .O}}{{range $i, $b := .Buy}}{{if $i}} + {{end}}{{template "tstack" (dict "Root" $r "S" $b)}}{{end}} <span aria-label="a cambio de">→</span> {{template "tstack" (dict "Root" $r "S" .Sell)}}{{end}}{{end}}
+
+{{define "sources"}}{{$r := .Root}}
+<div class="scroll">
+<table class="data stack-sm">
+  <thead><tr><th scope="col">Dónde</th><th scope="col" class="w-chance">Probabilidad</th><th scope="col" class="num">Cantidad</th><th scope="col">Detalles</th></tr></thead>
+  <tbody>
+  {{range .Sources}}
+    <tr{{if .Status.Disabled}} class="off"{{end}}>
+      <td>{{if .Owner}}<a href="{{rel $r .Owner.URL}}">{{.Owner.Name}}</a><br><a class="sub" href="{{rel $r .Table.URL}}">{{.Table.Name}}</a>{{else}}<a href="{{rel $r .Table.URL}}">{{.Table.Name}}</a>{{end}}
+        {{template "status" .Status}}</td>
+      <td>{{template "chance" .Chance}}{{if .Approx}} <span class="approx" title="Cálculo aproximado: la tabla usa mecánicas que no se pueden calcular exactas">≈</span>{{end}}{{if .Share}}<br><span class="meta">en el {{pct .Share}} de sus contenedores</span>{{end}}</td>
+      <td class="num">{{count .CountMin .CountMax}}</td>
+      <td>{{template "notes" .Notes}}{{if lt .Confidence 2}} {{template "conf" .Confidence}}{{end}}</td>
+    </tr>
+  {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "tradeRefs"}}{{$r := .Root}}<ul class="links">
+  {{range .Refs}}
+    <li><a href="{{rel $r .Merchant.URL}}">{{.Merchant.Name}}</a>{{if .Level}} <span class="meta">({{.Level}})</span>{{end}}:
+      {{template "toffer" (dict "Root" $r "O" .Offer)}} <span class="meta">· {{if lt .Offer.Chance 1.0}}{{pct .Offer.Chance}} de que lo ofrezca{{else}}siempre lo ofrece{{end}}{{if .Offer.Note}} · {{.Offer.Note}}{{end}}</span></li>
+  {{end}}
+</ul>{{end}}
+
+{{define "haul"}}{{$r := .Root}}{{if .Haul}}
+{{if gt (len .Haul) 12}}<div class="filters"><label class="sr-only" for="f-{{.ID}}">Filtrar objetos</label>
+  <input id="f-{{.ID}}" type="search" class="field filter" data-filter="{{.ID}}" placeholder="Filtrar objetos" autocomplete="off"></div>{{end}}
+<div class="scroll">
+<table class="data stack-sm" id="{{.ID}}">
+  <thead><tr><th scope="col">Objeto</th><th scope="col" class="w-chance">Probabilidad</th><th scope="col" class="num">Hasta</th><th scope="col" class="num hide-sm">{{if .Containers}}Contenedores{{else}}Tablas{{end}}</th></tr></thead>
+  <tbody>
+  {{range .Haul}}<tr>
+    <td><a href="{{rel $r .Item.URL}}">{{.Item.Name}}</a></td>
+    <td>{{template "chance" .Best}}</td>
+    <td class="num">{{count .CountMax .CountMax}}</td>
+    <td class="num hide-sm">{{if .Containers}}{{.Containers}}{{else}}{{len .Tables}}{{end}}</td>
+  </tr>{{end}}
+  </tbody>
+</table>
+</div>
+<p class="empty filter-empty" hidden>Ningún objeto coincide.</p>
+{{else}}<p class="empty">Sus contenedores no dan objetos conocidos.</p>{{end}}{{end}}
+
+{{define "biomeLine"}}{{$r := .Root}}{{if .Biomes}}<p class="biome-line"><span class="meta">Biomas:</span> {{range $i, $b := limit 14 .Biomes}}{{if $i}}, {{end}}<a href="{{rel $r $b.URL}}">{{$b.Name}}</a>{{end}}{{if gt (len .Biomes) 14}} <span class="meta">y {{plus (len .Biomes) -14}} más</span>{{end}}</p>{{else if .Note}}<p class="biome-line meta">{{.Note}}</p>{{else}}<p class="biome-line meta">Biomas desconocidos: la estructura no los declara.</p>{{end}}{{end}}
+
+{{define "creatureWhere"}}{{$r := .Root}}{{with .C}}{{if .Known}}{{.Where}}{{if .LiveStructures}} ({{range $i, $s := .LiveStructures}}{{if lt $i 4}}{{if $i}}, {{end}}{{if $s.URL}}<a href="{{rel $r $s.URL}}">{{$s.Name}}</a>{{else}}{{$s.Name}}{{end}}{{end}}{{end}}{{if gt (len .LiveStructures) 4}}…{{end}}){{end}}{{else}}<span class="warn-text">No se sabe dónde aparece</span>{{end}}{{end}}{{end}}
+
+{{define "tradeTable"}}{{$r := .Root}}
+<div class="scroll">
+<table class="data stack-sm">
+  <thead><tr><th scope="col">Comerciante</th><th scope="col">Intercambio</th><th scope="col" class="w-chance">Probabilidad de que lo ofrezca</th><th scope="col">Dónde sale</th></tr></thead>
+  <tbody>
+  {{range .Refs}}<tr>
+    <td><a href="{{rel $r .Merchant.URL}}">{{.Merchant.Name}}</a>{{if .Level}}<br><span class="meta">nivel {{.Level}}</span>{{end}}</td>
+    <td>{{template "toffer" (dict "Root" $r "O" .Offer)}}{{if .Offer.MaxUses}}<br><span class="meta">{{.Offer.MaxUses}} usos antes de reponer</span>{{end}}{{if .Offer.Note}}<br><span class="meta">{{.Offer.Note}}</span>{{end}}</td>
+    <td>{{template "chance" .Offer.Chance}}</td>
+    <td>{{if .Merchant.Creature}}<a href="{{rel $r .Merchant.Creature.URL}}">{{.Merchant.Creature.Name}}</a>: {{template "creatureWhere" (dict "Root" $r "C" .Merchant.Creature)}}{{else if .Merchant.Location}}{{.Merchant.Location}}{{else}}<span class="warn-text">No se sabe dónde aparece</span>{{end}}
+      {{template "line" (dict "Root" $r "L" .Line)}}</td>
+  </tr>{{end}}
+  </tbody>
+</table>
+</div>{{end}}
+
+{{define "card"}}{{$r := .Root}}{{$it := .It}}{{with .C}}
+<section class="pozo card" id="{{.Key}}" aria-labelledby="c-{{.Key}}">
+  <header class="card-head">
+    <h2 id="c-{{.Key}}">{{.Title}} <span class="count">{{.Rows}} {{if eq .Rows 1}}dato{{else}}datos{{end}}</span></h2>
+    {{if .Best}}<p class="card-best"><span class="num">{{pct .Best}}</span> {{.Unit}} como máximo</p>{{end}}
+  </header>
+
+  {{range .Structures}}
+  <h3 class="grp">{{.Label}}</h3>
+  {{range .Structures}}
+  <div class="place-block">
+    <div class="place-head"><h4><a href="{{rel $r .Owner.URL}}">{{.Owner.Name}}</a></h4>{{template "status" .Owner.Status}}<span class="num">{{pct .Best}}</span></div>
+    {{template "biomeLine" (dict "Root" $r "Biomes" .Owner.Biomes "Note" .Owner.BiomesNote)}}
+    <div class="scroll"><table class="data stack-sm">
+      <thead><tr><th scope="col">Contenedor</th><th scope="col" class="w-chance">Probabilidad por contenedor</th><th scope="col" class="num">Cantidad</th><th scope="col">Detalles</th></tr></thead>
+      <tbody>{{range .Rows}}<tr>
+        <td>{{if .Container}}{{.Container}}{{else}}Contenedor{{end}}<br><a class="sub" href="{{rel $r .Table.URL}}">{{.Table.Name}}</a></td>
+        <td>{{template "chance" .Chance}}{{if .Approx}} <span class="approx" title="Cálculo aproximado">≈</span>{{end}}{{if .Share}}<br><span class="meta">usa esta tabla en el {{pct .Share}} de sus contenedores</span>{{end}}</td>
+        <td class="num">{{count .CountMin .CountMax}}</td>
+        <td>{{template "notes" .Notes}}{{if lt .Confidence 2}} {{template "conf" .Confidence}}{{end}}</td>
+      </tr>{{end}}</tbody>
+    </table></div>
+  </div>
+  {{end}}{{end}}
+
+  {{range .LC}}
+  <h3 class="grp">{{.Label}}</h3>
+  {{range .Buildings}}
+  <div class="place-block">
+    <div class="place-head"><h4><a href="{{rel $r .Building.URL}}">{{.Building.Name}}</a></h4><span class="num">{{pct .Best}}</span></div>
+    <div class="scroll"><table class="data stack-sm">
+      <thead><tr><th scope="col">Parte y contenedor</th><th scope="col" class="w-chance">Probabilidad por contenedor</th><th scope="col" class="num">Cantidad</th><th scope="col">Solo si…</th></tr></thead>
+      <tbody>{{range .Rows}}<tr>
+        <td>{{.Part}}<br><span class="meta">{{.Block}} ×{{.Count}}{{if .Table}} · <a class="sub" href="{{rel $r .Table.URL}}">{{.Table.Name}}</a>{{end}}</span></td>
+        <td>{{template "chance" .Chance}}{{if and .Share (lt .Share 1.0)}}<br><span class="meta">usa esta tabla en el {{pct .Share}} de estos contenedores</span>{{end}}</td>
+        <td class="num">{{count .CountMin .CountMax}}</td>
+        <td>{{if .Detail}}{{.Detail}}{{else}}<span class="meta">siempre</span>{{end}}</td>
+      </tr>{{end}}</tbody>
+    </table></div>
+  </div>
+  {{end}}{{end}}
+
+  {{if .Mobs}}
+  <div class="scroll"><table class="data stack-sm">
+    <thead><tr><th scope="col">Criatura</th><th scope="col" class="w-chance">Probabilidad al matarla</th><th scope="col" class="num">Cantidad</th><th scope="col">Condiciones</th><th scope="col">Dónde sale</th></tr></thead>
+    <tbody>{{range .Mobs}}<tr>
+      <td>{{if .Table.Creature}}<a href="{{rel $r .Table.Creature.URL}}">{{.Table.Creature.Name}}</a>{{else}}<a href="{{rel $r .Table.URL}}">{{.Table.Name}}</a>{{end}} {{template "status" .Status}}</td>
+      <td>{{template "chance" .Chance}}{{if .Approx}} <span class="approx" title="Cálculo aproximado">≈</span>{{end}}</td>
+      <td class="num">{{count .CountMin .CountMax}}</td>
+      <td>{{if .Notes}}{{template "notes" .Notes}}{{else}}<span class="meta">ninguna</span>{{end}}</td>
+      <td>{{if .Table.Creature}}{{template "creatureWhere" (dict "Root" $r "C" .Table.Creature)}}{{else}}<span class="warn-text">No se sabe dónde aparece</span>{{end}}
+        {{template "line" (dict "Root" $r "L" .Line)}}</td>
+    </tr>{{end}}</tbody>
+  </table></div>
+  {{end}}
+
+  {{range .Fish}}
+  <div class="place-block">
+    <div class="place-head"><h4>{{if .URL}}<a href="{{rel $r .URL}}">{{.Name}}</a>{{else}}{{.Name}}{{end}}</h4></div>
+    <div class="scroll"><table class="data stack-sm">
+      <thead><tr><th scope="col">Sistema de pesca</th><th scope="col" class="w-chance">Probabilidad por captura</th><th scope="col">Condiciones</th></tr></thead>
+      <tbody>{{range .Rows}}<tr>
+        <td><a href="{{rel $r .Source.URL}}">{{.Source.Name}}</a><br><span class="meta">{{.Group}}{{if .Catch.Entry.Rarity}} · {{.Catch.Entry.Rarity}}{{end}}</span></td>
+        <td>{{if .Catch.Chance}}{{template "chance" .Catch.Chance}}{{else}}<span class="meta">{{.Catch.Note}}</span>{{end}}{{if .Catch.Bait}}<br><span class="meta">con {{.Catch.Bait}}</span>{{end}}{{if and .Catch.Chance .Catch.Note}}<br><span class="meta">{{.Catch.Note}}</span>{{end}}</td>
+        <td>{{template "fishConds" .Catch.Entry}}</td>
+      </tr>{{end}}</tbody>
+    </table></div>
+  </div>
+  {{end}}
+  {{if .FishTables}}{{if .Fish}}<h3 class="grp">Tablas de pesca</h3>{{end}}{{template "sources" (dict "Root" $r "Sources" .FishTables)}}{{end}}
+
+  {{if .Trades}}{{template "tradeTable" (dict "Root" $r "Refs" .Trades)}}{{end}}
+
+  {{if .NPCs}}
+  <div class="scroll"><table class="data stack-sm">
+    <thead><tr><th scope="col">NPC</th><th scope="col" class="w-chance">Probabilidad al matarlo</th><th scope="col" class="num">Cantidad</th><th scope="col">Dónde sale</th></tr></thead>
+    <tbody>{{range .NPCs}}<tr>
+      <td><a href="{{rel $r .Merchant.URL}}">{{.Merchant.Name}}</a></td>
+      <td>{{template "chance" .Chance}}</td>
+      <td class="num">{{.Count}}</td>
+      <td>{{if .Merchant.Location}}{{.Merchant.Location}}{{else}}<span class="warn-text">No se sabe dónde aparece</span>{{end}}</td>
+    </tr>{{end}}</tbody>
+  </table></div>
+  {{end}}
+
+  {{if .Plain}}{{template "sources" (dict "Root" $r "Sources" .Plain)}}{{end}}
+</section>
+{{end}}{{end}}
+
+{{define "line"}}{{$r := .Root}}{{with .L}}<p class="line"><span class="line-k">Línea completa:</span>
+  {{range $i, $s := .Steps}}{{if $i}}<span class="sep" aria-hidden="true">›</span>{{end}}<span class="step">{{if $s.URL}}<a href="{{rel $r $s.URL}}">{{$s.Label}}</a>{{else}}{{$s.Label}}{{end}}{{if $s.Chance}} <strong>{{pct $s.Chance}}</strong>{{end}}{{if $s.Detail}} <span class="meta">{{$s.Detail}}</span>{{end}}</span>{{end}}
+  <span class="sep" aria-hidden="true">=</span> <strong class="total">{{fine .Total}}</strong> <span class="meta">{{.Unit}}</span></p>{{end}}{{end}}

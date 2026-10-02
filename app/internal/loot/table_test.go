@@ -40,7 +40,7 @@ func drop(t *testing.T, tab *Table, item string) Drop {
 
 func near(a, b float64) bool { return math.Abs(a-b) < 1e-9 }
 
-func resolve(t *testing.T, src memSource, id string) *Table {
+func resolve(t *testing.T, src Source, id string) *Table {
 	t.Helper()
 	tab, ok, err := NewResolver(src).Resolve(domain.MustParseResourceID(id))
 	if err != nil || !ok {
@@ -102,7 +102,8 @@ func TestNestedTablesTagsAndConditions(t *testing.T) {
 	if d := drop(t, tab, "minecraft:ruby"); !near(d.Chance, 0.25) {
 		t.Errorf("rubí = %v", d.Chance)
 	}
-	book := drop(t, tab, "minecraft:book")
+	// A book enchanted by a loot function is an enchanted book.
+	book := drop(t, tab, "minecraft:enchanted_book")
 	if !near(book.Chance, 0.5) || len(book.Notes) != 1 || book.Notes[0] != "enchant_randomly" {
 		t.Errorf("libro = %+v", book)
 	}

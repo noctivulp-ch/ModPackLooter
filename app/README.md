@@ -41,24 +41,35 @@ cual a GitHub Pages o GitLab Pages.
 | `--lang` | Idioma de los nombres (`es_es`, `es_ar`, `en_us`…). Por defecto el del juego (`options.txt`) o `es_es`; si falta una traducción se usa otra variante del mismo idioma y luego inglés. |
 | `--minecraft-jar` | Jar de Minecraft vanilla (o carpeta con `data/`). Se busca solo en CurseForge, Prism y el launcher oficial. |
 | `--world` | Mundo modelo creado con el modpack (carpeta con `level.dat` o nombre dentro de `saves/`): usa sus biomas reales, sus datapacks y sus configs de servidor (p. ej. el perfil de Lost Cities). Sin él se usan los valores por defecto del pack (`defaultconfigs/`). |
-| `--assets-dir` | Carpeta `assets` del launcher, para traducir los nombres vanilla. |
+| `--assets-dir` | Carpeta `assets` del launcher, para traducir los nombres vanilla. Si no se indica se busca junto a la instancia y en las carpetas por defecto de Prism (también Flatpak), CurseForge y el launcher oficial, así que un servidor también sale en español si el launcher está en el mismo equipo. |
 | `--mc-version`, `--loader` | Fuerzan la versión y el cargador si no se detectan. |
 | `--datapack` | Datapack extra (carpeta o `.zip`); repetible. |
 | `--json` | (`scan`, `plan`) salida para scripts. |
 
 Los avisos y el progreso van a *stderr*; el resultado, a *stdout*.
 
-## Qué detecta hoy (Minecraft 1.20.x, Forge/NeoForge)
+## Qué detecta hoy (Minecraft 1.20.x y 1.21.x, Forge/NeoForge)
 
 - Cofres, barriles, vagonetas y arqueología de **plantillas NBT** y **processor lists**
   (`append_loot`) de cualquier mod con estructuras jigsaw.
 - Estructuras vanilla cuyo loot asigna el código (pirámides, minas, fortalezas…).
-- **Lost Cities**: paletas y condiciones de loot con su peso.
 - **Lootr**: loot por jugador, *refresh*, *decay* y exclusiones según su configuración.
 - Heurística por nombre y, al final, todas las tablas restantes clasificadas por su ruta.
 - **Desactivados** (seguro / posible): estructuras sin `structure_set`, biomas inexistentes en el
   mundo modelo, Biome Replacer, Structurify, InControl, perfil de Lost Cities y menciones en
   configs y scripts de KubeJS.
+- **Pestañas por mod** (solo aparecen si el mod está):
+  - **Lost Cities** por capas: perfil › estilo de mundo › estilos de ciudad por bioma ›
+    edificios › contenedores › loot.
+  - **Pesca**: Starcatcher, Tide 2 y la caña vanilla, por bioma y condiciones (cebo, hora,
+    clima, altura, temperatura).
+  - **Tradeos**: aldeanos y comerciante errante (verificados contra el juego), trueque con
+    piglins, NPCs de CustomNPCs con sus drops y tiendas.
+- **Cambios de mods** a loot, drops, tradeos y pesca, en cualquier modpack: reemplazos de
+  tablas, Global Loot Modifiers, LootJS, KubeJS, MoreJS, CraftTweaker, opciones de config y
+  código de los mods.
+- Nombres desde los archivos de idioma, también para cosas sin traducción estándar.
+- Servidores dedicados: `server.jar` y el mundo de `server.properties` se detectan solos.
 
 ## Desarrollo
 

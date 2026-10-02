@@ -120,6 +120,7 @@ type Worldgen interface {
 	Structures() []worldgen.Structure
 	StructureLoot(s worldgen.Structure) ([]worldgen.Found, []domain.ResourceID)
 	TemplatesWithLoot() []*worldgen.Template
+	Template(id domain.ResourceID) (*worldgen.Template, bool)
 	BiomeTag(id domain.ResourceID) []domain.ResourceID
 	StructureSets() map[domain.ResourceID][]domain.ResourceID
 	HasStructureSets() bool

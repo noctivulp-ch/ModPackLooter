@@ -369,15 +369,8 @@ func (mp *Modpack) loadVanilla(explicit string, diags *domain.Diagnostics) resou
 	v := mp.MCVersion.String()
 	candidates := []string{explicit}
 	if explicit == "" {
-		candidates = []string{
-			// Dedicated server: the vanilla server jar next to mods/, or the
-			// "-extra" jar (data and assets) the Forge installer leaves in libraries/.
-			filepath.Join(mp.Root, "server.jar"),
-			filepath.Join(mp.Root, "minecraft_server."+v+".jar"),
-		}
-		extras, _ := filepath.Glob(filepath.Join(mp.Root, "libraries", "net", "minecraft", "server", v+"*", "server-"+v+"*-extra.jar"))
-		candidates = append(candidates, extras...)
-		candidates = append(candidates,
+		candidates = append(serverJars(mp.Root, v),
+			// Client installs.
 			filepath.Join(mp.Root, "versions", v, v+".jar"),
 			// CurseForge: <cf>/minecraft/Instances/<name> -> <cf>/minecraft/Install/versions
 			filepath.Join(mp.Root, "..", "..", "Install", "versions", v, v+".jar"),
@@ -387,6 +380,9 @@ func (mp *Modpack) loadVanilla(explicit string, diags *domain.Diagnostics) resou
 			filepath.Join(userHome(), ".minecraft", "versions", v, v+".jar"),
 		)
 	}
+	// Jars without data (a loader's launcher renamed server.jar) are only
+	// reported when no candidate has the data.
+	var skipped []string
 	for _, c := range candidates {
 		if c == "" {
 			continue
@@ -414,13 +410,67 @@ func (mp *Modpack) loadVanilla(explicit string, diags *domain.Diagnostics) resou
 		mp.closers = append(mp.closers, zp.Close)
 		pack := unwrapBundler(zp, diags)
 		if !hasVanillaData(pack) {
-			diags.Add(domain.LevelWarning, stage, c, "el jar no contiene los datos de Minecraft (data/minecraft/); se ignora")
+			skipped = append(skipped, c)
 			continue
 		}
 		diags.Add(domain.LevelInfo, stage, c, "datos vanilla de Minecraft %s cargados", v)
 		return pack
 	}
+	for _, c := range skipped {
+		diags.Add(domain.LevelWarning, stage, c, "el jar no contiene los datos de Minecraft (data/minecraft/); se ignora")
+	}
 	return nil
+}
+
+// serverJars lists where dedicated servers keep the vanilla server jar (or
+// a jar with its data), most specific first:
+//   - official server: server.jar (a bundler since 1.18) and, once run,
+//     versions/<v>/server-<v>.jar;
+//   - Forge 1.17+, NeoForge 1.20.1–1.21.1 and hybrids (Mohist, Arclight…):
+//     libraries/net/minecraft/server/<v>-<mcp>/server-<v>-<mcp>-extra.jar
+//     (the server's data and assets, without classes);
+//   - NeoForge (newer installers): libraries/net/minecraft/server/<v>/
+//     server-<v>.jar and the patched libraries/net/neoforged/
+//     minecraft-server-patched/<ver>/*.jar;
+//   - Fabric and Quilt: .fabric/server/<v>-server.jar, .quilt/server/… and
+//     their remapped jars;
+//   - Paper, Purpur, Folia: cache/mojang_<v>.jar and versions/<v>/*.jar;
+//   - any other jar in the server folder (renamed launchers are skipped
+//     because they have no data).
+func serverJars(root, v string) []string {
+	out := []string{
+		filepath.Join(root, "server.jar"),
+		filepath.Join(root, "minecraft_server."+v+".jar"),
+	}
+	globs := []string{
+		filepath.Join(root, "libraries", "net", "minecraft", "server", v+"*", "server-"+v+"*-extra.jar"),
+		filepath.Join(root, "libraries", "net", "minecraft", "server", v, "server-"+v+".jar"),
+		filepath.Join(root, "libraries", "net", "neoforged", "minecraft-server-patched", "*", "minecraft-server-patched-*.jar"),
+		filepath.Join(root, "versions", v, "server-"+v+".jar"),
+		filepath.Join(root, "versions", v, "*.jar"),
+		filepath.Join(root, "cache", "mojang_"+v+".jar"),
+		filepath.Join(root, ".fabric", "server", v+"-server.jar"),
+		filepath.Join(root, ".fabric", "server", "*.jar"),
+		filepath.Join(root, ".fabric", "remappedJars", "minecraft-"+v+"*", "*.jar"),
+		filepath.Join(root, ".quilt", "server", "*.jar"),
+		filepath.Join(root, ".quilt", "remappedJars", "minecraft-"+v+"*", "*.jar"),
+		filepath.Join(root, "*.jar"),
+	}
+	seen := map[string]bool{}
+	for _, o := range out {
+		seen[o] = true
+	}
+	for _, g := range globs {
+		matches, _ := filepath.Glob(g)
+		sort.Strings(matches)
+		for _, m := range matches {
+			if !seen[m] {
+				seen[m] = true
+				out = append(out, m)
+			}
+		}
+	}
+	return out
 }
 
 func userHome() string {

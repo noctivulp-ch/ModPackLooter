@@ -27,8 +27,10 @@ func (mp *Modpack) loadAssetLangs(explicit, lang string, diags *domain.Diagnosti
 			filepath.Join(mp.Root, "assets"),
 			filepath.Join(mp.Root, "..", "..", "Install", "assets"), // CurseForge
 			filepath.Join(mp.Root, "..", "..", "..", "assets"),      // Prism / MultiMC
-			filepath.Join(userHome(), ".minecraft", "assets"),       // launcher oficial
 		}
+		// Default launcher folders, so a dedicated server folder (which has
+		// no assets) still gets vanilla translations.
+		candidates = append(candidates, launcherAssetDirs()...)
 	}
 	for _, dir := range candidates {
 		if dir == "" {
@@ -73,4 +75,26 @@ func (mp *Modpack) loadAssetLangs(explicit, lang string, diags *domain.Diagnosti
 	}
 	diags.Add(domain.LevelInfo, stage, "", "no se encontraron las traducciones vanilla (%s) en los assets del launcher; los objetos vanilla saldrán en inglés. Usa --assets-dir <carpeta assets>", lang)
 	return nil
+}
+
+// launcherAssetDirs lists the default assets folders of the usual launchers
+// (Prism, CurseForge, official) on Linux, Windows and macOS.
+func launcherAssetDirs() []string {
+	home := userHome()
+	appData := os.Getenv("APPDATA")
+	var out []string
+	add := func(parts ...string) {
+		if parts[0] != "" {
+			out = append(out, filepath.Join(parts...))
+		}
+	}
+	add(home, ".local", "share", "PrismLauncher", "assets")
+	add(home, ".var", "app", "org.prismlauncher.PrismLauncher", "data", "PrismLauncher", "assets")
+	add(appData, "PrismLauncher", "assets")
+	add(home, "Library", "Application Support", "PrismLauncher", "assets")
+	add(home, "curseforge", "minecraft", "Install", "assets")
+	add(home, ".minecraft", "assets")
+	add(appData, ".minecraft", "assets")
+	add(home, "Library", "Application Support", "minecraft", "assets")
+	return out
 }

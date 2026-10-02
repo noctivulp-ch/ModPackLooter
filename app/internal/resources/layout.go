@@ -33,6 +33,9 @@ const (
 	TypeTideFish        = "fishing/fish"
 	TypeTideLoot        = "fishing/loot"
 	TypeTideCrate       = "fishing/crates"
+	TypeEnchantment     = "enchantment" // data-driven since 1.21
+	TypeEnchantmentTag  = "tags/enchantment"
+	TypeInstrumentTag   = "tags/instrument"
 )
 
 // Layout maps the folder names of one range of Minecraft versions to the
@@ -86,6 +89,9 @@ func commonFolders() map[string]string {
 		"fishing/fish":              TypeTideFish,
 		"fishing/loot":              TypeTideLoot,
 		"fishing/crates":            TypeTideCrate,
+		"enchantment":               TypeEnchantment,
+		"tags/enchantment":          TypeEnchantmentTag,
+		"tags/instrument":           TypeInstrumentTag,
 	}
 }
 
