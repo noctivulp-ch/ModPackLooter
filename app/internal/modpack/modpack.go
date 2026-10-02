@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/EnierAragon/ModPackLooter/app/internal/discovery"
 	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
 	"github.com/EnierAragon/ModPackLooter/app/internal/mcversion"
 	"github.com/EnierAragon/ModPackLooter/app/internal/names"
@@ -50,6 +51,7 @@ type Modpack struct {
 	HasVanilla    bool
 
 	closers []func() error
+	jars    []discovery.Jar
 }
 
 // Close releases every open archive.
@@ -68,6 +70,25 @@ func (m *Modpack) ModIDs() map[string]bool {
 		out[mod.ID] = true
 	}
 	return out
+}
+
+// Jars lists the mod jars of the mods folder.
+func (m *Modpack) Jars() []discovery.Jar { return m.jars }
+
+// ModName names the mod shipped in a pack (a jar file, or a nested jar
+// "outer.jar!/inner.jar"); other packs keep their name.
+func (m *Modpack) ModName(pack string) string {
+	for _, md := range m.Mods {
+		if md.File == pack && md.Name != "" {
+			return md.Name
+		}
+	}
+	for _, md := range m.Mods {
+		if md.File == pack {
+			return md.ID
+		}
+	}
+	return pack
 }
 
 // ReadFile reads a file relative to the game directory (e.g. config files).
@@ -187,6 +208,7 @@ func (mp *Modpack) loadMods(diags *domain.Diagnostics) ([]resources.Pack, error)
 			continue
 		}
 		mp.closers = append(mp.closers, zp.Close)
+		mp.jars = append(mp.jars, discovery.Jar{File: name, Pack: zp})
 		packs = append(packs, mp.registerJar(zp, name, diags, 0)...)
 	}
 	return packs, nil

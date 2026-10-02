@@ -5,7 +5,6 @@ package main
 import (
 	"os"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/analysis"
 	"github.com/EnierAragon/ModPackLooter/app/internal/cli"
 	"github.com/EnierAragon/ModPackLooter/app/internal/plugins"
 )
@@ -16,7 +15,7 @@ var version = "dev"
 func main() {
 	deps := cli.Deps{
 		Version:  version,
-		Analyzer: analysis.Analyzer{Discoverers: plugins.Discoverers(), Enrichers: plugins.Enrichers(), Disablers: plugins.Disablers()},
+		Analyzer: plugins.Analyzer(),
 	}
 	os.Exit(cli.Main(deps, os.Args[1:]))
 }

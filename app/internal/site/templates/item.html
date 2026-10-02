@@ -21,6 +21,12 @@
   </ul>
 </section>
 {{end}}
+{{if $it.Changes}}
+<section class="pozo">
+  <h2>Cambios de mods</h2>
+  <ul class="links">{{range $it.Changes}}<li>{{template "change" (dict "Root" $.Root "C" .)}} <span class="meta">en</span> {{if .Table}}<a href="{{rel $.Root .Table.URL}}">{{.Target}}</a>{{else}}{{.Target}}{{end}}</li>{{end}}</ul>
+</section>
+{{end}}
 {{if $it.Sources}}
 <section class="pozo">
   <h2>Dónde conseguirlo</h2>

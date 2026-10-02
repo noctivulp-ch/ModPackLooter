@@ -34,10 +34,12 @@ func (f fake) Discover(_ context.Context, _ discovery.Input, out *discovery.Clai
 
 type memIndex []domain.ResourceID
 
-func (m memIndex) LootTables() []domain.ResourceID                       { return m }
-func (m memIndex) ReadJSON(string, domain.ResourceID, any) (bool, error) { return false, nil }
-func (m memIndex) IDs(string) []domain.ResourceID                        { return nil }
-func (m memIndex) Tag(string, domain.ResourceID) []domain.ResourceID     { return nil }
+func (m memIndex) LootTables() []domain.ResourceID                          { return m }
+func (m memIndex) ReadJSON(string, domain.ResourceID, any) (bool, error)    { return false, nil }
+func (m memIndex) IDs(string) []domain.ResourceID                           { return nil }
+func (m memIndex) Tag(string, domain.ResourceID) []domain.ResourceID        { return nil }
+func (m memIndex) Providers(string, domain.ResourceID) []discovery.Provider { return nil }
+func (m memIndex) Lang(string) map[string]string                            { return nil }
 
 func target(version string, loader domain.Loader, mods ...string) discovery.Target {
 	t := discovery.Target{Version: mcversion.MustParse(version), Loader: loader, Mods: map[string]bool{}}

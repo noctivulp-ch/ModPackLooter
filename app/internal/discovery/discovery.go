@@ -107,6 +107,12 @@ type ResourceIndex interface {
 	IDs(typ string) []domain.ResourceID
 	// Tag resolves a tag of a tag type (e.g. "tags/block"), merged across packs.
 	Tag(typ string, id domain.ResourceID) []domain.ResourceID
+	// Providers lists every pack that ships the resource, lowest priority
+	// first (the last one is the effective file).
+	Providers(typ string, id domain.ResourceID) []Provider
+	// Lang returns the merged translations of a language (for telling items
+	// from other ids).
+	Lang(code string) map[string]string
 }
 
 // Worldgen is the structure data discoverers need.
@@ -130,6 +136,11 @@ type Files interface {
 	Level() *world.World
 	// Root is the game folder, for plugins that scan config or script folders.
 	RootDir() string
+	// Jars lists the mod jars (not nested ones).
+	Jars() []Jar
+	// ModName names the mod shipped by a pack (jar file name), or returns
+	// the pack name.
+	ModName(pack string) string
 }
 
 // Input is everything a plugin may read.

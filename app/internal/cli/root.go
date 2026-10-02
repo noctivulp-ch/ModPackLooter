@@ -164,6 +164,7 @@ type scanSummary struct {
 	Disabled      int                  `json:"disabled"`
 	Possibly      int                  `json:"possiblyDisabled"`
 	Disablements  []domain.Disablement `json:"disablements"`
+	Changes       []domain.Change      `json:"changes"`
 	LangSource    string               `json:"langSource"`
 	Loader        string               `json:"loader"`
 	Mods          int                  `json:"mods"`
@@ -182,7 +183,7 @@ func summarize(res *analysis.Result) scanSummary {
 	s := scanSummary{
 		Root: res.Modpack.Root, MCVersion: res.Modpack.MCVersion.String(), VersionSource: res.Modpack.VersionSource,
 		Lang: res.Modpack.Lang, LangSource: res.Modpack.LangSource,
-		Disablers: res.Disablers, Disablements: res.Disablements,
+		Disablers: res.Disablers, Disablements: res.Disablements, Changes: res.Changes,
 		Loader: string(res.Modpack.Loader), Mods: len(res.Modpack.Mods), HasVanilla: res.Modpack.HasVanilla,
 		LootTables: len(res.Tables), Structures: len(res.Structures), Sources: len(res.Sources),
 		ByConfidence: map[string]int{}, ByDiscoverer: map[string]int{},
@@ -265,6 +266,20 @@ func writeSummary(w io.Writer, s scanSummary) {
 			mark = "⊘"
 		}
 		fmt.Fprintf(w, "  %s %-9s %-40s %s\n", mark, t.Kind, t.ID, strings.Join(r.reasons, "; "))
+	}
+	sure, maybe := 0, 0
+	byDetector := map[string]int{}
+	for _, c := range s.Changes {
+		if c.Certainty == domain.Certainly {
+			sure++
+		} else {
+			maybe++
+		}
+		byDetector[c.By]++
+	}
+	fmt.Fprintf(w, "\nCambios de mods a las fuentes: %d seguros · %d posibles\n", sure, maybe)
+	for _, k := range sortedKeys(byDetector) {
+		fmt.Fprintf(w, "  %-22s %d\n", k, byDetector[k])
 	}
 	fmt.Fprintln(w)
 }

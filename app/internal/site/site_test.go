@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/analysis"
 	"github.com/EnierAragon/ModPackLooter/app/internal/modpack"
 	"github.com/EnierAragon/ModPackLooter/app/internal/nbt"
 	"github.com/EnierAragon/ModPackLooter/app/internal/plugins"
@@ -38,7 +37,7 @@ func buildSite(t *testing.T) string {
 		"data/towers/loot_tables/blocks/brick.json":     `{"type":"minecraft:block","pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"towers:brick"}]}]}`,
 		"assets/towers/lang/es_es.json":                 `{"item.towers.key":"Llave <rúnica>","biome.towers.ash_fields":"Campos de ceniza"}`,
 	})
-	res, err := analysis.Analyzer{Discoverers: plugins.Discoverers(), Enrichers: plugins.Enrichers(), Disablers: plugins.Disablers()}.
+	res, err := plugins.Analyzer().
 		Run(context.Background(), modpack.Options{Path: in.Root}, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -155,7 +154,7 @@ func TestLostCitiesTab(t *testing.T) {
 		"data/lostcities/loot_tables/chests/rare.json":                table,
 		"assets/lostcities/lang/es_es.json":                           `{"lostcities.citystyle.citystyle_desert":"Ciudad del desierto","lostcities.advancement.title.shop":"Tienda de la esquina"}`,
 	})
-	res, err := analysis.Analyzer{Discoverers: plugins.Discoverers(), Enrichers: plugins.Enrichers(), Disablers: plugins.Disablers()}.
+	res, err := plugins.Analyzer().
 		Run(context.Background(), modpack.Options{Path: in.Root}, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -243,7 +242,7 @@ func TestFishingTab(t *testing.T) {
 			 "conditions":[{"condition":"minecraft:entity_properties","entity":"this","predicate":{"type_specific":{"type":"fishing_hook","in_open_water":true}}}]},
 			{"type":"minecraft:loot_table","name":"minecraft:gameplay/fishing/fish","weight":85,"quality":-1}]}]}`,
 	})
-	res, err := analysis.Analyzer{Discoverers: plugins.Discoverers(), Enrichers: plugins.Enrichers(), Disablers: plugins.Disablers()}.
+	res, err := plugins.Analyzer().
 		Run(context.Background(), modpack.Options{Path: in.Root}, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -310,6 +309,11 @@ func TestNoFishingTabWithoutFishing(t *testing.T) {
 
 func TestEnchantNotes(t *testing.T) {
 	in := testkit.NewInstance(t)
+	in.Jar("mods/a-vanilla.jar", testkit.Files{
+		"META-INF/mods.toml": testkit.ModsToml("avanilla", "Vanilla data", "[1.20.1,1.21)"),
+		"data/minecraft/loot_tables/gameplay/fishing/treasure.json": `{"type":"minecraft:fishing","pools":[{"rolls":1,"entries":[
+			{"type":"minecraft:item","name":"minecraft:book","functions":[{"function":"minecraft:enchant_with_levels","levels":30.0,"treasure":true}]}]}]}`,
+	})
 	in.Jar("mods/dctweaks.jar", testkit.Files{
 		"META-INF/mods.toml": testkit.ModsToml("deceasedcraft", "DeceasedCraft", "[1.20.1,1.21)"),
 		// DCTweaks overrides the vanilla fishing treasure without treasure enchantments.
@@ -319,7 +323,7 @@ func TestEnchantNotes(t *testing.T) {
 			{"type":"minecraft:item","name":"minecraft:fishing_rod","functions":[{"function":"minecraft:enchant_randomly","enchantments":["minecraft:mending","minecraft:lure"]}]}]}]}`,
 		"assets/minecraft/lang/es_es.json": `{"enchantment.minecraft.mending":"Reparación","enchantment.minecraft.frost_walker":"Paso helado","enchantment.minecraft.lure":"Atracción"}`,
 	})
-	res, err := analysis.Analyzer{Discoverers: plugins.Discoverers(), Enrichers: plugins.Enrichers(), Disablers: plugins.Disablers()}.
+	res, err := plugins.Analyzer().
 		Run(context.Background(), modpack.Options{Path: in.Root}, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -342,5 +346,13 @@ func TestEnchantNotes(t *testing.T) {
 		if !strings.Contains(page, want) {
 			t.Errorf("la tabla de tesoro no contiene %q", want)
 		}
+	}
+	// Overriding a table is a change: listed in "Cambios de mods".
+	changes, err := os.ReadFile(filepath.Join(out, "cambios/index.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(changes), "DeceasedCraft") {
+		t.Error("la página de cambios debería nombrar al mod que reemplaza la tabla")
 	}
 }
