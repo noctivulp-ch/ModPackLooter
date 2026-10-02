@@ -1,0 +1,53 @@
+{{define "chance"}}<span class="chance"><span class="meter" aria-hidden="true"><span style="--w: {{width .}}"></span></span><span class="num">{{pct .}}</span></span>{{end}}
+
+{{define "conf"}}<span class="conf conf-{{confClass .}}" title="{{confHelp .}}"><span aria-hidden="true">{{if eq (confClass .) "ok"}}✓{{else if eq (confClass .) "known"}}◆{{else if eq (confClass .) "warn"}}≈{{else}}?{{end}}</span> {{conf .}}</span>{{end}}
+
+{{define "notes"}}{{if .}}<ul class="notes">{{range .}}<li>{{.}}</li>{{end}}</ul>{{end}}{{end}}
+
+{{define "biomeChips"}}{{if .Biomes}}<ul class="chips">{{range .Biomes}}<li><a href="{{rel $.Root .URL}}">{{.Name}}</a></li>{{end}}</ul>{{end}}{{end}}
+
+{{define "drops"}}
+<div class="scroll">
+<table class="data">
+  <thead><tr><th scope="col">Objeto</th><th scope="col" class="w-chance">Probabilidad por contenedor</th><th scope="col">Cantidad</th><th scope="col">Notas</th></tr></thead>
+  <tbody>
+  {{range .Drops}}
+    <tr>
+      <td><a href="{{rel $.Root .Item.URL}}">{{.Item.Name}}</a></td>
+      <td>{{template "chance" .Chance}}{{if .Approx}} <span class="approx" title="Cálculo aproximado">≈</span>{{end}}</td>
+      <td class="num">{{count .CountMin .CountMax}}</td>
+      <td>{{template "notes" .Notes}}</td>
+    </tr>
+  {{else}}
+    <tr><td colspan="4" class="empty">Esta tabla no da objetos (puede estar vacía o depender de datos que la app no lee).</td></tr>
+  {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "use"}}
+<section class="pozo">
+  <header class="pozo-head">
+    <h3><a href="{{rel .Root .Use.Table.URL}}">{{.Use.Table.Name}}</a></h3>
+    <p class="meta">
+      {{kind .Use.Kind}}{{if .Use.Container}} · {{short .Use.Container}}{{end}}
+      {{if .Use.Share}} · se usa en el {{pct .Use.Share}} de estos contenedores{{end}}
+      · {{template "conf" .Use.Confidence}} {{template "status" .Use.Status}}
+    </p>
+    {{template "notes" .Use.Notes}}
+  </header>
+  {{template "drops" (dict "Root" .Root "Drops" .Use.Table.Drops)}}
+  {{if .Use.Evidence}}<details class="evidence"><summary>Cómo se encontró</summary><ul>{{range .Use.Evidence}}<li>{{.}}</li>{{end}}</ul><p class="id">{{.Use.Table.ID}}</p></details>{{end}}
+</section>
+{{end}}
+
+{{define "status"}}{{if .Certainty}}<span class="dis {{if .Disabled}}dis-cert{{else}}dis-maybe{{end}}" title="{{join .Reasons}}"><span aria-hidden="true">{{if .Disabled}}⊘{{else}}⚠{{end}}</span> {{if .Disabled}}Desactivado{{else}}Posiblemente desactivado{{end}}</span>{{end}}{{end}}
+
+{{define "statusBox"}}{{if .Certainty}}
+<section class="pozo pozo-dis">
+  <h2>{{template "status" .}}</h2>
+  <ul class="plain">{{range .Reasons}}<li>{{.}}</li>{{end}}</ul>
+  {{if not .Disabled}}<p class="meta">Es un aviso: la app encontró indicios, pero no puede confirmarlo.</p>{{end}}
+</section>
+{{end}}{{end}}

@@ -1,0 +1,55 @@
+{{define "content"}}
+{{$it := .Data}}
+<nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "objetos/"}}">Objetos</a> / <a href="{{rel .Root $it.Mod.URL}}">{{$it.Mod.Name}}</a></nav>
+<div class="page-head">
+  <h1>{{$it.Name}}</h1>
+  <p class="id">{{$it.ID}}</p>
+</div>
+{{if $it.Unobtainable}}<section class="pozo pozo-dis"><p><strong>No se puede conseguir como loot en este modpack:</strong> todas sus fuentes están desactivadas. Abajo se muestran igualmente.</p></section>{{end}}
+
+<section class="pozo">
+  <h2>Dónde conseguirlo</h2>
+  <ol class="best">
+  {{range limit 3 $it.Sources}}
+    <li>
+      {{template "chance" .Effective}}
+      <span class="best-where">
+        {{if .Owner}}<a href="{{rel $.Root .Owner.URL}}">{{.Owner.Name}}</a>{{else}}<a href="{{rel $.Root .Table.URL}}">{{.Table.Name}}</a>{{end}}
+        <span class="meta">{{kind .Kind}} · {{count .CountMin .CountMax}} unid. · {{template "conf" .Confidence}} {{template "status" .Status}}</span>
+      </span>
+    </li>
+  {{end}}
+  </ol>
+</section>
+
+<section class="pozo">
+  <h2>Todas las fuentes <span class="count">{{len $it.Sources}}</span></h2>
+  <div class="scroll">
+  <table class="data">
+    <thead><tr><th scope="col">Fuente</th><th scope="col">Tipo</th><th scope="col" class="w-chance">Probabilidad por contenedor</th><th scope="col">Cantidad</th><th scope="col">Confianza</th><th scope="col">Notas</th></tr></thead>
+    <tbody>
+    {{range $it.Sources}}
+      <tr{{if .Status.Disabled}} class="off"{{end}}>
+        <td>
+          {{if .Owner}}<a href="{{rel $.Root .Owner.URL}}">{{.Owner.Name}}</a><br>{{end}}
+          {{template "status" .Status}}
+          <a class="sub" href="{{rel $.Root .Table.URL}}">{{.Table.Name}}</a>
+        </td>
+        <td>{{kind .Kind}}</td>
+        <td>{{template "chance" .Chance}}{{if .Approx}} <span class="approx" title="Cálculo aproximado">≈</span>{{end}}{{if .Share}}<br><span class="meta">en el {{pct .Share}} de sus contenedores</span>{{end}}</td>
+        <td class="num">{{count .CountMin .CountMax}}</td>
+        <td>{{template "conf" .Confidence}}</td>
+        <td>{{template "notes" .Notes}}</td>
+      </tr>
+    {{end}}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="pozo">
+  <h2>Biomas donde puede aparecer</h2>
+  {{if $it.Biomes}}{{template "biomeChips" (dict "Root" .Root "Biomes" $it.Biomes)}}
+  {{else}}<p class="empty">Sus fuentes no están ligadas a biomas conocidos (criaturas, pesca o tablas sin origen).</p>{{end}}
+</section>
+{{end}}

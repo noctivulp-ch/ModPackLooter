@@ -1,0 +1,19 @@
+{{define "content"}}
+{{$o := .Data}}
+<nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "estructuras/"}}">Estructuras</a> / <a href="{{rel .Root $o.Mod.URL}}">{{$o.Mod.Name}}</a></nav>
+<div class="page-head">
+  <h1>{{$o.Name}}</h1>
+  <p class="id">{{$o.ID}}</p>
+</div>
+
+{{template "statusBox" $o.Status}}
+<section class="pozo">
+  <h2>Dónde aparece</h2>
+  {{if $o.BiomesNote}}<p>{{$o.BiomesNote}}</p>{{end}}
+  {{if $o.Biomes}}{{template "biomeChips" (dict "Root" .Root "Biomes" $o.Biomes)}}
+  {{else if not $o.BiomesNote}}<p class="empty">No se conocen sus biomas: la estructura no los declara en sus datos.</p>{{end}}
+</section>
+
+<h2 class="section-title">Loot <span class="count">{{len $o.Uses}} {{if eq (len $o.Uses) 1}}tabla{{else}}tablas{{end}}</span></h2>
+{{range $o.Uses}}{{template "use" (dict "Root" $.Root "Use" .)}}{{end}}
+{{end}}
