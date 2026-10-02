@@ -324,6 +324,7 @@ var funcs = template.FuncMap{
 		return []domain.Confidence{domain.ConfidenceExact, domain.ConfidenceKnown, domain.ConfidenceManual, domain.ConfidenceHeuristic, domain.ConfidenceUnknown}
 	},
 	"short": func(s string) string { return strings.TrimPrefix(s, "minecraft:") },
+	"join":  func(s []string) string { return strings.Join(s, " · ") },
 	"limit": func(n int, s any) any {
 		switch v := s.(type) {
 		case []*ItemSource:

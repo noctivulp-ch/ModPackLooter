@@ -40,6 +40,7 @@ modpacklooter init --ci gitlab
 | `--download-vanilla` | Descarga el jar vanilla del manifiesto oficial de Mojang y lo guarda en caché. |
 | `--loader forge\|neoforge\|fabric` | Fuerza el cargador si no se detecta. |
 | `--lang <código>` | Idioma de los nombres (`es_es`, `es_ar`, `en_us`…). Por defecto el del juego (`options.txt`) o `es_es`. Respaldo: idioma pedido → variante principal (`es_es`) → otras variantes → `en_us`. |
+| `--world <mundo>` | Mundo modelo creado con el modpack (carpeta con `level.dat` o nombre en `saves/`): usa sus biomas, datapacks y configs de servidor. |
 | `--assets-dir <ruta>` | Carpeta `assets` del launcher: de ahí salen las traducciones vanilla, que no vienen en el jar. |
 | `--metal oro\|jade\|peltre` | Acento visual del sitio (Wulfenite UI). |
 | `--config <archivo>` | Archivo de configuración del proyecto. |

@@ -49,6 +49,7 @@ type packFlags struct {
 	assetsDir    string
 	datapacks    []string
 	lang         string
+	world        string
 }
 
 func (f *packFlags) register(cmd *cobra.Command) {
@@ -57,13 +58,14 @@ func (f *packFlags) register(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&f.minecraftJar, "minecraft-jar", "", "jar de Minecraft vanilla (o carpeta de datos) para incluir el loot vanilla")
 	cmd.Flags().StringSliceVar(&f.datapacks, "datapack", nil, "datapack extra (carpeta o .zip); repetible")
 	cmd.Flags().StringVar(&f.assetsDir, "assets-dir", "", "carpeta assets del launcher, para traducir los nombres vanilla")
+	cmd.Flags().StringVar(&f.world, "world", "", "mundo modelo creado con el modpack (carpeta con level.dat o nombre dentro de saves/): usa sus opciones de generación")
 	cmd.Flags().StringVar(&f.lang, "lang", "", "idioma de los nombres (es_es, es_ar, en_us…); por defecto el del juego (options.txt) o es_es")
 }
 
 func (f *packFlags) options(path string, diags *domain.Diagnostics) modpack.Options {
 	return modpack.Options{
 		Path: path, MCVersion: f.mcVersion, Loader: f.loader, MinecraftJar: f.minecraftJar,
-		Datapacks: f.datapacks, AssetsDir: f.assetsDir, Lang: f.lang, Diagnostics: diags,
+		Datapacks: f.datapacks, AssetsDir: f.assetsDir, Lang: f.lang, World: f.world, Diagnostics: diags,
 	}
 }
 
@@ -153,32 +155,49 @@ func newScanCommand(deps Deps) *cobra.Command {
 }
 
 type scanSummary struct {
-	Root          string              `json:"root"`
-	MCVersion     string              `json:"mcVersion"`
-	VersionSource string              `json:"versionSource"`
-	Lang          string              `json:"lang"`
-	LangSource    string              `json:"langSource"`
-	Loader        string              `json:"loader"`
-	Mods          int                 `json:"mods"`
-	HasVanilla    bool                `json:"vanilla"`
-	LootTables    int                 `json:"lootTables"`
-	Structures    int                 `json:"structures"`
-	Sources       int                 `json:"sources"`
-	ByConfidence  map[string]int      `json:"byConfidence"`
-	ByDiscoverer  map[string]int      `json:"byDiscoverer"`
-	Plan          []string            `json:"plan"`
-	Enrichments   []string            `json:"enrichments"`
-	Diagnostics   []domain.Diagnostic `json:"diagnostics"`
+	Root          string               `json:"root"`
+	MCVersion     string               `json:"mcVersion"`
+	VersionSource string               `json:"versionSource"`
+	Lang          string               `json:"lang"`
+	World         string               `json:"world,omitempty"`
+	Disablers     []string             `json:"disablers"`
+	Disabled      int                  `json:"disabled"`
+	Possibly      int                  `json:"possiblyDisabled"`
+	Disablements  []domain.Disablement `json:"disablements"`
+	LangSource    string               `json:"langSource"`
+	Loader        string               `json:"loader"`
+	Mods          int                  `json:"mods"`
+	HasVanilla    bool                 `json:"vanilla"`
+	LootTables    int                  `json:"lootTables"`
+	Structures    int                  `json:"structures"`
+	Sources       int                  `json:"sources"`
+	ByConfidence  map[string]int       `json:"byConfidence"`
+	ByDiscoverer  map[string]int       `json:"byDiscoverer"`
+	Plan          []string             `json:"plan"`
+	Enrichments   []string             `json:"enrichments"`
+	Diagnostics   []domain.Diagnostic  `json:"diagnostics"`
 }
 
 func summarize(res *analysis.Result) scanSummary {
 	s := scanSummary{
 		Root: res.Modpack.Root, MCVersion: res.Modpack.MCVersion.String(), VersionSource: res.Modpack.VersionSource,
 		Lang: res.Modpack.Lang, LangSource: res.Modpack.LangSource,
+		Disablers: res.Disablers, Disablements: res.Disablements,
 		Loader: string(res.Modpack.Loader), Mods: len(res.Modpack.Mods), HasVanilla: res.Modpack.HasVanilla,
 		LootTables: len(res.Tables), Structures: len(res.Structures), Sources: len(res.Sources),
 		ByConfidence: map[string]int{}, ByDiscoverer: map[string]int{},
 		Plan: res.Plan, Enrichments: res.Enrichments, Diagnostics: res.Diagnostics.Items(),
+	}
+	if res.Modpack.World != nil {
+		s.World = res.Modpack.World.Name
+	}
+	for _, st := range res.Statuses {
+		switch st.Certainty {
+		case domain.Certainly:
+			s.Disabled++
+		case domain.Possibly:
+			s.Possibly++
+		}
 	}
 	for _, src := range res.Sources {
 		s.ByConfidence[src.Confidence.String()]++
@@ -197,6 +216,11 @@ func writeSummary(w io.Writer, s scanSummary) {
 	fmt.Fprintf(w, "Modpack     %s\n", s.Root)
 	fmt.Fprintf(w, "Minecraft   %s (%s) · %s\n", s.MCVersion, s.VersionSource, s.Loader)
 	fmt.Fprintf(w, "Idioma      %s (%s)\n", s.Lang, s.LangSource)
+	world := "ninguno (valores por defecto del modpack)"
+	if s.World != "" {
+		world = s.World
+	}
+	fmt.Fprintf(w, "Mundo       %s\n", world)
 	fmt.Fprintf(w, "Mods        %d\n", s.Mods)
 	fmt.Fprintf(w, "Vanilla     %s\n", vanilla)
 	fmt.Fprintf(w, "Loot tables %d\n", s.LootTables)
@@ -212,6 +236,14 @@ func writeSummary(w io.Writer, s scanSummary) {
 	}
 	if len(s.Enrichments) > 0 {
 		fmt.Fprintf(w, "\nAjustes aplicados: %s\n", strings.Join(s.Enrichments, ", "))
+	}
+	fmt.Fprintf(w, "\nDesactivados: %d seguro · %d posible\n", s.Disabled, s.Possibly)
+	for _, d := range s.Disablements {
+		mark := "!"
+		if d.Certainty == domain.Certainly {
+			mark = "⊘"
+		}
+		fmt.Fprintf(w, "  %s %-9s %-40s %s\n", mark, d.Target.Kind, d.Target.ID, d.Reason)
 	}
 	fmt.Fprintln(w)
 }
@@ -275,8 +307,13 @@ func newPlanCommand(deps Deps) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			xplan, err := deps.Analyzer.Disablers.Plan(target)
+			if err != nil {
+				return err
+			}
 			steps := describe(dplan.Steps, "descubrimiento")
 			steps = append(steps, describe(eplan.Steps, "enriquecimiento")...)
+			steps = append(steps, describe(xplan.Steps, "desactivadores")...)
 			if asJSON {
 				enc := json.NewEncoder(cmd.OutOrStdout())
 				enc.SetIndent("", "  ")

@@ -16,7 +16,7 @@ var version = "dev"
 func main() {
 	deps := cli.Deps{
 		Version:  version,
-		Analyzer: analysis.Analyzer{Discoverers: plugins.Discoverers(), Enrichers: plugins.Enrichers()},
+		Analyzer: analysis.Analyzer{Discoverers: plugins.Discoverers(), Enrichers: plugins.Enrichers(), Disablers: plugins.Disablers()},
 	}
 	os.Exit(cli.Main(deps, os.Args[1:]))
 }

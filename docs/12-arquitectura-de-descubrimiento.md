@@ -177,6 +177,12 @@ se ejecutarán y en qué orden. Es útil para depurar las reviews.
 | Descubrimiento | `name-matching` | heurística | todas |
 | Descubrimiento | `generic-by-path` | genérica | todas |
 | Enriquecimiento | `lootr` | específica | `>=1.20 <1.21` + mod `lootr` |
+| Desactivadores | `structure-sets`, `structure-biomes` | específica | todas |
+| Desactivadores | `biome-replacer`, `structurify`, `incontrol-spawns`, `lostcities-profile` | específica | su mod |
+| Desactivadores | `config-mentions`, `kubejs-scripts` | heurística | todas / mod `kubejs` |
+
+La tercera puerta (desactivadores) está descrita en
+[14-mundo-modelo-y-desactivadores.md](14-mundo-modelo-y-desactivadores.md).
 
 Todos se registran en `app/internal/plugins/plugins.go`. `modpacklooter plan`
 muestra el orden para cualquier versión, cargador y lista de mods.

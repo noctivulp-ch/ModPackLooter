@@ -17,6 +17,7 @@ import (
 	"github.com/EnierAragon/ModPackLooter/app/internal/mcversion"
 	"github.com/EnierAragon/ModPackLooter/app/internal/names"
 	"github.com/EnierAragon/ModPackLooter/app/internal/resources"
+	"github.com/EnierAragon/ModPackLooter/app/internal/world"
 )
 
 const stage = "cargador"
@@ -30,6 +31,7 @@ type Options struct {
 	Datapacks    []string // extra datapack folders or zips
 	AssetsDir    string   // launcher assets folder (for vanilla translations)
 	Lang         string   // language for names; empty = the game's (options.txt), else es_es
+	World        string   // model world: a folder with level.dat, or a name under saves/
 	Diagnostics  *domain.Diagnostics
 }
 
@@ -38,9 +40,10 @@ type Modpack struct {
 	Root          string // the game directory (the one holding mods/)
 	MCVersion     mcversion.Version
 	Loader        domain.Loader
-	VersionSource string // how the version was detected, for the report
-	Lang          string // language used for names, e.g. "es_ar"
-	LangSource    string // "--lang", "options.txt" or "por defecto"
+	VersionSource string       // how the version was detected, for the report
+	Lang          string       // language used for names, e.g. "es_ar"
+	LangSource    string       // "--lang", "options.txt" or "por defecto"
+	World         *world.World // model world, nil when none was given
 	Mods          []Mod
 	Index         *resources.Index
 	HasVanilla    bool
@@ -86,6 +89,13 @@ func Open(opts Options) (*Modpack, error) {
 	}
 	mp := &Modpack{Root: root}
 	mp.Lang, mp.LangSource = detectLang(root, opts.Lang)
+	if opts.World != "" {
+		w, err := world.Load(resolveWorld(root, opts.World))
+		if err != nil {
+			return nil, err
+		}
+		mp.World = w
+	}
 
 	modPacks, err := mp.loadMods(diags)
 	if err != nil {
@@ -113,6 +123,7 @@ func Open(opts Options) (*Modpack, error) {
 	}
 	packs = append(packs, modPacks...)
 	packs = append(packs, mp.loadDatapacks(opts.Datapacks, diags)...)
+	packs = append(packs, mp.loadWorldDatapacks(diags)...)
 	if p := mp.loadScripts(diags); p != nil {
 		packs = append(packs, p)
 	}
@@ -448,3 +459,77 @@ func detectLang(root, explicit string) (string, string) {
 	}
 	return names.DefaultLang, "por defecto"
 }
+
+// resolveWorld accepts a world folder or the name of one under saves/.
+func resolveWorld(root, name string) string {
+	if st, err := os.Stat(filepath.Join(name, "level.dat")); err == nil && !st.IsDir() {
+		return name
+	}
+	return filepath.Join(root, "saves", name)
+}
+
+// loadWorldDatapacks adds <world>/datapacks, skipping the ones the world
+// disabled. They load last, as in the game.
+func (mp *Modpack) loadWorldDatapacks(diags *domain.Diagnostics) []resources.Pack {
+	if mp.World == nil {
+		return nil
+	}
+	dir := filepath.Join(mp.World.Path, "datapacks")
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil
+	}
+	var packs []resources.Pack
+	for _, e := range entries {
+		if mp.World.PackDisabled(e.Name()) {
+			diags.Add(domain.LevelInfo, stage, e.Name(), "datapack desactivado en el mundo; no se usa")
+			continue
+		}
+		path := filepath.Join(dir, e.Name())
+		switch {
+		case e.IsDir():
+			if _, err := os.Stat(filepath.Join(path, "data")); err != nil {
+				continue
+			}
+			if dp, err := resources.OpenDirPack(path, resources.KindDatapack); err == nil {
+				packs = append(packs, dp)
+			}
+		case strings.EqualFold(filepath.Ext(path), ".zip"):
+			if zp, err := resources.OpenZipPack(path, resources.KindDatapack); err == nil {
+				mp.closers = append(mp.closers, zp.Close)
+				packs = append(packs, zp)
+			}
+		}
+	}
+	return packs
+}
+
+// ServerConfig reads a Forge server config (e.g. "lostcities-server.toml").
+// Server configs are per world: the model world's serverconfig/ wins; without
+// a world, defaultconfigs/ holds what the pack assigns to new worlds.
+// origin says where it was found ("mundo", "defaultconfigs", "config").
+func (mp *Modpack) ServerConfig(name string) ([]byte, string, error) {
+	if strings.Contains(name, "..") {
+		return nil, "", fmt.Errorf("ruta no válida: %s", name)
+	}
+	var candidates [][2]string
+	if mp.World != nil {
+		candidates = append(candidates, [2]string{filepath.Join(mp.World.Path, "serverconfig", name), "mundo " + mp.World.Name})
+	}
+	candidates = append(candidates,
+		[2]string{filepath.Join(mp.Root, "defaultconfigs", name), "defaultconfigs (mundos nuevos)"},
+		[2]string{filepath.Join(mp.Root, "config", name), "config"},
+	)
+	for _, c := range candidates {
+		if data, err := os.ReadFile(c[0]); err == nil {
+			return data, c[1], nil
+		}
+	}
+	return nil, "", os.ErrNotExist
+}
+
+// RootDir returns the game folder.
+func (mp *Modpack) RootDir() string { return mp.Root }
+
+// Level returns the model world, or nil.
+func (mp *Modpack) Level() *world.World { return mp.World }

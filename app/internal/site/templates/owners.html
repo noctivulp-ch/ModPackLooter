@@ -16,7 +16,7 @@
       <tr class="group"><th scope="rowgroup" colspan="3">{{.Mod.Name}}</th></tr>
       {{range .Owners}}
       <tr>
-        <td><a href="{{rel $.Root .URL}}">{{.Name}}</a></td>
+        <td><a href="{{rel $.Root .URL}}">{{.Name}}</a> {{template "status" .Status}}</td>
         <td class="num">{{len .Uses}}</td>
         <td class="num">{{if .Biomes}}{{len .Biomes}}{{else}}—{{end}}</td>
       </tr>

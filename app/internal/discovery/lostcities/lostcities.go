@@ -62,12 +62,40 @@ func (Discoverer) Discover(_ context.Context, in discovery.Input, out *discovery
 	if len(used) == 0 {
 		return nil
 	}
-	out.DeclareOwner(domain.OwnerInfo{
+	info := domain.OwnerInfo{
 		Owner:      Owner,
 		Name:       "Lost Cities (edificios de la ciudad)",
 		Biomes:     in.World.BiomeTag(domain.MustParseResourceID("minecraft:is_overworld")),
 		BiomesNote: "según el perfil de Lost Cities; las ciudades pueden cubrir casi cualquier bioma del Overworld",
-	})
+	}
+	profiles := ReadProfiles(in)
+	if desc := profiles.Describe(); desc != "" {
+		info.BiomesNote = "Ciudades activas en " + desc + " (" + profiles.Origin + ")."
+		// With a model world, the biomes of the city dimensions are known exactly.
+		if w := in.Files.Level(); w != nil {
+			set := map[domain.ResourceID]bool{}
+			exact := true
+			for dim := range profiles.Active() {
+				d, ok := w.Dimension(dim)
+				if !ok || d.Biomes == nil {
+					exact = false
+					continue
+				}
+				for _, b := range d.Biomes {
+					set[b] = true
+				}
+			}
+			if exact && len(set) > 0 {
+				info.Biomes = info.Biomes[:0]
+				for b := range set {
+					info.Biomes = append(info.Biomes, b)
+				}
+				sort.Slice(info.Biomes, func(i, j int) bool { return info.Biomes[i].String() < info.Biomes[j].String() })
+				info.BiomesNote += " Biomas tomados del mundo " + w.Name + "."
+			}
+		}
+	}
+	out.DeclareOwner(info)
 
 	conds := make([]domain.ResourceID, 0, len(used))
 	for c := range used {

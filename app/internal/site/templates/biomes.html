@@ -15,7 +15,7 @@
     <tbody>
       <tr class="group"><th scope="rowgroup" colspan="2">{{.Mod.Name}}</th></tr>
       {{range .Biomes}}
-      <tr><td><a href="{{rel $.Root .URL}}">{{.Name}}</a></td><td class="num">{{len .Owners}}</td></tr>
+      <tr><td><a href="{{rel $.Root .URL}}">{{.Name}}</a> {{template "status" .Status}}</td><td class="num">{{len .Owners}}</td></tr>
       {{end}}
     </tbody>
     {{end}}

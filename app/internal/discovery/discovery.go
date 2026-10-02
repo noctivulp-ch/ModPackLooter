@@ -12,6 +12,7 @@ import (
 
 	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
 	"github.com/EnierAragon/ModPackLooter/app/internal/mcversion"
+	"github.com/EnierAragon/ModPackLooter/app/internal/world"
 	"github.com/EnierAragon/ModPackLooter/app/internal/worldgen"
 )
 
@@ -114,11 +115,21 @@ type Worldgen interface {
 	StructureLoot(s worldgen.Structure) ([]worldgen.Found, []domain.ResourceID)
 	TemplatesWithLoot() []*worldgen.Template
 	BiomeTag(id domain.ResourceID) []domain.ResourceID
+	StructureSets() map[domain.ResourceID][]domain.ResourceID
+	HasStructureSets() bool
 }
 
 // Files reads files of the game folder, such as mod configs.
 type Files interface {
+	// ReadFile reads a file relative to the game folder.
 	ReadFile(rel string) ([]byte, error)
+	// ServerConfig reads a per-world server config: the model world's
+	// serverconfig/, else defaultconfigs/, else config/. origin says which.
+	ServerConfig(name string) (data []byte, origin string, err error)
+	// Level returns the model world, or nil when none was given.
+	Level() *world.World
+	// Root is the game folder, for plugins that scan config or script folders.
+	RootDir() string
 }
 
 // Input is everything a plugin may read.
@@ -134,6 +145,13 @@ type Input struct {
 type Discoverer interface {
 	Plugin
 	Discover(ctx context.Context, in Input, out *Claims) error
+}
+
+// Disabler finds structures, biomes or mobs that the modpack, its configs,
+// scripts or the model world keep from generating.
+type Disabler interface {
+	Plugin
+	Detect(ctx context.Context, in Input, out *Disablements) error
 }
 
 // Enricher annotates sources already discovered (Lootr, …).

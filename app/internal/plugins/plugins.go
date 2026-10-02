@@ -4,6 +4,7 @@ package plugins
 
 import (
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery"
+	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/disablers"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/generic"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/heuristics"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/lootr"
@@ -20,6 +21,20 @@ func Discoverers() *discovery.Registry[discovery.Discoverer] {
 		lostcities.Discoverer{},
 		heuristics.NameMatching{},
 		generic.ByPath{},
+	)
+}
+
+// Disablers returns the disabler hook point with every known plugin.
+func Disablers() *discovery.Registry[discovery.Disabler] {
+	return discovery.NewRegistry[discovery.Disabler](
+		disablers.StructureSets{},
+		disablers.StructureBiomes{},
+		disablers.BiomeReplacer{},
+		disablers.Structurify{},
+		disablers.InControl{},
+		lostcities.Disabler{},
+		disablers.ConfigMentions{},
+		disablers.KubeJS{},
 	)
 }
 
