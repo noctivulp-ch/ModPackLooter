@@ -41,7 +41,7 @@ cual a GitHub Pages o GitLab Pages.
 | `--lang` | Idioma de los nombres (`es_es`, `es_ar`, `en_us`…). Por defecto el del juego (`options.txt`) o `es_es`; si falta una traducción se usa otra variante del mismo idioma y luego inglés. |
 | `--minecraft-jar` | Jar de Minecraft vanilla (o carpeta con `data/`). Se busca solo en CurseForge, Prism y el launcher oficial. |
 | `--world` | Mundo modelo creado con el modpack (carpeta con `level.dat` o nombre dentro de `saves/`): usa sus biomas reales, sus datapacks y sus configs de servidor (p. ej. el perfil de Lost Cities). Sin él se usan los valores por defecto del pack (`defaultconfigs/`). |
-| `--assets-dir` | Carpeta `assets` del launcher, para traducir los nombres vanilla. |
+| `--assets-dir` | Carpeta `assets` del launcher, para traducir los nombres vanilla. Si no se indica se busca junto a la instancia y en las carpetas por defecto de Prism (también Flatpak), CurseForge y el launcher oficial, así que un servidor también sale en español si el launcher está en el mismo equipo. |
 | `--mc-version`, `--loader` | Fuerzan la versión y el cargador si no se detectan. |
 | `--datapack` | Datapack extra (carpeta o `.zip`); repetible. |
 | `--json` | (`scan`, `plan`) salida para scripts. |

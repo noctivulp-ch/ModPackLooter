@@ -41,7 +41,7 @@ modpacklooter init --ci gitlab
 | `--loader forge\|neoforge\|fabric` | Fuerza el cargador si no se detecta. |
 | `--lang <código>` | Idioma de los nombres (`es_es`, `es_ar`, `en_us`…). Por defecto el del juego (`options.txt`) o `es_es`. Respaldo: idioma pedido → variante principal (`es_es`) → otras variantes → `en_us`. |
 | `--world <mundo>` | Mundo modelo creado con el modpack (carpeta con `level.dat` o nombre en `saves/`): usa sus biomas, datapacks y configs de servidor. |
-| `--assets-dir <ruta>` | Carpeta `assets` del launcher: de ahí salen las traducciones vanilla, que no vienen en el jar. |
+| `--assets-dir <ruta>` | Carpeta `assets` del launcher: de ahí salen las traducciones vanilla, que no vienen en el jar. Sin la opción se busca junto a la instancia y en las carpetas por defecto de Prism (`~/.local/share/PrismLauncher/assets`, Flatpak, `%APPDATA%`, macOS), CurseForge y el launcher oficial. |
 | `--metal oro\|jade\|peltre` | Acento visual del sitio (Wulfenite UI). |
 | `--config <archivo>` | Archivo de configuración del proyecto. |
 | `--include-mod / --exclude-mod` | Filtrar mods. |
