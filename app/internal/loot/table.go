@@ -388,6 +388,23 @@ func countAndNotes(fns []rawFunction) (Number, []string, bool) {
 			approx = approx || n.Approximate
 			continue
 		}
+		if name == "enchant_with_levels" {
+			// "enchant_with_levels|<min>|<max>|<treasure>": the site says
+			// whether treasure enchantments (Mending…) are possible.
+			lv := parseNumber(f["levels"], 0)
+			var treasure bool
+			_ = json.Unmarshal(f["treasure"], &treasure)
+			notes = append(notes, fmt.Sprintf("enchant_with_levels|%g|%g|%t", lv.Min, lv.Max, treasure))
+			continue
+		}
+		if name == "enchant_randomly" {
+			var list []string
+			_ = json.Unmarshal(f["enchantments"], &list)
+			if len(list) > 0 {
+				notes = append(notes, "enchant_randomly|"+strings.Join(list, ","))
+				continue
+			}
+		}
 		if notableFunctions[name] {
 			notes = append(notes, name)
 			continue

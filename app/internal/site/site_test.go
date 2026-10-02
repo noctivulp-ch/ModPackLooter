@@ -307,3 +307,40 @@ func TestNoFishingTabWithoutFishing(t *testing.T) {
 		t.Error("sin datos de pesca no debe haber pestaña")
 	}
 }
+
+func TestEnchantNotes(t *testing.T) {
+	in := testkit.NewInstance(t)
+	in.Jar("mods/dctweaks.jar", testkit.Files{
+		"META-INF/mods.toml": testkit.ModsToml("deceasedcraft", "DeceasedCraft", "[1.20.1,1.21)"),
+		// DCTweaks overrides the vanilla fishing treasure without treasure enchantments.
+		"data/minecraft/loot_tables/gameplay/fishing/treasure.json": `{"type":"minecraft:fishing","pools":[{"rolls":1,"entries":[
+			{"type":"minecraft:item","name":"minecraft:book","functions":[{"function":"minecraft:enchant_with_levels","levels":15.0,"treasure":false}]},
+			{"type":"minecraft:item","name":"minecraft:bow","functions":[{"function":"minecraft:enchant_with_levels","levels":{"type":"minecraft:uniform","min":20,"max":39},"treasure":true}]},
+			{"type":"minecraft:item","name":"minecraft:fishing_rod","functions":[{"function":"minecraft:enchant_randomly","enchantments":["minecraft:mending","minecraft:lure"]}]}]}]}`,
+		"assets/minecraft/lang/es_es.json": `{"enchantment.minecraft.mending":"Reparación","enchantment.minecraft.frost_walker":"Paso helado","enchantment.minecraft.lure":"Atracción"}`,
+	})
+	res, err := analysis.Analyzer{Discoverers: plugins.Discoverers(), Enrichers: plugins.Enrichers(), Disablers: plugins.Disablers()}.
+		Run(context.Background(), modpack.Options{Path: in.Root}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Close()
+	out := filepath.Join(t.TempDir(), "site")
+	if _, err := site.Build(res, site.Options{OutDir: out}); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(filepath.Join(out, "tablas/minecraft/gameplay/fishing/treasure/index.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	page := string(data)
+	for _, want := range []string{
+		"Encantado (nivel 15, sin encantamientos de tesoro: no da Reparación, Paso helado ni maldiciones)",
+		"Encantado (nivel 20–39, puede dar encantamientos de tesoro como Reparación)",
+		"Encantado al azar con: Reparación, Atracción",
+	} {
+		if !strings.Contains(page, want) {
+			t.Errorf("la tabla de tesoro no contiene %q", want)
+		}
+	}
+}
