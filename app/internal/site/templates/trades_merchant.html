@@ -8,6 +8,7 @@
 <section class="pozo card" id="donde">
   <header class="card-head"><h2>Dónde sale</h2></header>
   {{if $m.Creature}}<p><a href="{{rel .Root $m.Creature.URL}}">{{$m.Creature.Name}}</a>: {{template "creatureWhere" (dict "Root" .Root "C" $m.Creature)}}.</p>
+    {{range $m.Creature.From}}<p>{{.Name}}, de donde viene: <a href="{{rel $.Root .URL}}">{{.Where}}</a>.</p>{{end}}
     {{if $m.Station}}<p class="meta">Cualquier {{$m.Creature.Name}} sin profesión la toma al trabajar en un bloque de {{$m.Station.Name}}.</p>{{end}}
   {{else if $m.Location}}<p>{{$m.Location}}</p>
   {{else}}<p class="warn-text">No se sabe dónde aparece.</p>{{end}}
