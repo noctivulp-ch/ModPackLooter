@@ -38,6 +38,9 @@ type Item struct {
 	Fishing []*FishEntry
 	// Changes are mods adding or removing the item somewhere.
 	Changes []*Change
+	// Trades sell or buy the item; NPCDrops are NPCs that drop it.
+	Trades   []*TradeRef
+	NPCDrops []*NPCDrop
 }
 
 // ItemSource is one way to get an item.
@@ -156,6 +159,9 @@ type Model struct {
 	LostCities *LostCities
 	Fishing    *Fishing
 	Changes    []*ChangeSection
+	Trades     *Trades
+
+	tradeChanges []*Change
 }
 
 // DisabledRow is a disabled structure, biome or mob, for the about page.
@@ -555,6 +561,7 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 	}
 	buildFishing(res, m, namer, ensureItem)
 	buildChanges(res, m, namer, ensureItem)
+	buildTrades(res, m, namer, ensureItem)
 	sortRefs(m.Items, func(i *Item) Ref { return i.Ref })
 	sortRefs(m.Mods, func(md *Mod) Ref { return md.Ref })
 	for _, md := range m.Mods {

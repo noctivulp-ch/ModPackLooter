@@ -1,7 +1,7 @@
 {{define "content"}}
 <div class="page-head">
   <h1>Objetos</h1>
-  <p class="lede">{{len .Data}} objetos se pueden conseguir como loot o pescando. Ordenados por nombre; filtra para encontrar uno.</p>
+  <p class="lede">{{len .Data}} objetos se pueden conseguir como loot, pescando, por tradeo o de NPCs. Ordenados por nombre; filtra para encontrar uno.</p>
 </div>
 <section class="pozo">
   <div class="filters">
@@ -16,8 +16,8 @@
       <tr>
         <td><a href="{{rel $.Root .URL}}">{{.Name}}</a></td>
         <td>{{.Mod.Name}}</td>
-        <td class="num">{{plus (len .Sources) (len .Fishing)}}</td>
-        <td>{{if .Sources}}{{template "chance" .Best}}{{else}}<span class="meta">Pesca</span>{{end}}</td>
+        <td class="num">{{plus (plus (len .Sources) (len .Fishing)) (plus (len .Trades) (len .NPCDrops))}}</td>
+        <td>{{if .Sources}}{{template "chance" .Best}}{{else if .Fishing}}<span class="meta">Pesca</span>{{else if .Trades}}<span class="meta">Tradeo</span>{{else}}<span class="meta">NPC</span>{{end}}</td>
       </tr>
     {{end}}
     </tbody>

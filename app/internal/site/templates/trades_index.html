@@ -1,0 +1,29 @@
+{{define "content"}}
+{{$t := .Data}}
+<div class="page-head">
+  <h1>Tradeos</h1>
+  <p class="lede">Qué venden y compran los aldeanos, el comerciante errante, los piglins y los NPCs de los mods.</p>
+</div>
+<div class="grid">
+{{range $t.Catalogs}}
+  <section class="pozo">
+    <h2><a href="{{rel $.Root .URL}}">{{.Name}}</a></h2>
+    {{with index .Intro 0}}<p class="meta">{{.}}</p>{{end}}
+    <ul class="chips">{{range .Merchants}}<li><a href="{{rel $.Root .URL}}">{{.Name}}</a></li>{{end}}</ul>
+  </section>
+{{end}}
+{{if $t.Barter}}
+  <section class="pozo">
+    <h2><a href="{{rel .Root $t.Barter.URL}}">Trueque con piglins</a></h2>
+    <p class="meta">Al darle un lingote de oro a un piglin, devuelve un objeto de su tabla de trueque (leída de los datos del modpack, con sus cambios).</p>
+    <p>{{len $t.Barter.Drops}} objetos posibles</p>
+  </section>
+{{end}}
+</div>
+{{if $t.Changes}}
+<h2 class="section-title">Cambios de mods a los tradeos <span class="count">{{len $t.Changes}}</span></h2>
+<section class="pozo">
+  <ul class="links">{{range $t.Changes}}<li>{{template "change" (dict "Root" $.Root "C" .)}} <span class="meta">en {{.Target}}</span></li>{{end}}</ul>
+</section>
+{{end}}
+{{end}}

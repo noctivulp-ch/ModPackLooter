@@ -25,6 +25,7 @@ construye o se usa la app, queda escrita aquí**.
 | [15-pestanas-por-mod-y-lost-cities.md](15-pestanas-por-mod-y-lost-cities.md) | Pestañas dedicadas por mod (solo si está) y Lost Cities por capas; nombres desde `lang`. |
 | [16-pesca.md](16-pesca.md) | Pestaña de pesca: Starcatcher, Tide 2 y vanilla, por bioma y condiciones. |
 | [17-cambios-de-fuentes.md](17-cambios-de-fuentes.md) | Cambios de mods a loot, drops, tradeos y pesca: capa genérica + específicos. |
+| [18-tradeos.md](18-tradeos.md) | Tradeos: aldeanos y comerciante errante verificados contra el juego, trueque, NPCs de CustomNPCs. |
 | [decisiones/](decisiones/) | Registro de decisiones de arquitectura (ADR). |
 
 ## Cómo documentamos decisiones

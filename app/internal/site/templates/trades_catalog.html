@@ -1,0 +1,24 @@
+{{define "content"}}
+{{$c := .Data}}
+<nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "tradeos/"}}">Tradeos</a></nav>
+<div class="page-head">
+  <h1>{{$c.Name}}</h1>
+  {{range $c.Intro}}<p class="lede">{{.}}</p>{{end}}
+  {{if $c.Known}}<p>Confianza: {{template "conf" $c.Confidence}}</p>{{end}}
+</div>
+<section class="pozo">
+  <div class="scroll">
+  <table class="data">
+    <thead><tr><th scope="col">Quién</th><th scope="col" class="hide-sm">Bloque de trabajo</th><th scope="col" class="num">Tradeos</th><th scope="col" class="num">Drops</th></tr></thead>
+    <tbody>
+    {{range $c.Merchants}}<tr>
+      <td><a href="{{rel $.Root .URL}}">{{.Name}}</a>{{if .Changes}} <span class="dis dis-maybe" title="Hay mods que cambian sus tradeos">cambiado por mods</span>{{end}}</td>
+      <td class="hide-sm">{{if .Station}}<a href="{{rel $.Root .Station.URL}}">{{.Station.Name}}</a>{{else}}—{{end}}</td>
+      <td class="num">{{if .Offers}}{{.Offers}}{{else}}—{{end}}</td>
+      <td class="num">{{if .Drops}}{{len .Drops}}{{else}}—{{end}}</td>
+    </tr>{{end}}
+    </tbody>
+  </table>
+  </div>
+</section>
+{{end}}

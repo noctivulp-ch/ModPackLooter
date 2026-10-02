@@ -26,6 +26,7 @@ type Change struct {
 	Detail    string
 	Disables  bool
 	targetKey string
+	targetID  domain.ResourceID
 }
 
 // ChangeGroup is a set of changes from the same origin (one Global Loot
@@ -167,6 +168,10 @@ func buildChanges(res *analysis.Result, m *Model, namer *names.Namer, itemOf fun
 			v.Target = "el trueque con piglins"
 		}
 		v.targetKey = string(c.Target.Kind) + c.Target.ID.String()
+		v.targetID = c.Target.ID
+		if c.Target.Kind == domain.ChangeTrades || c.Target.Kind == domain.ChangeBarter {
+			m.tradeChanges = append(m.tradeChanges, v)
+		}
 		if !v.Disables {
 			for _, t := range attach {
 				t.Changes = append(t.Changes, v)
