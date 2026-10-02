@@ -439,3 +439,46 @@ func TestTradesTab(t *testing.T) {
 		t.Error("el bandido debería listar sus drops")
 	}
 }
+
+func TestCreaturePages(t *testing.T) {
+	in := testkit.NewInstance(t)
+	in.Jar("mods/a-vanilla.jar", testkit.Files{
+		"META-INF/mods.toml": testkit.ModsToml("avanilla", "Vanilla data", "[1.20.1,1.21)"),
+		"data/minecraft/loot_tables/entities/zombie.json": `{"type":"minecraft:entity","pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:rotten_flesh"}]}]}`,
+		"data/minecraft/worldgen/biome/plains.json":       `{"spawners":{"monster":[{"type":"minecraft:zombie","weight":95,"minCount":4,"maxCount":4},{"type":"minecraft:spider","weight":5,"minCount":1,"maxCount":1}]}}`,
+		"data/minecraft/worldgen/biome/desert.json":       `{"spawners":{"monster":[{"type":"minecraft:zombie","weight":10,"minCount":1,"maxCount":2}]}}`,
+		"data/minecraft/forge/biome_modifier/no_desert_zombies.json": `{"type":"forge:remove_spawns","biomes":"minecraft:desert","entity_types":"minecraft:zombie"}`,
+		"assets/minecraft/lang/es_es.json": `{"entity.minecraft.zombie":"Zombi","biome.minecraft.plains":"Llanura","item.minecraft.rotten_flesh":"Carne podrida"}`,
+	})
+	res, err := plugins.Analyzer().Run(context.Background(), modpack.Options{Path: in.Root}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Close()
+	out := filepath.Join(t.TempDir(), "site")
+	if _, err := site.Build(res, site.Options{OutDir: out}); err != nil {
+		t.Fatal(err)
+	}
+	read := func(p string) string {
+		data, err := os.ReadFile(filepath.Join(out, p))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(data)
+	}
+	zombie := read("criaturas/minecraft/zombie/index.html")
+	for _, want := range []string{"Zombi", "Llanura", "95 %", "hostil", "Carne podrida", "aparece en 1 bioma"} {
+		if !strings.Contains(zombie, want) {
+			t.Errorf("la ficha del zombi no contiene %q", want)
+		}
+	}
+	if strings.Contains(zombie, "Desert") {
+		t.Error("remove_spawns debe quitar el desierto")
+	}
+	flesh := read("objetos/minecraft/rotten_flesh/index.html")
+	for _, want := range []string{"La forma más probable", "Lo sueltan criaturas", "Zombi", "aparece en 1 bioma"} {
+		if !strings.Contains(flesh, want) {
+			t.Errorf("la carne podrida no contiene %q", want)
+		}
+	}
+}
