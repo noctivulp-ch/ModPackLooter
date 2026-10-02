@@ -1,0 +1,78 @@
+name: app · Release
+
+# Publica binarios autocontenidos al crear una etiqueta app/vX.Y.Z.
+# También se puede lanzar a mano: genera los binarios como artefactos del
+# workflow sin crear una release.
+on:
+  push:
+    tags: ["app/v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - { goos: windows, goarch: amd64 }
+          - { goos: linux, goarch: amd64 }
+          - { goos: linux, goarch: arm64 }
+          - { goos: darwin, goarch: amd64 }
+          - { goos: darwin, goarch: arm64 }
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: app/go.mod
+          cache-dependency-path: app/go.sum
+      - name: Versión
+        id: v
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/app/v* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/app/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=dev-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Compilar
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+        run: |
+          name="modpacklooter-${{ steps.v.outputs.version }}-${GOOS}-${GOARCH}"
+          bin="modpacklooter"; [ "$GOOS" = windows ] && bin="modpacklooter.exe"
+          mkdir -p "dist/$name"
+          go build -trimpath -ldflags "-s -w -X main.version=${{ steps.v.outputs.version }}" -o "dist/$name/$bin" ./cmd/modpacklooter
+          cp README.md "dist/$name/"
+          cd dist
+          if [ "$GOOS" = windows ]; then zip -qr "$name.zip" "$name"; else tar czf "$name.tar.gz" "$name"; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: modpacklooter-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            app/dist/*.zip
+            app/dist/*.tar.gz
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/app/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Sumas de verificación
+        run: cd dist && sha256sum * > SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: ModPackLooter ${{ github.ref_name }}
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+          files: dist/*

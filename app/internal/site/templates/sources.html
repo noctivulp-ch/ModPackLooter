@@ -1,0 +1,16 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>Otras fuentes</h1>
+  <p class="lede">Tablas de loot que no están ligadas a una estructura: criaturas, pesca, jugabilidad y tablas cuyo origen no se pudo determinar.</p>
+</div>
+{{range .Data}}
+<section class="pozo">
+  <h2>{{kind .Kind}} <span class="count">{{len .Uses}}</span></h2>
+  <ul class="links cols">
+  {{range .Uses}}<li><a href="{{rel $.Root .Table.URL}}">{{.Table.Name}}</a> {{template "status" .Status}} <span class="id">{{short .Table.ID.String}}</span></li>{{end}}
+  </ul>
+</section>
+{{else}}
+<section class="pozo"><p class="empty">Todas las tablas de loot están ligadas a alguna estructura.</p></section>
+{{end}}
+{{end}}

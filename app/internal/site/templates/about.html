@@ -1,0 +1,62 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>Acerca de este sitio</h1>
+  <p class="lede">Cómo se generó y qué limitaciones tiene. Si algo no cuadra, comparte esta página o el archivo <a href="diagnostics.json">diagnostics.json</a>.</p>
+</div>
+<div class="grid">
+  <section class="pozo">
+    <h2>Modpack analizado</h2>
+    <dl class="facts">
+      <div><dt>Minecraft</dt><dd>{{.M.Pack.MCVersion}} <span class="meta">({{.M.Pack.VersionSource}})</span></dd></div>
+      <div><dt>Cargador</dt><dd>{{.M.Pack.Loader}}</dd></div>
+      <div><dt>Mundo modelo</dt><dd>{{if .M.WorldName}}{{.M.WorldName}}{{else}}ninguno <span class="meta">(se usan los valores por defecto del modpack)</span>{{end}}</dd></div>
+      <div><dt>Idioma de los nombres</dt><dd>{{.M.Lang}} <span class="meta">({{.M.LangSource}})</span></dd></div>
+      <div><dt>Mods</dt><dd>{{.M.Pack.Mods}}</dd></div>
+      <div><dt>Loot vanilla</dt><dd>{{if .M.Pack.HasVanilla}}incluido{{else}}no incluido{{end}}</dd></div>
+      <div><dt>Fuentes de loot</dt><dd>{{.M.Pack.Sources}}</dd></div>
+      <div><dt>Tablas de bloques</dt><dd>{{.M.Pack.BlockTables}} <span class="meta">(omitidas)</span></dd></div>
+    </dl>
+  </section>
+  <section class="pozo">
+    <h2>Cómo se buscó el loot</h2>
+    <p>Descubridores, en orden:</p>
+    <ol class="plain">{{range .M.Plan}}<li><code>{{.}}</code></li>{{end}}</ol>
+    {{if .M.Enrichments}}<p>Ajustes aplicados después:</p><ul class="plain">{{range .M.Enrichments}}<li><code>{{.}}</code></li>{{end}}</ul>{{end}}
+    {{if .M.Disablers}}<p>Detectores de desactivación:</p><ul class="plain">{{range .M.Disablers}}<li><code>{{.}}</code></li>{{end}}</ul>{{end}}
+    <p class="meta">No se ve el loot que los mods asignan desde su propio código ni el que cambian los scripts (KubeJS, CraftTweaker) o los Global Loot Modifiers; llegarán en próximas versiones.</p>
+  </section>
+</div>
+<section class="pozo">
+  <h2>Estructuras, biomas y criaturas desactivados <span class="count">{{len .M.Disabled}}</span></h2>
+  {{if .M.Disabled}}
+  <p class="meta"><strong>Desactivado</strong>: confirmado por los datos o por una configuración que la app entiende. <strong>Posiblemente desactivado</strong>: hay indicios (una configuración o un script lo menciona) que conviene revisar.</p>
+  <div class="scroll">
+  <table class="data">
+    <thead><tr><th scope="col">Qué</th><th scope="col">Estado</th><th scope="col">Por qué</th></tr></thead>
+    <tbody>
+    {{range .M.Disabled}}
+      <tr>
+        <td>{{if .Ref}}<a href="{{rel $.Root .Ref.URL}}">{{.Ref.Name}}</a>{{else}}{{.ID}}{{end}} <span class="meta">{{if eq .Kind "structure"}}estructura{{else if eq .Kind "biome"}}bioma{{else}}criatura{{end}}</span></td>
+        <td>{{template "status" .Status}}</td>
+        <td>{{join .Status.Reasons}}</td>
+      </tr>
+    {{end}}
+    </tbody>
+  </table>
+  </div>
+  {{else}}<p class="empty">No se detectó nada desactivado.</p>{{end}}
+</section>
+<section class="pozo">
+  <h2>Diagnósticos <span class="count">{{len .M.Diagnostics}}</span></h2>
+  {{if .M.Diagnostics}}
+  <div class="scroll">
+  <table class="data">
+    <thead><tr><th scope="col">Nivel</th><th scope="col">Etapa</th><th scope="col">Origen</th><th scope="col">Mensaje</th></tr></thead>
+    <tbody>
+    {{range .M.Diagnostics}}<tr><td><span class="lvl lvl-{{.Level}}">{{.Level}}</span></td><td>{{.Stage}}</td><td class="id">{{.Source}}</td><td>{{.Message}}</td></tr>{{end}}
+    </tbody>
+  </table>
+  </div>
+  {{else}}<p class="empty">Sin incidencias.</p>{{end}}
+</section>
+{{end}}
