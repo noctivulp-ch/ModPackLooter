@@ -34,7 +34,10 @@ func (f fake) Discover(_ context.Context, _ discovery.Input, out *discovery.Clai
 
 type memIndex []domain.ResourceID
 
-func (m memIndex) LootTables() []domain.ResourceID { return m }
+func (m memIndex) LootTables() []domain.ResourceID                       { return m }
+func (m memIndex) ReadJSON(string, domain.ResourceID, any) (bool, error) { return false, nil }
+func (m memIndex) IDs(string) []domain.ResourceID                        { return nil }
+func (m memIndex) Tag(string, domain.ResourceID) []domain.ResourceID     { return nil }
 
 func target(version string, loader domain.Loader, mods ...string) discovery.Target {
 	t := discovery.Target{Version: mcversion.MustParse(version), Loader: loader, Mods: map[string]bool{}}
@@ -44,7 +47,7 @@ func target(version string, loader domain.Loader, mods ...string) discovery.Targ
 	return t
 }
 
-func ids(p discovery.Plan) []string {
+func ids(p discovery.Plan[discovery.Discoverer]) []string {
 	var out []string
 	for _, d := range p.Steps {
 		out = append(out, d.Descriptor().ID)
@@ -53,7 +56,7 @@ func ids(p discovery.Plan) []string {
 }
 
 func TestPlanOrdersByPhasePriorityAndID(t *testing.T) {
-	reg := discovery.NewRegistry(
+	reg := discovery.NewRegistry[discovery.Discoverer](
 		generic.ByPath{},
 		fake{desc: discovery.Descriptor{ID: "heuristic", Phase: discovery.PhaseHeuristic}},
 		fake{desc: discovery.Descriptor{ID: "b-specific", Phase: discovery.PhaseSpecific}},
@@ -81,7 +84,7 @@ func TestPlanSelectsVersionLoaderAndModVariants(t *testing.T) {
 	neoOnly := fake{desc: discovery.Descriptor{ID: "neoforge-glm", Phase: discovery.PhaseSpecific, Applies: discovery.Applicability{
 		Loaders: []domain.Loader{domain.LoaderNeoForge},
 	}}}
-	reg := discovery.NewRegistry(v120, v26, neoOnly)
+	reg := discovery.NewRegistry[discovery.Discoverer](v120, v26, neoOnly)
 
 	cases := []struct {
 		name string
@@ -109,7 +112,7 @@ func TestPlanSelectsVersionLoaderAndModVariants(t *testing.T) {
 }
 
 func TestPlanRejectsOverlappingVariants(t *testing.T) {
-	reg := discovery.NewRegistry(
+	reg := discovery.NewRegistry[discovery.Discoverer](
 		fake{desc: discovery.Descriptor{ID: "templates", Phase: discovery.PhaseSpecific, Applies: discovery.Applicability{Versions: mcversion.MustParseRange(">=1.20.1")}}},
 		fake{desc: discovery.Descriptor{ID: "templates", Phase: discovery.PhaseSpecific, Applies: discovery.Applicability{Versions: mcversion.MustParseRange(">=1.21")}}},
 	)
@@ -123,7 +126,7 @@ func TestPlanRejectsOverlappingVariants(t *testing.T) {
 
 func TestPlanRejectsInvalidDescriptors(t *testing.T) {
 	for _, d := range []discovery.Descriptor{{Phase: discovery.PhaseSpecific}, {ID: "x"}} {
-		if _, err := discovery.NewRegistry(fake{desc: d}).Plan(target("1.20.1", domain.LoaderForge)); err == nil {
+		if _, err := discovery.NewRegistry[discovery.Discoverer](fake{desc: d}).Plan(target("1.20.1", domain.LoaderForge)); err == nil {
 			t.Errorf("se esperaba error para %+v", d)
 		}
 	}
@@ -136,7 +139,7 @@ func TestRunKeepsGoingAfterFailureAndGenericSkipsClaimedTables(t *testing.T) {
 	pyramid := domain.Owner{Kind: domain.OwnerStructure, ID: domain.MustParseResourceID("minecraft:desert_pyramid")}
 
 	var calls []string
-	reg := discovery.NewRegistry(
+	reg := discovery.NewRegistry[discovery.Discoverer](
 		generic.ByPath{},
 		fake{calls: &calls, err: errors.New("boom"), desc: discovery.Descriptor{ID: "broken", Phase: discovery.PhaseSpecific, Priority: 5}},
 		fake{calls: &calls, desc: discovery.Descriptor{ID: "templates", Phase: discovery.PhaseSpecific}, sources: []domain.LootSource{{
@@ -152,9 +155,9 @@ func TestRunKeepsGoingAfterFailureAndGenericSkipsClaimedTables(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	claims, failures := plan.Run(context.Background(), discovery.Input{Resources: memIndex{desert, zombie, custom}})
+	claims, failures := discovery.Discover(context.Background(), plan, discovery.Input{Resources: memIndex{desert, zombie, custom}})
 
-	if len(failures) != 1 || failures[0].DiscovererID != "broken" {
+	if len(failures) != 1 || failures[0].PluginID != "broken" {
 		t.Errorf("fallos = %+v, se esperaba solo 'broken'", failures)
 	}
 	if want := []string{"broken", "templates", "names"}; !reflect.DeepEqual(calls, want) {

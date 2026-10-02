@@ -18,7 +18,7 @@ import (
 // Deps are the core services the CLI needs, injected by the composition root.
 type Deps struct {
 	Version   string
-	Discovery *discovery.Registry
+	Discovery *discovery.Registry[discovery.Discoverer]
 }
 
 // NewRootCommand builds the modpacklooter command tree.
@@ -80,7 +80,7 @@ type planStep struct {
 	Versions string `json:"versions"`
 }
 
-func steps(plan discovery.Plan) []planStep {
+func steps(plan discovery.Plan[discovery.Discoverer]) []planStep {
 	out := make([]planStep, 0, len(plan.Steps))
 	for _, d := range plan.Steps {
 		desc := d.Descriptor()
@@ -89,13 +89,13 @@ func steps(plan discovery.Plan) []planStep {
 	return out
 }
 
-func writePlanJSON(w io.Writer, plan discovery.Plan) error {
+func writePlanJSON(w io.Writer, plan discovery.Plan[discovery.Discoverer]) error {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	return enc.Encode(steps(plan))
 }
 
-func writePlanText(w io.Writer, t discovery.Target, plan discovery.Plan) error {
+func writePlanText(w io.Writer, t discovery.Target, plan discovery.Plan[discovery.Discoverer]) error {
 	if _, err := fmt.Fprintf(w, "Plan de descubrimiento para Minecraft %s (%s)\n\n", t.Version, t.Loader); err != nil {
 		return err
 	}

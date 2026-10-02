@@ -15,7 +15,7 @@ import (
 var version = "dev"
 
 func main() {
-	registry := discovery.NewRegistry(
+	registry := discovery.NewRegistry[discovery.Discoverer](
 		// Specific, relational and heuristic discoverers are registered here
 		// as they are implemented. The generic fallback always runs last.
 		generic.ByPath{},

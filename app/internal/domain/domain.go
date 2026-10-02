@@ -92,6 +92,7 @@ const (
 	OwnerStructure OwnerKind = "structure"
 	OwnerEntity    OwnerKind = "entity"
 	OwnerBiome     OwnerKind = "biome"
+	OwnerTemplate  OwnerKind = "template" // a template no known structure uses
 )
 
 // Owner is the structure, mob or biome a loot source is attached to.
@@ -106,11 +107,35 @@ type Evidence struct {
 	Detail       string // file, template piece, config key…
 }
 
+// Note is extra information about a source, e.g. "loot per player (Lootr)".
+type Note struct {
+	Key  string // stable identifier, e.g. "lootr.refresh"
+	Text string // human readable, already localised
+}
+
 // LootSource links a loot table to the place it is obtained from.
 type LootSource struct {
 	LootTable  ResourceID
 	Kind       SourceKind
 	Owner      Owner
 	Confidence Confidence
-	Evidence   []Evidence
+	// Container is the block or entity that holds the loot, when known
+	// (e.g. "minecraft:chest", "minecraft:chest_minecart").
+	Container string
+	// Share is the fraction of this owner's containers that use the table,
+	// when the owner picks among several tables (0 means not applicable).
+	Share    float64
+	Evidence []Evidence
+	Notes    []Note
+}
+
+// OwnerInfo describes an owner a discoverer knows about, such as a structure
+// that is not declared in data (e.g. a Lost Cities city).
+type OwnerInfo struct {
+	Owner Owner
+	Name  string
+	// Biomes where the owner can appear; BiomesNote explains when the list is
+	// not exhaustive or not known.
+	Biomes     []ResourceID
+	BiomesNote string
 }
