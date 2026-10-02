@@ -71,5 +71,27 @@ exige aguas abiertas. Se muestran dos grupos: en aguas abiertas y fuera.
   los de superficie, con su condición a la vista.
 - Los botines de Tide se muestran con su peso frente al de los peces, no como
   porcentaje, porque cuáles aplican depende sobre todo de la altura.
-- Los bloqueos de objetos o encantamientos hechos por otros mods (p. ej. quitar
-  Reparación de la pesca) aún no se detectan (pendiente).
+- Los bloqueos hechos por código de otros mods (eventos, LootJS, Global Loot
+  Modifiers) aún no se detectan (pendiente). Los hechos con datos sí: ver abajo.
+
+## Encantamientos en el loot (caso Reparación en DeceasedCraft)
+
+En DeceasedCraft «no se puede pescar Reparación». La causa está en los datos de
+DCTweaks 5.11.18: reemplaza `minecraft:gameplay/fishing/treasure` y cambia
+`enchant_with_levels` de nivel 30 con `treasure: true` a **nivel 15 con
+`treasure: false`**, así que no salen encantamientos de tesoro (Reparación,
+Paso helado, Velocidad del alma, Sigilo rápido, maldiciones).
+
+Como la app ya aplica la prioridad de packs (vanilla < mods < datapacks), usa
+esa tabla. Ahora las notas de los objetos lo explican:
+
+- `enchant_with_levels` → «Encantado (nivel 15, sin encantamientos de tesoro:
+  no da Reparación, Paso helado ni maldiciones)» o «…puede dar encantamientos
+  de tesoro como Reparación».
+- `enchant_randomly` con lista → «Encantado al azar con: …».
+
+Los nombres de encantamientos salen del lang (`enchantment.<ns>.<id>`).
+
+Aparte, Quark tiene `Nerf Mending = true` en ese pack: Reparación ya no repara
+con experiencia (en el yunque repara entero y se consume), pero no la quita del
+loot.

@@ -198,11 +198,54 @@ var noteText = map[string]string{
 	"random_chance_with_looting": "Más con Botín",
 }
 
-func translateNotes(in []string) []string {
+// detailedNote explains loot functions that carry parameters.
+func detailedNote(n string, namer *names.Namer) (string, bool) {
+	parts := strings.Split(n, "|")
+	switch parts[0] {
+	case "enchant_with_levels":
+		if len(parts) != 4 {
+			return "", false
+		}
+		lv := parts[1]
+		if parts[2] != parts[1] {
+			lv = parts[1] + "–" + parts[2]
+		}
+		mending := enchantName(namer, "minecraft:mending")
+		if parts[3] == "true" {
+			return "Encantado (nivel " + lv + ", puede dar encantamientos de tesoro como " + mending + ")", true
+		}
+		return "Encantado (nivel " + lv + ", sin encantamientos de tesoro: no da " + mending + ", " + enchantName(namer, "minecraft:frost_walker") + " ni maldiciones)", true
+	case "enchant_randomly":
+		if len(parts) != 2 {
+			return "", false
+		}
+		var list []string
+		for _, e := range strings.Split(parts[1], ",") {
+			list = append(list, enchantName(namer, e))
+		}
+		return "Encantado al azar con: " + strings.Join(list, ", "), true
+	}
+	return "", false
+}
+
+func enchantName(namer *names.Namer, id string) string {
+	if rid, err := domain.ParseResourceID(strings.TrimPrefix(id, "#")); err == nil {
+		if v, ok := namer.Text("enchantment." + rid.Namespace + "." + rid.Path); ok {
+			return v
+		}
+		return names.Humanize(rid.Path)
+	}
+	return id
+}
+
+func translateNotes(in []string, namer *names.Namer) []string {
 	seen := map[string]bool{}
 	var out []string
 	for _, n := range in {
 		t, ok := noteText[n]
+		if !ok {
+			t, ok = detailedNote(n, namer)
+		}
 		if !ok {
 			t = names.Humanize(n)
 		}
@@ -281,7 +324,7 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		if lt := res.Tables[id]; lt != nil {
 			t.Approx = lt.Approximate
 			for _, d := range lt.Drops {
-				t.Drops = append(t.Drops, Drop{Item: itemOf(d.Item), Chance: d.Chance, CountMin: d.CountMin, CountMax: d.CountMax, Notes: translateNotes(d.Notes), Approx: d.Approximate})
+				t.Drops = append(t.Drops, Drop{Item: itemOf(d.Item), Chance: d.Chance, CountMin: d.CountMin, CountMax: d.CountMax, Notes: translateNotes(d.Notes, namer), Approx: d.Approximate})
 			}
 		}
 		tables[id] = t
