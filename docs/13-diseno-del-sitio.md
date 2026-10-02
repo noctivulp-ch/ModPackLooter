@@ -52,7 +52,7 @@ lista, filtra y lleva a las fichas.
 | Edificio de Lost Cities | Ficha maestra | Igual que una estructura, piso por piso. |
 | Criatura (mob, aldeano, comerciante) | Ficha maestra | Dónde aparece, qué suelta y con qué probabilidad, qué comercia y a qué nivel. |
 | Comerciante (profesión, NPC) | Ficha maestra | Sus tradeos por nivel, precios y dónde aparece. |
-| Pesca en un bioma (por sistema de pesca) | Ficha maestra | Qué sale pescando ahí, con qué probabilidad y condiciones (caña, cebo, hora, clima). |
+| Pescar en un bioma | Ficha maestra | Junta todas las cañas: dimensión › bioma › caña › condición › captura. |
 | Bioma | Punto de navegación | Un bioma entero no se puede leer completo: lleva a sus estructuras, criaturas y pesca. |
 | Listas (objetos, estructuras, criaturas…), mods, tablas | Punto de navegación | Buscan y filtran; el detalle vive en las fichas. |
 
@@ -67,6 +67,12 @@ un bioma de una dimensión. El **objeto** es la ficha principal; los
 **contenedores** importan por lo que tienen, y las **estructuras** porque es adonde
 el jugador va a buscar algo. Los biomas se agrupan por dimensión y llevan a sus
 estructuras y a sus criaturas.
+
+En la pesca, el papel de la estructura lo hace la **caña** (cada sistema de pesca:
+Starcatcher, Tide, caña vanilla…). El del contenedor lo hace cada **condición**
+(agua, lava o vacío; con o sin cebo; aguas abiertas…), y dentro están las
+capturas. La ficha «Pescar en <bioma>» ordena así: dimensión › bioma › caña ›
+condición › captura, con un índice arriba para saltar a cada caña y condición.
 
 ### La línea completa
 

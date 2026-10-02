@@ -5,5 +5,6 @@
   <h1>Pescar en {{$b.Name}}</h1>
   <p>{{$b.Source.Name}}{{if $b.Dimension}} · {{$b.Dimension}}{{end}}{{if $b.Biome}} · <a href="{{rel .Root $b.Biome.URL}}">el bioma</a>{{end}}</p>
 </header>
+{{if $b.Spot}}{{if gt (len $b.Spot.Rods) 1}}<section class="pozo"><p>En este bioma también se pesca con otras cañas: <a href="{{rel .Root $b.Spot.URL}}">ver todas las cañas en {{$b.Name}}</a>.</p></section>{{end}}{{end}}
 {{range $b.Groups}}{{template "fishGroup" (dict "Root" $.Root "G" .)}}{{end}}
 {{end}}

@@ -13,6 +13,7 @@ import (
 // Fishing is the fishing tab: pesca › fuente › bioma › condiciones › captura.
 type Fishing struct {
 	Sources []*FishSource
+	Spots   []*FishSpot
 }
 
 // FishSource is a fishing system (a mod, or the vanilla rod).
@@ -40,6 +41,7 @@ type FishBiome struct {
 	Groups    []FishGroup
 	Count     int
 	Top       []FishCatch
+	Spot      *FishSpot // every rod in this biome
 }
 
 // FishGroup is a list of catches that compete with each other.
@@ -282,10 +284,93 @@ func (r *renderer) renderFishing(m *Model) {
 		return
 	}
 	r.render("fish_index", "pesca/", "pesca", "Pesca", m, m.Fishing)
+	for _, sp := range m.Fishing.Spots {
+		r.render("fish_spot", sp.URL, "pesca", "Pescar en "+sp.Name, m, sp)
+	}
 	for _, s := range m.Fishing.Sources {
 		r.render("fish_source", s.URL, "pesca", "Pesca · "+s.Name, m, s)
 		for _, b := range s.Biomes {
 			r.render("fish_biome", b.URL, "pesca", b.Name+" · "+s.Name, m, b)
 		}
 	}
+}
+
+// FishSpot is the master page of fishing in a biome: every rod that works
+// there, each with its conditions and what they give. Dimension › biome ›
+// rod › condition › catch.
+type FishSpot struct {
+	Ref
+	Biome     *Biome
+	Dimension string
+	Rods      []FishRod
+	Count     int
+}
+
+// FishRod is a fishing system (a kind of rod) in a spot.
+type FishRod struct {
+	Source     *FishSource
+	Page       *FishBiome // the system's own page for the biome, if any
+	Groups     []FishGroup
+	Everywhere bool // the same in every biome
+}
+
+// spotGroup groups spots by dimension, for the fishing index.
+type spotGroup struct {
+	Label string
+	Spots []*FishSpot
+}
+
+// SpotGroups lists the spots by dimension.
+func (f *Fishing) SpotGroups() []spotGroup {
+	by := map[string][]*FishSpot{}
+	for _, s := range f.Spots {
+		by[s.Dimension] = append(by[s.Dimension], s)
+	}
+	var out []spotGroup
+	for _, d := range dimensionOrder {
+		if len(by[d]) > 0 {
+			out = append(out, spotGroup{Label: d, Spots: by[d]})
+		}
+	}
+	return out
+}
+
+// buildSpots joins every fishing system per biome.
+func buildSpots(m *Model) {
+	if m.Fishing == nil {
+		return
+	}
+	spots := map[domain.ResourceID]*FishSpot{}
+	for _, src := range m.Fishing.Sources {
+		for _, fb := range src.Biomes {
+			sp := spots[fb.ID]
+			if sp == nil {
+				sp = &FishSpot{Ref: Ref{ID: fb.ID, Name: fb.Name, URL: "pesca/biomas/" + idPath(fb.ID) + "/"}, Biome: fb.Biome, Dimension: "Otras dimensiones"}
+				if fb.Biome != nil {
+					sp.Dimension = fb.Biome.Dimension
+					fb.Biome.Fishing = sp
+				}
+				spots[fb.ID] = sp
+			}
+			sp.Rods = append(sp.Rods, FishRod{Source: src, Page: fb, Groups: fb.Groups})
+			sp.Count += fb.Count
+			fb.Spot = sp
+		}
+	}
+	// Systems that fish the same everywhere are one more rod in every spot.
+	for _, src := range m.Fishing.Sources {
+		if len(src.Everywhere) == 0 {
+			continue
+		}
+		for _, sp := range spots {
+			sp.Rods = append(sp.Rods, FishRod{Source: src, Groups: src.Everywhere, Everywhere: true})
+			for _, g := range src.Everywhere {
+				sp.Count += len(g.Catches)
+			}
+		}
+	}
+	for _, sp := range spots {
+		m.Fishing.Spots = append(m.Fishing.Spots, sp)
+	}
+	sortRefs(m.Fishing.Spots, func(s *FishSpot) Ref { return s.Ref })
 }

@@ -6,6 +6,7 @@
   <p>{{$b.Dimension}} · {{$b.Mod.Name}} · {{len $b.Owners}} estructuras con loot · {{len $b.Creatures}} criaturas</p>
 </header>
 {{template "statusBox" $b.Status}}
+{{with $b.Fishing}}<section class="pozo"><p><a href="{{rel $.Root .URL}}">Pescar en {{$b.Name}}</a> <span class="meta">· {{len .Rods}} {{if eq (len .Rods) 1}}caña{{else}}cañas{{end}} · {{.Count}} capturas posibles</span></p></section>{{end}}
 <div class="cols-2">
   <section class="pozo">
     <header class="pozo-head"><h2>¿Qué hay aquí?</h2><p class="meta">Lo más fácil de encontrar en las estructuras de este bioma.</p></header>

@@ -270,7 +270,11 @@ func buildCards(it *Item, m *Model) {
 				for _, g := range b.Groups {
 					for _, ct := range g.Catches {
 						if ct.Entry.Item == it {
-							add(b.Name, b.URL, FishRow{Source: src, Group: g.Title, Catch: ct})
+							url := b.URL
+							if b.Spot != nil {
+								url = b.Spot.URL
+							}
+							add(b.Name, url, FishRow{Source: src, Group: g.Title, Catch: ct})
 						}
 					}
 				}
