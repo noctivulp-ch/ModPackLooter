@@ -269,6 +269,13 @@ func TestFishingTab(t *testing.T) {
 			t.Errorf("la Estrella del Nether no contiene %q", want)
 		}
 	}
+	// The master page of a biome joins every rod: dimension › biome › rod › condition › catch.
+	spot := read("pesca/biomas/minecraft/river/index.html")
+	for _, want := range []string{"Pescar en", "Starcatcher"} {
+		if !strings.Contains(spot, want) {
+			t.Errorf("la pesca del río no contiene %q", want)
+		}
+	}
 	river := read("pesca/starcatcher/minecraft/river/index.html")
 	for _, want := range []string{"Trucha", "100 %", "solo de 19:00 a 05:00", "Con cebo", "con Wither Skeleton Skull"} {
 		if !strings.Contains(river, want) {

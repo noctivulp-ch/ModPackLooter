@@ -332,6 +332,9 @@ main:focus { outline: none; }
 .biome-line { margin: 4px 0 4px; font-size: 0.8125rem; max-width: none; }
 .tech { margin-top: var(--gap-grupo); }
 
+.jump { margin: 0 0 6px; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; max-width: none; }
+.jump strong { min-width: 12em; }
+
 /* La línea completa: de dónde sale a la probabilidad real. */
 .line { margin: 8px 0 0; font-size: 0.8125rem; line-height: 1.6; color: var(--texto-pozo); max-width: none; }
 .line .line-k { font-weight: 600; color: var(--texto-secundario); margin-right: 4px; }

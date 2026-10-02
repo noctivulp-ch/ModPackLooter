@@ -144,6 +144,8 @@ type Biome struct {
 	Status    domain.Status
 	// Creatures are the mobs that spawn in it naturally.
 	Creatures []BiomeCreature
+	// Fishing is what every rod gives in it.
+	Fishing *FishSpot
 }
 
 // BiomeCreature is a mob that spawns in a biome.
@@ -658,6 +660,7 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 	}
 	ensureItem := func(id domain.ResourceID) *Item { return ensureVariant(id, domain.Variant{}) }
 	buildFishing(res, m, namer, ensureItem)
+	buildSpots(m)
 	buildChanges(res, m, namer, ensureItem)
 	buildTrades(res, m, namer, ensureVariant)
 	for _, it := range m.Items {
