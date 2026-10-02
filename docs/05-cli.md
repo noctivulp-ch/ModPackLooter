@@ -72,6 +72,21 @@ loot_tables = ["examplemod:chests/ruined_tower_top"]
 - Códigos de salida: `0` éxito, `1` error fatal, `2` éxito con advertencias
   (opcional vía `--strict`).
 
+## Reglas de terminal (guía tui-architect)
+
+- **Sin TTY = salida plana**: sin colores, spinners ni cursor si `stdout` no es
+  una terminal (CI, tuberías). Se respetan `NO_COLOR`, `FORCE_COLOR` y
+  `TERM=dumb`.
+- **`--json`** en todos los comandos de consulta y en `scan`, para scripts.
+- **stdout para resultados, stderr para progreso y logs**; `--debug` escribe
+  un log detallado a archivo.
+- **Color semántico y escaso** (acento, ok, aviso, error, atenuado), siempre
+  acompañado de un símbolo (`✓ ✗ !`), con opción `--ascii`.
+- **Mensajes de error** en una línea: qué pasó + cómo arreglarlo.
+- `--version` y `--help` útiles desde el primer día.
+- La TUI será otra capa sobre el mismo núcleo; el modo CLI no es un
+  *fallback*, es de primera clase.
+
 ## Futura TUI
 
 `modpacklooter tui <ruta-modpack>` abrirá una interfaz interactiva para

@@ -45,8 +45,8 @@ contrato independiente del lenguaje.
 | Necesidad | Opción prevista |
 |---|---|
 | Lenguaje | Go (última versión estable) |
-| CLI | `spf13/cobra` |
-| TUI (fase 3) | `charmbracelet/bubbletea` + `lipgloss` |
+| CLI | `spf13/cobra` (+ `charmbracelet/fang` para ayuda/errores con estilo, a evaluar) |
+| TUI (fase 3) | **Bubble Tea v2** + Lip Gloss v2 + Bubbles v2 (`charm.land/...`), Huh para formularios |
 | NBT | Librería existente o lector propio mínimo detrás del puerto `StructureTemplateReader` |
 | Zip / JSON / gzip | Librería estándar |
 | Configuración | TOML (`BurntSushi/toml` o `pelletier/go-toml`) |
