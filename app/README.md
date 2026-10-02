@@ -48,17 +48,28 @@ cual a GitHub Pages o GitLab Pages.
 
 Los avisos y el progreso van a *stderr*; el resultado, a *stdout*.
 
-## Qué detecta hoy (Minecraft 1.20.x, Forge/NeoForge)
+## Qué detecta hoy (Minecraft 1.20.x y 1.21.x, Forge/NeoForge)
 
 - Cofres, barriles, vagonetas y arqueología de **plantillas NBT** y **processor lists**
   (`append_loot`) de cualquier mod con estructuras jigsaw.
 - Estructuras vanilla cuyo loot asigna el código (pirámides, minas, fortalezas…).
-- **Lost Cities**: paletas y condiciones de loot con su peso.
 - **Lootr**: loot por jugador, *refresh*, *decay* y exclusiones según su configuración.
 - Heurística por nombre y, al final, todas las tablas restantes clasificadas por su ruta.
 - **Desactivados** (seguro / posible): estructuras sin `structure_set`, biomas inexistentes en el
   mundo modelo, Biome Replacer, Structurify, InControl, perfil de Lost Cities y menciones en
   configs y scripts de KubeJS.
+- **Pestañas por mod** (solo aparecen si el mod está):
+  - **Lost Cities** por capas: perfil › estilo de mundo › estilos de ciudad por bioma ›
+    edificios › contenedores › loot.
+  - **Pesca**: Starcatcher, Tide 2 y la caña vanilla, por bioma y condiciones (cebo, hora,
+    clima, altura, temperatura).
+  - **Tradeos**: aldeanos y comerciante errante (verificados contra el juego), trueque con
+    piglins, NPCs de CustomNPCs con sus drops y tiendas.
+- **Cambios de mods** a loot, drops, tradeos y pesca, en cualquier modpack: reemplazos de
+  tablas, Global Loot Modifiers, LootJS, KubeJS, MoreJS, CraftTweaker, opciones de config y
+  código de los mods.
+- Nombres desde los archivos de idioma, también para cosas sin traducción estándar.
+- Servidores dedicados: `server.jar` y el mundo de `server.properties` se detectan solos.
 
 ## Desarrollo
 
