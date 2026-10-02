@@ -12,6 +12,7 @@ import (
 	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/heuristics"
 	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/lootr"
 	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/lostcities"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/spawns"
 	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/starcatcher"
 	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/templates"
 	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/tide"
@@ -22,6 +23,7 @@ import (
 func Discoverers() *discovery.Registry[discovery.Discoverer] {
 	return discovery.NewRegistry[discovery.Discoverer](
 		templates.Discoverer{},
+		spawns.Discoverer{},
 		vanilla.Discoverer1_20{},
 		lostcities.Discoverer{},
 		starcatcher.Discoverer{},

@@ -54,6 +54,9 @@ type Item struct {
 	// Ways summarise how to get it, most likely first; Top is the best.
 	Ways []*Way
 	Top  *WayPlace
+	// Cards are every way of getting it with all the details.
+	Cards  []*Card
+	lcRows map[*LCBuilding][]LCItemRow
 }
 
 // LCHaulRef links an item to a Lost Cities building that can hold it.
@@ -76,6 +79,8 @@ type ItemSource struct {
 	Notes      []string
 	Approx     bool
 	Status     domain.Status
+	// Container names the block or entity holding the table ("Cofre").
+	Container string
 }
 
 // Owner is a structure, feature or template that holds loot.
@@ -114,6 +119,8 @@ type Table struct {
 	Uses    []*TableUse
 	Approx  bool
 	Changes []*Change // modifications by mods, scripts or configs
+	// Creature is the mob whose drops the table holds.
+	Creature *Creature
 }
 
 // Drop is a row of a loot table.
@@ -181,6 +188,7 @@ type Model struct {
 	Fishing    *Fishing
 	Changes    []*ChangeSection
 	Trades     *Trades
+	Creatures  []*Creature
 
 	tradeChanges []*Change
 }
@@ -353,6 +361,10 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 	}
 	// variantOf returns the page of a useful variant of an item.
 	variantOf := func(id domain.ResourceID, v domain.Variant) *Item {
+		// One page per enchantment: the level is a detail of each source.
+		if v.Kind == domain.VariantEnchantment {
+			v.Level = 0
+		}
 		if v.IsZero() {
 			return itemOf(id)
 		}
@@ -384,7 +396,11 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		if lt := res.Tables[id]; lt != nil {
 			t.Approx = lt.Approximate
 			for _, d := range lt.Drops {
-				t.Drops = append(t.Drops, Drop{Item: variantOf(d.Item, d.Variant), Chance: d.Chance, CountMin: d.CountMin, CountMax: d.CountMax, Notes: translateNotes(d.Notes, namer), Approx: d.Approximate})
+				notes := translateNotes(d.Notes, namer)
+				if d.Variant.Kind == domain.VariantEnchantment && d.Variant.Level > 0 {
+					notes = append([]string{"Nivel " + levelName(namer, d.Variant.Level)}, notes...)
+				}
+				t.Drops = append(t.Drops, Drop{Item: variantOf(d.Item, d.Variant), Chance: d.Chance, CountMin: d.CountMin, CountMax: d.CountMax, Notes: notes, Approx: d.Approximate})
 			}
 		}
 		tables[id] = t
@@ -481,7 +497,7 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 				Table: t, Kind: s.Kind, Owner: owner, Chance: d.Chance, Share: s.Share, Effective: eff,
 				CountMin: d.CountMin, CountMax: d.CountMax, Confidence: s.Confidence,
 				Notes: append(append([]string(nil), d.Notes...), use.Notes...), Approx: d.Approx,
-				Status: use.Status,
+				Status: use.Status, Container: containerName(namer, s.Container),
 			}
 			d.Item.Sources = append(d.Item.Sources, src)
 			if eff > d.Item.Best {
@@ -560,7 +576,7 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 	sortRefs(m.Tables, func(t *Table) Ref { return t.Ref })
 	for _, b := range biomes {
 		sortRefs(b.Owners, func(o *Owner) Ref { return o.Ref })
-		b.Top = topItems(b.Owners, 24)
+		b.Top = topItems(b.Owners, 300)
 		m.Biomes = append(m.Biomes, b)
 	}
 	sortRefs(m.Biomes, func(b *Biome) Ref { return b.Ref })
@@ -631,6 +647,7 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 	for _, it := range m.Items {
 		sortRefs(it.Variants, func(v *Item) Ref { return v.Ref })
 	}
+	buildCreatures(res, m, namer, modOf)
 	if m.LostCities != nil {
 		for _, b := range m.LostCities.Buildings {
 			for _, h := range b.Haul {
@@ -640,6 +657,7 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 	}
 	for _, it := range m.Items {
 		buildWays(it, namer)
+		buildCards(it, m)
 	}
 	sortRefs(m.Items, func(i *Item) Ref { return i.Ref })
 	sortRefs(m.Mods, func(md *Mod) Ref { return md.Ref })
@@ -647,6 +665,24 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		sortRefs(md.Items, func(i *Item) Ref { return i.Ref })
 	}
 	return m
+}
+
+// containerName names the block or entity of a container.
+func containerName(namer *names.Namer, id string) string {
+	if id == "" {
+		return ""
+	}
+	rid, err := domain.ParseResourceID(id)
+	if err != nil {
+		return id
+	}
+	if v, ok := namer.Text("block." + rid.Namespace + "." + rid.Path); ok {
+		return v
+	}
+	if v, ok := namer.Text("entity." + rid.Namespace + "." + rid.Path); ok {
+		return v
+	}
+	return namer.Item(rid)
 }
 
 // entityOf maps "ns:entities/zombie" to the entity "ns:zombie".

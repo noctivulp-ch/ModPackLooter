@@ -1,12 +1,18 @@
 {{define "content"}}
 {{$m := .Data}}
 <nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "tradeos/"}}">Tradeos</a> / <a href="{{rel .Root $m.Catalog.URL}}">{{$m.Catalog.Name}}</a></nav>
-<div class="page-head">
+<header class="item-title">
   <h1>{{$m.Name}}</h1>
-  <p class="id">{{$m.ID}}{{if $m.Location}} · {{$m.Location}}{{end}}</p>
-  {{if $m.Station}}<p>Bloque de trabajo: <a href="{{rel .Root $m.Station.URL}}">{{$m.Station.Name}}</a></p>{{end}}
+  <p>{{$m.Catalog.Name}} · {{$m.Offers}} ofertas{{if $m.Station}} · bloque de trabajo: <a href="{{rel .Root $m.Station.URL}}">{{$m.Station.Name}}</a>{{end}}</p>
+</header>
+<section class="pozo card" id="donde">
+  <header class="card-head"><h2>Dónde sale</h2></header>
+  {{if $m.Creature}}<p><a href="{{rel .Root $m.Creature.URL}}">{{$m.Creature.Name}}</a>: {{template "creatureWhere" (dict "Root" .Root "C" $m.Creature)}}.</p>
+    {{if $m.Station}}<p class="meta">Cualquier {{$m.Creature.Name}} sin profesión la toma al trabajar en un bloque de {{$m.Station.Name}}.</p>{{end}}
+  {{else if $m.Location}}<p>{{$m.Location}}</p>
+  {{else}}<p class="warn-text">No se sabe dónde aparece.</p>{{end}}
   {{if $m.Note}}<p class="meta">{{$m.Note}}</p>{{end}}
-</div>
+</section>
 {{if $m.Changes}}
 <section class="pozo">
   <h2>Cambios de mods</h2>

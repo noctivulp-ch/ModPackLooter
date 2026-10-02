@@ -39,6 +39,9 @@ type TradeMerchant struct {
 	Location string
 	Changes  []*Change
 	Offers   int
+	// Creature is the mob that trades (villager, wandering trader).
+	Creature *Creature
+	entity   domain.ResourceID
 }
 
 // TradeLevel is a level of a merchant.
@@ -130,7 +133,7 @@ func buildTrades(res *analysis.Result, m *Model, namer *names.Namer, variantOf f
 	for _, c := range cats {
 		tc := &TradeCatalog{Ref: Ref{Name: c.Name, URL: "tradeos/" + c.Key + "/"}, Intro: c.Intro, Known: c.Confidence == domain.ConfidenceKnown, Confidence: c.Confidence}
 		for _, mc := range c.Merchants {
-			tm := &TradeMerchant{Catalog: tc, Note: mc.Note, Location: mc.Location}
+			tm := &TradeMerchant{Catalog: tc, Note: mc.Note, Location: mc.Location, entity: mc.Entity}
 			name := mc.Name
 			if v, ok := namer.Text(name); ok {
 				name = v

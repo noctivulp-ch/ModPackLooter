@@ -264,7 +264,7 @@ func TestFishingTab(t *testing.T) {
 		t.Error("falta la pestaña Pesca")
 	}
 	star := read("objetos/minecraft/nether_star/index.html")
-	for _, want := range []string{"Se pesca", "Starcatcher", "solo con cebo:", "Wither Skeleton Skull", "aparece Wither al pescarlo", "en cualquier bioma"} {
+	for _, want := range []string{"Pescando", "La forma más probable", "Starcatcher", "solo con cebo:", "Wither Skeleton Skull", "aparece Wither al pescarlo", "en cualquier bioma"} {
 		if !strings.Contains(star, want) {
 			t.Errorf("la Estrella del Nether no contiene %q", want)
 		}
@@ -348,18 +348,18 @@ func TestEnchantNotes(t *testing.T) {
 		"Encantado (nivel 20–39, puede dar encantamientos de tesoro como Reparación)",
 		// Each useful variant is its own item.
 		"Caña de pescar: Reparación", "Caña de pescar: Atracción",
-		"Libro encantado: Reparación I", "Poción de curación II",
+		"Libro encantado: Reparación", "Nivel I", "Poción de curación II",
 	} {
 		if !strings.Contains(page, want) {
 			t.Errorf("la tabla de tesoro no contiene %q", want)
 		}
 	}
-	book, err := os.ReadFile(filepath.Join(out, "objetos/minecraft/enchanted_book/enchantment-minecraft_mending_1/index.html"))
-	if err != nil || !strings.Contains(string(book), "Libro encantado: Reparación I") {
+	book, err := os.ReadFile(filepath.Join(out, "objetos/minecraft/enchanted_book/enchantment-minecraft_mending/index.html"))
+	if err != nil || !strings.Contains(string(book), "Libro encantado: Reparación") {
 		t.Errorf("falta la página de la variante: %v", err)
 	}
 	index, _ := os.ReadFile(filepath.Join(out, "assets/search-index.js"))
-	if !strings.Contains(string(index), "Enchanted Book: Mending I") {
+	if !strings.Contains(string(index), "Enchanted Book: Mending") {
 		t.Error("el índice debe permitir buscar por el nombre en inglés")
 	}
 	// Overriding a table is a change: listed in "Cambios de mods".
@@ -417,7 +417,7 @@ func TestTradesTab(t *testing.T) {
 		}
 	}
 	bread := read("objetos/minecraft/bread/index.html")
-	for _, want := range []string{"Lo vende", "Granjero", "Lo sueltan NPCs", "Bandido", "25 %"} {
+	for _, want := range []string{"Comerciando", "Granjero", "Lo sueltan NPCs", "Bandido", "25 %"} {
 		if !strings.Contains(bread, want) {
 			t.Errorf("el pan no contiene %q", want)
 		}

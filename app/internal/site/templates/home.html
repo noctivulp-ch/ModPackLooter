@@ -1,35 +1,36 @@
 {{define "content"}}
 <div class="page-head">
   <h1>{{.M.Title}}</h1>
-  <p class="lede">Dónde conseguir cada objeto de este modpack: en qué estructuras aparece, en qué biomas y con qué probabilidad.</p>
+  <p class="lede">Dónde conseguir cada cosa de este modpack: en qué estructuras sale, qué criaturas lo sueltan, dónde se pesca y quién lo vende, con su probabilidad.</p>
 </div>
 
-<section class="pozo pozo-search">
-  <label for="q-home" class="label">¿Qué estás buscando?</label>
-  <input id="q-home" class="big-search" type="search" placeholder="Por ejemplo: diamante, aldea, desierto…" autocomplete="off" spellcheck="false" data-proxy="q">
-  <p class="hint-text">Pulsa <kbd>/</kbd> en cualquier página para buscar.</p>
+<section class="pozo home-search">
+  <label for="q-home">¿Qué estás buscando?</label>
+  <input id="q-home" class="field big-search" type="search" placeholder="Un objeto, una estructura o un bioma" autocomplete="off" spellcheck="false">
+  {{with .M.Examples}}<p class="examples"><span>Prueba:</span>{{range .}}<button type="button" data-try="{{.}}">{{.}}</button>{{end}}</p>{{end}}
 </section>
 
-<div class="grid">
-  <section class="pozo">
-    <h2>Este modpack</h2>
-    <dl class="facts">
-      <div><dt>Objetos con loot</dt><dd><a href="{{rel .Root "objetos/"}}">{{len .M.Items}}</a></dd></div>
-      <div><dt>Estructuras con loot</dt><dd><a href="{{rel .Root "estructuras/"}}">{{len .M.Owners}}</a></dd></div>
-      <div><dt>Biomas</dt><dd><a href="{{rel .Root "biomas/"}}">{{len .M.Biomes}}</a></dd></div>
-      <div><dt>Tablas de loot</dt><dd><a href="{{rel .Root "fuentes/"}}">{{len .M.Tables}}</a></dd></div>
-      <div><dt>Mods con loot</dt><dd><a href="{{rel .Root "mods/"}}">{{len .M.Mods}}</a></dd></div>
-    </dl>
-    {{if not .M.Pack.HasVanilla}}<p class="warn-text">No se incluyó el loot de Minecraft vanilla: solo aparece el contenido de los mods.</p>{{end}}
-  </section>
+<div class="tasks">
+  <a class="pozo task" href="{{rel .Root "objetos/"}}"><strong>Busco un objeto</strong><span><span class="n">{{len .M.Items}}</span> objetos y variantes, con la forma más probable de conseguir cada uno.</span></a>
+  <a class="pozo task" href="{{rel .Root "estructuras/"}}"><strong>¿Qué hay en esta estructura?</strong><span><span class="n">{{len .M.Owners}}</span> estructuras con todo lo que tienen dentro.</span></a>
+  <a class="pozo task" href="{{rel .Root "biomas/"}}"><strong>¿Qué hay en mi bioma?</strong><span><span class="n">{{len .M.Biomes}}</span> biomas con sus estructuras y lo más fácil de encontrar.</span></a>
+  {{if .M.Has "lostcities"}}<a class="pozo task" href="{{rel .Root "lostcities/"}}"><strong>Ciudades perdidas</strong><span>Edificios de Lost Cities y el loot de cada uno.</span></a>{{end}}
+  <a class="pozo task" href="{{rel .Root "fuentes/"}}"><strong>Criaturas y otras fuentes</strong><span>Lo que sueltan los mobs, la arqueología y más.</span></a>
+  {{if .M.Has "pesca"}}<a class="pozo task" href="{{rel .Root "pesca/"}}"><strong>Pescar</strong><span>Qué sale en cada bioma y con qué condiciones.</span></a>{{end}}
+  {{if .M.Has "tradeos"}}<a class="pozo task" href="{{rel .Root "tradeos/"}}"><strong>Comerciar</strong><span>Aldeanos, comerciantes y NPCs: qué venden y qué compran.</span></a>{{end}}
+  {{if .M.Has "cambios"}}<a class="pozo task" href="{{rel .Root "cambios/"}}"><strong>¿Qué cambió el modpack?</strong><span>Loot añadido, quitado o desactivado por los mods.</span></a>{{end}}
+</div>
 
-  <section class="pozo">
-    <h2>Cómo leer las probabilidades</h2>
-    <p>El porcentaje es la probabilidad de encontrar el objeto <strong>al abrir un contenedor</strong> (cofre, barril, vagoneta…), al menos una vez.</p>
-    <p>Cuando una estructura elige entre varias tablas, se indica en qué parte de sus contenedores se usa cada una.</p>
+{{if not .M.Pack.HasVanilla}}<section class="pozo pozo-dis"><p>No se incluyó el loot de Minecraft vanilla: solo aparece el contenido de los mods.</p></section>{{end}}
+
+<details class="fold">
+  <summary><h2>Cómo leer las probabilidades</h2></summary>
+  <div class="pozo">
+    <p>El porcentaje es la probabilidad de encontrar el objeto <strong>al menos una vez</strong> en lo que dice al lado: al abrir un contenedor (cofre, barril, vagoneta…), al matar una criatura, por captura al pescar o de que un comerciante te lo ofrezca.</p>
+    <p>Cuando una estructura elige entre varias tablas de loot, se indica en qué parte de sus contenedores se usa cada una.</p>
     <ul class="legend">
       {{range confs}}<li>{{template "conf" .}} <span>{{confHelp .}}</span></li>{{end}}
     </ul>
-  </section>
-</div>
+  </div>
+</details>
 {{end}}
