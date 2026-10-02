@@ -4,6 +4,7 @@
 package analysis
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 
@@ -230,7 +231,8 @@ func (r *Resources) LootTableJSON(id domain.ResourceID) ([]byte, bool, error) {
 	if err != nil {
 		return nil, true, fmt.Errorf("%s: %w", e, err)
 	}
-	return data, true, nil
+	// Some mods save their JSON with a UTF-8 byte order mark.
+	return bytes.TrimPrefix(data, []byte{0xEF, 0xBB, 0xBF}), true, nil
 }
 
 func (r *Resources) ItemTag(id domain.ResourceID) []domain.ResourceID {

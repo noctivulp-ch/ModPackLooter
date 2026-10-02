@@ -44,6 +44,7 @@ type Modpack struct {
 	Lang          string       // language used for names, e.g. "es_ar"
 	LangSource    string       // "--lang", "options.txt" or "por defecto"
 	World         *world.World // model world, nil when none was given
+	WorldAuto     bool         // the world was detected (server.properties), not given
 	Mods          []Mod
 	Index         *resources.Index
 	HasVanilla    bool
@@ -89,12 +90,29 @@ func Open(opts Options) (*Modpack, error) {
 	}
 	mp := &Modpack{Root: root}
 	mp.Lang, mp.LangSource = detectLang(root, opts.Lang)
+	worldPath := ""
 	if opts.World != "" {
-		w, err := world.Load(resolveWorld(root, opts.World))
-		if err != nil {
+		worldPath = resolveWorld(root, opts.World)
+	} else if sw := serverWorld(root); sw != "" {
+		// A dedicated server keeps its world next to mods/: use it as the
+		// model world automatically.
+		worldPath = sw
+		mp.WorldAuto = true
+	}
+	if worldPath != "" {
+		w, err := world.Load(worldPath)
+		switch {
+		case err == nil:
+			mp.World = w
+			if mp.WorldAuto {
+				diags.Add(domain.LevelInfo, stage, worldPath, "mundo del servidor detectado (server.properties); se usa como mundo modelo")
+			}
+		case mp.WorldAuto:
+			diags.Add(domain.LevelWarning, stage, worldPath, "no se pudo leer el mundo del servidor: %v", err)
+			mp.WorldAuto = false
+		default:
 			return nil, err
 		}
-		mp.World = w
 	}
 
 	modPacks, err := mp.loadMods(diags)
@@ -330,6 +348,14 @@ func (mp *Modpack) loadVanilla(explicit string, diags *domain.Diagnostics) resou
 	candidates := []string{explicit}
 	if explicit == "" {
 		candidates = []string{
+			// Dedicated server: the vanilla server jar next to mods/, or the
+			// "-extra" jar (data and assets) the Forge installer leaves in libraries/.
+			filepath.Join(mp.Root, "server.jar"),
+			filepath.Join(mp.Root, "minecraft_server."+v+".jar"),
+		}
+		extras, _ := filepath.Glob(filepath.Join(mp.Root, "libraries", "net", "minecraft", "server", v+"*", "server-"+v+"*-extra.jar"))
+		candidates = append(candidates, extras...)
+		candidates = append(candidates,
 			filepath.Join(mp.Root, "versions", v, v+".jar"),
 			// CurseForge: <cf>/minecraft/Instances/<name> -> <cf>/minecraft/Install/versions
 			filepath.Join(mp.Root, "..", "..", "Install", "versions", v, v+".jar"),
@@ -337,7 +363,7 @@ func (mp *Modpack) loadVanilla(explicit string, diags *domain.Diagnostics) resou
 			filepath.Join(mp.Root, "..", "..", "..", "libraries", "com", "mojang", "minecraft", v, "minecraft-"+v+"-client.jar"),
 			// Official launcher.
 			filepath.Join(userHome(), ".minecraft", "versions", v, v+".jar"),
-		}
+		)
 	}
 	for _, c := range candidates {
 		if c == "" {
@@ -364,8 +390,13 @@ func (mp *Modpack) loadVanilla(explicit string, diags *domain.Diagnostics) resou
 			continue
 		}
 		mp.closers = append(mp.closers, zp.Close)
+		pack := unwrapBundler(zp, diags)
+		if !hasVanillaData(pack) {
+			diags.Add(domain.LevelWarning, stage, c, "el jar no contiene los datos de Minecraft (data/minecraft/); se ignora")
+			continue
+		}
 		diags.Add(domain.LevelInfo, stage, c, "datos vanilla de Minecraft %s cargados", v)
-		return zp
+		return pack
 	}
 	return nil
 }
@@ -465,6 +496,10 @@ func resolveWorld(root, name string) string {
 	if st, err := os.Stat(filepath.Join(name, "level.dat")); err == nil && !st.IsDir() {
 		return name
 	}
+	// A server keeps worlds next to mods/; a client, under saves/.
+	if _, err := os.Stat(filepath.Join(root, name, "level.dat")); err == nil {
+		return filepath.Join(root, name)
+	}
 	return filepath.Join(root, "saves", name)
 }
 
@@ -533,3 +568,59 @@ func (mp *Modpack) RootDir() string { return mp.Root }
 
 // Level returns the model world, or nil.
 func (mp *Modpack) Level() *world.World { return mp.World }
+
+// unwrapBundler returns the real game jar inside a server "bundler" jar
+// (Minecraft 1.18+ ships server.jar as a launcher that keeps the server in
+// META-INF/versions/<version>/server-<version>.jar).
+func unwrapBundler(zp *resources.ZipPack, diags *domain.Diagnostics) resources.Pack {
+	if hasVanillaData(zp) {
+		return zp
+	}
+	for _, path := range zp.Files() {
+		if !strings.HasPrefix(path, "META-INF/versions/") || !strings.HasSuffix(path, ".jar") {
+			continue
+		}
+		data, err := resources.ReadFile(zp, path)
+		if err != nil {
+			diags.Add(domain.LevelWarning, stage, zp.Name(), "jar interno ilegible %s: %v", path, err)
+			continue
+		}
+		inner, err := resources.NewZipPackFromBytes(zp.Name()+"!/"+filepath.Base(path), resources.KindVanilla, data)
+		if err != nil {
+			diags.Add(domain.LevelWarning, stage, zp.Name(), "jar interno ilegible %s: %v", path, err)
+			continue
+		}
+		if hasVanillaData(inner) {
+			return inner
+		}
+	}
+	return zp
+}
+
+func hasVanillaData(p resources.Pack) bool {
+	for _, f := range p.Files() {
+		if strings.HasPrefix(f, "data/minecraft/") {
+			return true
+		}
+	}
+	return false
+}
+
+// serverWorld returns the world of a dedicated server (server.properties
+// level-name, "world" by default) when it exists next to mods/.
+func serverWorld(root string) string {
+	data, err := os.ReadFile(filepath.Join(root, "server.properties"))
+	if err != nil {
+		return ""
+	}
+	name := "world"
+	for _, line := range strings.Split(string(data), "\n") {
+		if v, ok := strings.CutPrefix(strings.TrimSpace(line), "level-name="); ok && strings.TrimSpace(v) != "" {
+			name = strings.TrimSpace(v)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(root, name, "level.dat")); err != nil {
+		return ""
+	}
+	return filepath.Join(root, name)
+}
