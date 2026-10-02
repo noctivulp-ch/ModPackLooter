@@ -1,12 +1,18 @@
 name: app · Release
 
 # Publica binarios autocontenidos al crear una etiqueta app/vX.Y.Z.
-# También se puede lanzar a mano: genera los binarios como artefactos del
-# workflow sin crear una release.
+# También se puede lanzar a mano: sin versión genera los binarios como
+# artefactos; con versión (p. ej. v0.2.0) además crea la etiqueta app/<versión>
+# sobre el commit lanzado y publica la release.
 on:
   push:
     tags: ["app/v*"]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Versión a publicar (p. ej. v0.2.0-alpha.1). Vacío = solo compilar."
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -36,6 +42,8 @@ jobs:
         run: |
           if [[ "$GITHUB_REF" == refs/tags/app/v* ]]; then
             echo "version=${GITHUB_REF#refs/tags/app/}" >> "$GITHUB_OUTPUT"
+          elif [ -n "${{ inputs.version }}" ]; then
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
           else
             echo "version=dev-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
           fi
@@ -60,10 +68,22 @@ jobs:
             app/dist/*.tar.gz
 
   release:
-    if: startsWith(github.ref, 'refs/tags/app/v')
+    if: startsWith(github.ref, 'refs/tags/app/v') || inputs.version != ''
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: docs/releases
+      - name: Notas escritas a mano
+        id: notes
+        # docs/releases/<versión>.md va arriba; debajo, la lista automática de cambios.
+        run: |
+          version="${{ inputs.version }}"
+          if [ -z "$version" ]; then version="${GITHUB_REF_NAME#app/}"; fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          notes="docs/releases/${version}.md"
+          if [ -f "$notes" ]; then cp "$notes" release-notes.md; else : > release-notes.md; fi
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -72,7 +92,10 @@ jobs:
         run: cd dist && sha256sum * > SHA256SUMS.txt
       - uses: softprops/action-gh-release@v2
         with:
-          name: ModPackLooter ${{ github.ref_name }}
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          tag_name: app/${{ steps.notes.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          name: ModPackLooter ${{ steps.notes.outputs.version }}
+          prerelease: ${{ contains(steps.notes.outputs.version, '-') }}
+          body_path: release-notes.md
           generate_release_notes: true
           files: dist/*

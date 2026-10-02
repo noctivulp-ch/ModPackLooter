@@ -7,6 +7,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery"
 	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
@@ -212,6 +214,7 @@ type Resources struct {
 	diags *domain.Diagnostics
 	tags  map[string]*worldgen.Tags
 	langs map[string]map[string]string
+	ench  []domain.ResourceID
 }
 
 // NewResources wraps an index.
@@ -275,6 +278,38 @@ func (r *Resources) LootTableJSON(id domain.ResourceID) ([]byte, bool, error) {
 	}
 	// Some mods save their JSON with a UTF-8 byte order mark.
 	return bytes.TrimPrefix(data, []byte{0xEF, 0xBB, 0xBF}), true, nil
+}
+
+// Enchantments lists the enchantments of the pack: data-driven ones (1.21+)
+// and, for older versions, those named in the English lang files (every
+// registered enchantment has a name there).
+func (r *Resources) Enchantments() []domain.ResourceID {
+	if r.ench != nil {
+		return r.ench
+	}
+	seen := map[domain.ResourceID]bool{}
+	for _, id := range r.ix.IDs(resources.TypeEnchantment) {
+		seen[id] = true
+	}
+	if len(seen) == 0 {
+		for key, v := range r.Lang("en_us") {
+			parts := strings.Split(key, ".")
+			if len(parts) == 3 && parts[0] == "enchantment" && parts[1] != "level" && v != "" {
+				seen[domain.ResourceID{Namespace: parts[1], Path: parts[2]}] = true
+			}
+		}
+	}
+	r.ench = make([]domain.ResourceID, 0, len(seen))
+	for id := range seen {
+		r.ench = append(r.ench, id)
+	}
+	sort.Slice(r.ench, func(i, j int) bool { return r.ench[i].String() < r.ench[j].String() })
+	return r.ench
+}
+
+// InstrumentTag lists the instruments (goat horns) of a tag.
+func (r *Resources) InstrumentTag(id domain.ResourceID) []domain.ResourceID {
+	return r.Tag(resources.TypeInstrumentTag, id)
 }
 
 func (r *Resources) ItemTag(id domain.ResourceID) []domain.ResourceID {

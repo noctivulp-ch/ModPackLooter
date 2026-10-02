@@ -1,94 +1,80 @@
 {{define "content"}}
 {{$it := .Data}}
-<nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "objetos/"}}">Objetos</a> / <a href="{{rel .Root $it.Mod.URL}}">{{$it.Mod.Name}}</a></nav>
-<div class="page-head">
+<nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "objetos/"}}">Objetos</a> / <a href="{{rel .Root $it.Mod.URL}}">{{$it.Mod.Name}}</a>{{if $it.Base}} / <a href="{{rel .Root $it.Base.URL}}">{{$it.Base.Name}}</a>{{end}}</nav>
+<header class="item-title">
   <h1>{{$it.Name}}</h1>
-  <p class="id">{{$it.ID}}</p>
-</div>
+  <p>{{$it.Mod.Name}}{{if $it.Base}} · variante de <a href="{{rel .Root $it.Base.URL}}">{{$it.Base.Name}}</a>{{end}}{{if $it.Variants}} · {{len $it.Variants}} variantes{{end}}{{if $it.Cards}} · {{len $it.Cards}} {{if eq (len $it.Cards) 1}}forma de conseguirlo{{else}}formas de conseguirlo{{end}}{{end}}</p>
+</header>
+
 {{if $it.Unobtainable}}<section class="pozo pozo-dis"><p><strong>No se puede conseguir como loot en este modpack:</strong> todas sus fuentes están desactivadas. Abajo se muestran igualmente.</p></section>{{end}}
 
-{{if $it.Fishing}}
-<section class="pozo">
-  <h2>Se pesca</h2>
-  <ul class="links">
-  {{range $it.Fishing}}
-    <li><a href="{{rel $.Root .Source.URL}}">{{.Source.Name}}</a>{{if .Rarity}} <span class="meta">· {{.Rarity}}</span>{{end}}
-      {{if .Everywhere}}<span class="meta">· en cualquier bioma</span>{{else if .Places}}<span class="meta">· {{len .Places}} {{if eq (len .Places) 1}}bioma{{else}}biomas{{end}}:</span>
-        {{range $i, $p := .Places}}{{if lt $i 8}}{{if $i}}, {{end}}<a href="{{rel $.Root $p.URL}}">{{$p.Name}}</a>{{end}}{{end}}{{if gt (len .Places) 8}} y {{plus (len .Places) -8}} más{{end}}{{end}}
-      {{template "fishConds" .}}
-    </li>
-  {{end}}
-  </ul>
+{{with $it.Top}}
+<section class="pozo answer" aria-labelledby="answer-k">
+  <p class="k" id="answer-k">La forma más probable</p>
+  {{if .Chance}}<div class="big">{{pct .Chance}}<small>{{.Way.Unit}}</small></div>{{end}}
+  <p class="where{{if not .Chance}} wide{{end}}"><a href="{{rel $.Root .URL}}">{{.Name}}</a>
+    <span class="how">{{.Way.Title}}{{if .Detail}} · {{.Detail}}{{end}}</span></p>
+  {{if .Chance}}<div class="bar" aria-hidden="true"><span style="--w: {{width .Chance}}"></span></div>{{end}}
+  {{with .Line}}<div class="wide">{{template "line" (dict "Root" $.Root "L" .)}}</div>{{end}}
+  {{if gt (len $it.Cards) 1}}<p class="also">Todas las formas: {{range $i, $c := $it.Cards}}{{if $i}} · {{end}}<a href="#{{$c.Key}}">{{$c.Title}}</a>{{end}}</p>{{end}}
 </section>
+{{else}}{{if not $it.Variants}}{{if not $it.Buys}}<section class="pozo"><p class="empty">No hay fuentes conocidas para este objeto.</p></section>{{end}}{{end}}
 {{end}}
-{{if $it.Trades}}
-<section class="pozo">
-  <h2>Por tradeo</h2>
-  <ul class="links">
-  {{range limit 30 $it.Trades}}
-    <li>{{if .Sells}}<strong>Lo vende</strong>{{else}}<strong>Lo compra</strong>{{end}} <a href="{{rel $.Root .Merchant.URL}}">{{.Merchant.Name}}</a>{{if .Level}} <span class="meta">({{.Level}})</span>{{end}}:
-      {{template "toffer" (dict "Root" $.Root "O" .Offer)}} <span class="meta">· {{pct .Offer.Chance}} de probabilidad de ofrecerlo</span></li>
-  {{end}}
-  </ul>
-</section>
-{{end}}
-{{if $it.NPCDrops}}
-<section class="pozo">
-  <h2>Lo sueltan NPCs</h2>
-  <ul class="links">{{range $it.NPCDrops}}<li><a href="{{rel $.Root .Merchant.URL}}">{{.Merchant.Name}}</a> <span class="meta">· {{.Count}} unid. · {{pct .Chance}}</span></li>{{end}}</ul>
-</section>
-{{end}}
-{{if $it.Changes}}
-<section class="pozo">
-  <h2>Cambios de mods</h2>
-  <ul class="links">{{range $it.Changes}}<li>{{template "change" (dict "Root" $.Root "C" .)}} <span class="meta">en</span> {{if .Table}}<a href="{{rel $.Root .Table.URL}}">{{.Target}}</a>{{else}}{{.Target}}{{end}}</li>{{end}}</ul>
-</section>
-{{end}}
-{{if $it.Sources}}
-<section class="pozo">
-  <h2>Dónde conseguirlo</h2>
-  <ol class="best">
-  {{range limit 3 $it.Sources}}
-    <li>
-      {{template "chance" .Effective}}
-      <span class="best-where">
-        {{if .Owner}}<a href="{{rel $.Root .Owner.URL}}">{{.Owner.Name}}</a>{{else}}<a href="{{rel $.Root .Table.URL}}">{{.Table.Name}}</a>{{end}}
-        <span class="meta">{{kind .Kind}} · {{count .CountMin .CountMax}} unid. · {{template "conf" .Confidence}} {{template "status" .Status}}</span>
-      </span>
-    </li>
-  {{end}}
-  </ol>
-</section>
 
-<section class="pozo">
-  <h2>Todas las fuentes <span class="count">{{len $it.Sources}}</span></h2>
+{{if $it.Variants}}
+<section class="pozo card">
+  <header class="card-head">
+    <h2>Variantes <span class="count">{{len $it.Variants}}</span></h2>
+    <p class="meta">Cada variante se consigue en sitios distintos.</p>
+  </header>
+  {{if gt (len $it.Variants) 8}}<div class="filters"><label class="sr-only" for="f-var">Filtrar variantes</label>
+    <input id="f-var" type="search" class="field filter" data-filter="t-var" placeholder="Filtrar variantes, p. ej. reparación" autocomplete="off"></div>{{end}}
   <div class="scroll">
-  <table class="data">
-    <thead><tr><th scope="col">Fuente</th><th scope="col">Tipo</th><th scope="col" class="w-chance">Probabilidad por contenedor</th><th scope="col">Cantidad</th><th scope="col">Confianza</th><th scope="col">Notas</th></tr></thead>
+  <table class="data stack-sm" id="t-var">
+    <thead><tr><th scope="col">Variante</th><th scope="col" class="w-chance">Mejor probabilidad</th><th scope="col">Forma más probable</th></tr></thead>
     <tbody>
-    {{range $it.Sources}}
-      <tr{{if .Status.Disabled}} class="off"{{end}}>
-        <td>
-          {{if .Owner}}<a href="{{rel $.Root .Owner.URL}}">{{.Owner.Name}}</a><br>{{end}}
-          {{template "status" .Status}}
-          <a class="sub" href="{{rel $.Root .Table.URL}}">{{.Table.Name}}</a>
-        </td>
-        <td>{{kind .Kind}}</td>
-        <td>{{template "chance" .Chance}}{{if .Approx}} <span class="approx" title="Cálculo aproximado">≈</span>{{end}}{{if .Share}}<br><span class="meta">en el {{pct .Share}} de sus contenedores</span>{{end}}</td>
-        <td class="num">{{count .CountMin .CountMax}}</td>
-        <td>{{template "conf" .Confidence}}</td>
-        <td>{{template "notes" .Notes}}</td>
-      </tr>
-    {{end}}
+    {{range $it.Variants}}<tr>
+      <td><a href="{{rel $.Root .URL}}">{{.Label}}</a></td>
+      <td>{{with .Top}}{{if .Chance}}{{template "chance" .Chance}}{{else}}<span class="meta">—</span>{{end}}{{else}}<span class="meta">—</span>{{end}}</td>
+      <td>{{with .Top}}{{.Way.Title}}: {{.Name}}{{end}}</td>
+    </tr>{{end}}
     </tbody>
   </table>
   </div>
+  <p class="empty filter-empty" hidden>Ninguna variante coincide.</p>
 </section>
 {{end}}
 
-<section class="pozo">
-  <h2>Biomas donde puede aparecer</h2>
-  {{if $it.Biomes}}{{template "biomeChips" (dict "Root" .Root "Biomes" $it.Biomes)}}
-  {{else if not (or $it.Fishing $it.Trades $it.NPCDrops)}}<p class="empty">Sus fuentes no están ligadas a biomas conocidos (criaturas, pesca o tablas sin origen).</p>{{else}}<p class="meta">Para la pesca, mira los biomas de arriba.</p>{{end}}
+{{range $it.Cards}}{{template "card" (dict "Root" $.Root "C" . "It" $it)}}{{end}}
+
+{{if $it.Buys}}
+<section class="pozo card" id="compra">
+  <header class="card-head"><h2>Te lo compran <span class="count">{{len $it.Buys}}</span></h2><p class="meta">Comerciantes que lo aceptan como pago.</p></header>
+  {{template "tradeTable" (dict "Root" $.Root "Refs" $it.Buys)}}
 </section>
+{{end}}
+
+{{if $it.Biomes}}
+<section class="pozo card">
+  <header class="card-head"><h2>Biomas donde aparece <span class="count">{{len $it.Biomes}}</span></h2>
+  <p class="meta">Biomas donde se generan las estructuras que lo pueden tener.</p></header>
+  {{template "biomeChips" (dict "Root" .Root "Biomes" $it.Biomes)}}
+</section>
+{{end}}
+
+{{if $it.Changes}}
+<section class="pozo card" id="cambios">
+  <header class="card-head"><h2>Cambios de mods <span class="count">{{len $it.Changes}}</span></h2></header>
+  <ul class="links">{{range $it.Changes}}<li>{{template "change" (dict "Root" $.Root "C" .)}} <span class="meta">en</span> {{if .Table}}<a href="{{rel $.Root .Table.URL}}">{{.Target}}</a>{{else}}{{.Target}}{{end}}</li>{{end}}</ul>
+</section>
+{{end}}
+
+{{with $it.DisabledSources}}
+<section class="pozo card pozo-dis" id="desactivadas">
+  <header class="card-head"><h2>Fuentes desactivadas <span class="count">{{len .}}</span></h2><p class="meta">Un mod o la configuración las quita: aquí no sale.</p></header>
+  {{template "sources" (dict "Root" $.Root "Sources" .)}}
+</section>
+{{end}}
+
+<p class="id tech">{{$it.ID}}{{if $it.Variant.Kind}} · {{$it.Variant.String}}{{end}}</p>
 {{end}}

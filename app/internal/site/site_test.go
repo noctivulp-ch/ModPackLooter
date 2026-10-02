@@ -264,9 +264,16 @@ func TestFishingTab(t *testing.T) {
 		t.Error("falta la pestaña Pesca")
 	}
 	star := read("objetos/minecraft/nether_star/index.html")
-	for _, want := range []string{"Se pesca", "Starcatcher", "solo con cebo:", "Wither Skeleton Skull", "aparece Wither al pescarlo", "en cualquier bioma"} {
+	for _, want := range []string{"Pescando", "La forma más probable", "Starcatcher", "solo con cebo:", "Wither Skeleton Skull", "aparece Wither al pescarlo", "en cualquier bioma"} {
 		if !strings.Contains(star, want) {
 			t.Errorf("la Estrella del Nether no contiene %q", want)
+		}
+	}
+	// The master page of a biome joins every rod: dimension › biome › rod › condition › catch.
+	spot := read("pesca/biomas/minecraft/river/index.html")
+	for _, want := range []string{"Pescar en", "Starcatcher"} {
+		if !strings.Contains(spot, want) {
+			t.Errorf("la pesca del río no contiene %q", want)
 		}
 	}
 	river := read("pesca/starcatcher/minecraft/river/index.html")
@@ -321,8 +328,12 @@ func TestEnchantNotes(t *testing.T) {
 		"data/minecraft/loot_tables/gameplay/fishing/treasure.json": `{"type":"minecraft:fishing","pools":[{"rolls":1,"entries":[
 			{"type":"minecraft:item","name":"minecraft:book","functions":[{"function":"minecraft:enchant_with_levels","levels":15.0,"treasure":false}]},
 			{"type":"minecraft:item","name":"minecraft:bow","functions":[{"function":"minecraft:enchant_with_levels","levels":{"type":"minecraft:uniform","min":20,"max":39},"treasure":true}]},
-			{"type":"minecraft:item","name":"minecraft:fishing_rod","functions":[{"function":"minecraft:enchant_randomly","enchantments":["minecraft:mending","minecraft:lure"]}]}]}]}`,
-		"assets/minecraft/lang/es_es.json": `{"enchantment.minecraft.mending":"Reparación","enchantment.minecraft.frost_walker":"Paso helado","enchantment.minecraft.lure":"Atracción"}`,
+			{"type":"minecraft:item","name":"minecraft:fishing_rod","functions":[{"function":"minecraft:enchant_randomly","enchantments":["minecraft:mending","minecraft:lure"]}]},
+			{"type":"minecraft:item","name":"minecraft:enchanted_book","functions":[{"function":"minecraft:set_nbt","tag":"{StoredEnchantments:[{id:\"minecraft:mending\",lvl:1s}]}"}]},
+			{"type":"minecraft:item","name":"minecraft:potion","functions":[{"function":"minecraft:set_nbt","tag":"{Potion:\"minecraft:strong_healing\"}"}]}]}]}`,
+		"assets/minecraft/lang/es_es.json": `{"enchantment.minecraft.mending":"Reparación","enchantment.minecraft.frost_walker":"Paso helado","enchantment.minecraft.lure":"Atracción",
+			"item.minecraft.enchanted_book":"Libro encantado","item.minecraft.fishing_rod":"Caña de pescar","item.minecraft.potion.effect.healing":"Poción de curación","enchantment.level.1":"I"}`,
+		"assets/minecraft/lang/en_us.json": `{"enchantment.minecraft.mending":"Mending","item.minecraft.enchanted_book":"Enchanted Book"}`,
 	})
 	res, err := plugins.Analyzer().
 		Run(context.Background(), modpack.Options{Path: in.Root}, nil)
@@ -342,11 +353,21 @@ func TestEnchantNotes(t *testing.T) {
 	for _, want := range []string{
 		"Encantado (nivel 15, sin encantamientos de tesoro: no da Reparación, Paso helado ni maldiciones)",
 		"Encantado (nivel 20–39, puede dar encantamientos de tesoro como Reparación)",
-		"Encantado al azar con: Reparación, Atracción",
+		// Each useful variant is its own item.
+		"Caña de pescar: Reparación", "Caña de pescar: Atracción",
+		"Libro encantado: Reparación", "Nivel I", "Poción de curación II",
 	} {
 		if !strings.Contains(page, want) {
 			t.Errorf("la tabla de tesoro no contiene %q", want)
 		}
+	}
+	book, err := os.ReadFile(filepath.Join(out, "objetos/minecraft/enchanted_book/enchantment-minecraft_mending/index.html"))
+	if err != nil || !strings.Contains(string(book), "Libro encantado: Reparación") {
+		t.Errorf("falta la página de la variante: %v", err)
+	}
+	index, _ := os.ReadFile(filepath.Join(out, "assets/search-index.js"))
+	if !strings.Contains(string(index), "Enchanted Book: Mending") {
+		t.Error("el índice debe permitir buscar por el nombre en inglés")
 	}
 	// Overriding a table is a change: listed in "Cambios de mods".
 	changes, err := os.ReadFile(filepath.Join(out, "cambios/index.html"))
@@ -403,7 +424,7 @@ func TestTradesTab(t *testing.T) {
 		}
 	}
 	bread := read("objetos/minecraft/bread/index.html")
-	for _, want := range []string{"Lo vende", "Granjero", "Lo sueltan NPCs", "Bandido", "25 %"} {
+	for _, want := range []string{"Comerciando", "Granjero", "Lo sueltan NPCs", "Bandido", "25 %"} {
 		if !strings.Contains(bread, want) {
 			t.Errorf("el pan no contiene %q", want)
 		}
@@ -423,5 +444,48 @@ func TestTradesTab(t *testing.T) {
 	npc := read("tradeos/npcs/npc/bandit/index.html")
 	if !strings.Contains(npc, "Lo que suelta al morir") || !strings.Contains(npc, "100 %") {
 		t.Error("el bandido debería listar sus drops")
+	}
+}
+
+func TestCreaturePages(t *testing.T) {
+	in := testkit.NewInstance(t)
+	in.Jar("mods/a-vanilla.jar", testkit.Files{
+		"META-INF/mods.toml":                                         testkit.ModsToml("avanilla", "Vanilla data", "[1.20.1,1.21)"),
+		"data/minecraft/loot_tables/entities/zombie.json":            `{"type":"minecraft:entity","pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:rotten_flesh"}]}]}`,
+		"data/minecraft/worldgen/biome/plains.json":                  `{"spawners":{"monster":[{"type":"minecraft:zombie","weight":95,"minCount":4,"maxCount":4},{"type":"minecraft:spider","weight":5,"minCount":1,"maxCount":1}]}}`,
+		"data/minecraft/worldgen/biome/desert.json":                  `{"spawners":{"monster":[{"type":"minecraft:zombie","weight":10,"minCount":1,"maxCount":2}]}}`,
+		"data/minecraft/forge/biome_modifier/no_desert_zombies.json": `{"type":"forge:remove_spawns","biomes":"minecraft:desert","entity_types":"minecraft:zombie"}`,
+		"assets/minecraft/lang/es_es.json":                           `{"entity.minecraft.zombie":"Zombi","biome.minecraft.plains":"Llanura","item.minecraft.rotten_flesh":"Carne podrida"}`,
+	})
+	res, err := plugins.Analyzer().Run(context.Background(), modpack.Options{Path: in.Root}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Close()
+	out := filepath.Join(t.TempDir(), "site")
+	if _, err := site.Build(res, site.Options{OutDir: out}); err != nil {
+		t.Fatal(err)
+	}
+	read := func(p string) string {
+		data, err := os.ReadFile(filepath.Join(out, p))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(data)
+	}
+	zombie := read("criaturas/minecraft/zombie/index.html")
+	for _, want := range []string{"Zombi", "Llanura", "95 %", "hostil", "Carne podrida", "aparece en 1 bioma"} {
+		if !strings.Contains(zombie, want) {
+			t.Errorf("la ficha del zombi no contiene %q", want)
+		}
+	}
+	if strings.Contains(zombie, "Desert") {
+		t.Error("remove_spawns debe quitar el desierto")
+	}
+	flesh := read("objetos/minecraft/rotten_flesh/index.html")
+	for _, want := range []string{"La forma más probable", "Lo sueltan criaturas", "Zombi", "aparece en 1 bioma", "Línea completa", "por cada criatura hostil que aparece en Llanura"} {
+		if !strings.Contains(flesh, want) {
+			t.Errorf("la carne podrida no contiene %q", want)
+		}
 	}
 }

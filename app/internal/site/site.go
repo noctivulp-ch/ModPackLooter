@@ -75,7 +75,7 @@ func Build(res *analysis.Result, opts Options) (Stats, error) {
 	}
 
 	r.render("home", "", "inicio", opts.Title, m, nil)
-	r.render("items", "objetos/", "objetos", "Objetos", m, m.Items)
+	r.render("items", "objetos/", "objetos", "Objetos", m, listRows(m.Items))
 	for _, it := range m.Items {
 		r.render("item", it.URL, "objetos", it.Name, m, it)
 	}
@@ -87,7 +87,11 @@ func Build(res *analysis.Result, opts Options) (Stats, error) {
 	for _, b := range m.Biomes {
 		r.render("biome", b.URL, "biomas", b.Name, m, b)
 	}
-	r.render("sources", "fuentes/", "fuentes", "Otras fuentes", m, unownedGroups(m))
+	r.render("creatures", "criaturas/", "criaturas", "Criaturas", m, groupCreatures(m.Creatures))
+	for _, c := range m.Creatures {
+		r.render("creature", c.URL, "criaturas", c.Name, m, c)
+	}
+	r.render("sources", "fuentes/", "fuentes", "Criaturas y otras fuentes", m, unownedGroups(m))
 	for _, t := range m.Tables {
 		r.render("table", t.URL, "fuentes", t.Name, m, t)
 	}
@@ -188,6 +192,10 @@ type searchEntry struct {
 	ID   string `json:"i"`
 	URL  string `json:"u"`
 	Sub  string `json:"s,omitempty"`
+	// Keys are other words to find it by: English name, variant, mod.
+	Keys string `json:"k,omitempty"`
+	// Mod is the namespace, for "@mod" filters.
+	Mod string `json:"m,omitempty"`
 }
 
 func (r *renderer) writeAssets(m *Model) error {
@@ -206,21 +214,20 @@ func (r *renderer) writeAssets(m *Model) error {
 	}
 	var idx []searchEntry
 	for _, it := range m.Items {
-		sub := it.Mod.Name
-		if len(it.Sources) > 0 {
-			sub += " · mejor " + pct(it.Best)
-		}
-		idx = append(idx, searchEntry{"o", it.Name, it.ID.String(), it.URL + "index.html", sub})
+		idx = append(idx, itemEntry(it))
 	}
 	for _, o := range m.Owners {
-		idx = append(idx, searchEntry{"e", o.Name, o.ID.String(), o.URL + "index.html", o.Mod.Name})
+		idx = append(idx, searchEntry{Type: "e", Name: o.Name, ID: o.ID.String(), URL: o.URL + "index.html", Sub: o.Mod.Name, Keys: o.Mod.Name, Mod: o.ID.Namespace})
 	}
 	for _, b := range m.Biomes {
-		idx = append(idx, searchEntry{"b", b.Name, b.ID.String(), b.URL + "index.html", b.Mod.Name})
+		idx = append(idx, searchEntry{Type: "b", Name: b.Name, ID: b.ID.String(), URL: b.URL + "index.html", Sub: b.Mod.Name, Keys: b.Mod.Name, Mod: b.ID.Namespace})
 	}
 	idx = append(idx, lcSearch(m)...)
+	for _, c := range m.Creatures {
+		idx = append(idx, searchEntry{Type: "c", Name: c.Name, ID: c.ID.String(), URL: c.URL + "index.html", Sub: c.Mod.Name + " · " + c.Where(), Keys: c.Mod.Name, Mod: c.ID.Namespace})
+	}
 	for _, md := range m.Mods {
-		idx = append(idx, searchEntry{"m", md.Name, md.ID.Namespace, md.URL + "index.html", ""})
+		idx = append(idx, searchEntry{Type: "m", Name: md.Name, ID: md.ID.Namespace, URL: md.URL + "index.html", Mod: md.ID.Namespace})
 	}
 	data, err := json.Marshal(idx)
 	if err != nil {
@@ -248,6 +255,21 @@ func (r *renderer) writeAssets(m *Model) error {
 	}
 	// GitHub Pages: serve folders starting with "_" too.
 	return os.WriteFile(filepath.Join(r.out, ".nojekyll"), nil, 0o644)
+}
+
+func itemEntry(it *Item) searchEntry {
+	e := searchEntry{Type: "o", Name: it.Name, ID: it.ID.String(), URL: it.URL + "index.html", Mod: it.ID.Namespace}
+	if !it.Variant.IsZero() {
+		e.ID += " " + it.Variant.Value
+	}
+	e.Sub = it.Mod.Name
+	if it.Top != nil && it.Top.Chance > 0 {
+		e.Sub += " · " + pct(it.Top.Chance) + " " + it.Top.Way.Unit
+	} else if len(it.Variants) > 0 {
+		e.Sub += fmt.Sprintf(" · %d variantes", len(it.Variants))
+	}
+	e.Keys = strings.Join(append(append([]string(nil), it.Aka...), it.Label, it.Mod.Name), " · ")
+	return e
 }
 
 // pct formats a probability the Spanish way: "23 %", "4,5 %", "0,3 %", "<0,1 %".
@@ -308,6 +330,7 @@ var funcs = template.FuncMap{
 		return root + url
 	},
 	"pct":   pct,
+	"fine":  fine,
 	"count": count,
 	"width": func(p float64) string { return fmt.Sprintf("%.1f%%", math.Max(1.5, math.Min(100, p*100))) },
 	"kind":  func(k domain.SourceKind) string { return kindLabels[k] },
@@ -350,10 +373,30 @@ var funcs = template.FuncMap{
 			if len(v) > n {
 				return v[:n]
 			}
+		case []HaulItem:
+			if len(v) > n {
+				return v[:n]
+			}
+		case []BiomeItem:
+			if len(v) > n {
+				return v[:n]
+			}
 		}
 		return s
 	},
 	"plus": func(a, b int) int { return a + b },
+	// haulKeys lets a structure be found by what it holds.
+	"haulKeys": func(h []HaulItem) string {
+		var b strings.Builder
+		for i, x := range h {
+			if i == 80 {
+				break
+			}
+			b.WriteString(x.Item.Name)
+			b.WriteString(" · ")
+		}
+		return b.String()
+	},
 	"dict": func(kv ...any) (map[string]any, error) {
 		if len(kv)%2 != 0 {
 			return nil, fmt.Errorf("dict: número impar de argumentos")
@@ -369,6 +412,13 @@ var funcs = template.FuncMap{
 		return m, nil
 	},
 	"metals": func() []string { return Metals },
+	"wayOptions": func() [][2]string {
+		out := make([][2]string, 0, len(wayOrder)+1)
+		for _, w := range wayOrder {
+			out = append(out, [2]string{w.key, w.title})
+		}
+		return append(out, [2]string{"compra", "Te lo compran"})
+	},
 }
 
 // ownerGroup groups owners by mod for the structures page.
@@ -404,24 +454,45 @@ func groupOwners(owners []*Owner) []ownerGroup {
 	return out
 }
 
+type creatureGroup struct {
+	Mod       *Mod
+	Creatures []*Creature
+}
+
+func groupCreatures(cs []*Creature) []creatureGroup {
+	var out []creatureGroup
+	idx := map[*Mod]int{}
+	for _, c := range cs {
+		i, ok := idx[c.Mod]
+		if !ok {
+			i = len(out)
+			idx[c.Mod] = i
+			out = append(out, creatureGroup{Mod: c.Mod})
+		}
+		out[i].Creatures = append(out[i].Creatures, c)
+	}
+	sortRefs(out, func(g creatureGroup) Ref { return g.Mod.Ref })
+	return out
+}
+
 type biomeGroup struct {
-	Mod    *Mod
+	Label  string
 	Biomes []*Biome
 }
 
+// groupBiomes groups the biomes by dimension: dimension › biome ›
+// structure › container › item.
 func groupBiomes(biomes []*Biome) []biomeGroup {
-	var out []biomeGroup
-	idx := map[*Mod]int{}
+	by := map[string][]*Biome{}
 	for _, b := range biomes {
-		i, ok := idx[b.Mod]
-		if !ok {
-			i = len(out)
-			idx[b.Mod] = i
-			out = append(out, biomeGroup{Mod: b.Mod})
-		}
-		out[i].Biomes = append(out[i].Biomes, b)
+		by[b.Dimension] = append(by[b.Dimension], b)
 	}
-	sortRefs(out, func(g biomeGroup) Ref { return g.Mod.Ref })
+	var out []biomeGroup
+	for _, d := range dimensionOrder {
+		if len(by[d]) > 0 {
+			out = append(out, biomeGroup{Label: d, Biomes: by[d]})
+		}
+	}
 	return out
 }
 

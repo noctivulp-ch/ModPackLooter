@@ -7,6 +7,7 @@ import (
 	"github.com/EnierAragon/ModPackLooter/app/internal/analysis"
 	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
 	"github.com/EnierAragon/ModPackLooter/app/internal/names"
+	"github.com/EnierAragon/ModPackLooter/app/internal/resources"
 )
 
 // Ref is a link to a page of the site. URL is relative to the site root.
@@ -41,6 +42,28 @@ type Item struct {
 	// Trades sell or buy the item; NPCDrops are NPCs that drop it.
 	Trades   []*TradeRef
 	NPCDrops []*NPCDrop
+	// Variant is set on variant pages (an enchanted book's enchantment…);
+	// Base is then the plain item. Variants are the plain item's variants.
+	Variant  domain.Variant
+	Label    string // what makes the variant special, e.g. "Reparación"
+	Base     *Item
+	Variants []*Item
+	// Aka are other names to search by (English name…).
+	Aka []string
+	// LCBuildings are Lost Cities buildings that can hold the item.
+	LCBuildings []LCHaulRef
+	// Ways summarise how to get it, most likely first; Top is the best.
+	Ways []*Way
+	Top  *WayPlace
+	// Cards are every way of getting it with all the details.
+	Cards  []*Card
+	lcRows map[*LCBuilding][]LCItemRow
+}
+
+// LCHaulRef links an item to a Lost Cities building that can hold it.
+type LCHaulRef struct {
+	Building *LCBuilding
+	Haul     HaulItem
 }
 
 // ItemSource is one way to get an item.
@@ -57,6 +80,8 @@ type ItemSource struct {
 	Notes      []string
 	Approx     bool
 	Status     domain.Status
+	// Container names the block or entity holding the table ("Cofre").
+	Container string
 }
 
 // Owner is a structure, feature or template that holds loot.
@@ -69,6 +94,8 @@ type Owner struct {
 	Uses       []*TableUse
 	Template   bool
 	Status     domain.Status
+	// Haul is "¿Qué hay aquí?": every item of its containers.
+	Haul []HaulItem
 }
 
 // TableUse is a loot table used by an owner.
@@ -93,6 +120,8 @@ type Table struct {
 	Uses    []*TableUse
 	Approx  bool
 	Changes []*Change // modifications by mods, scripts or configs
+	// Creature is the mob whose drops the table holds.
+	Creature *Creature
 }
 
 // Drop is a row of a loot table.
@@ -108,10 +137,21 @@ type Drop struct {
 // Biome lists the owners that can generate in it.
 type Biome struct {
 	Ref
-	Mod    *Mod
-	Owners []*Owner
-	Top    []BiomeItem // best items obtainable in the biome
-	Status domain.Status
+	Mod       *Mod
+	Dimension string // "Mundo normal", "Nether", "End" or "Otras dimensiones"
+	Owners    []*Owner
+	Top       []BiomeItem // best items obtainable in the biome
+	Status    domain.Status
+	// Creatures are the mobs that spawn in it naturally.
+	Creatures []BiomeCreature
+	// Fishing is what every rod gives in it.
+	Fishing *FishSpot
+}
+
+// BiomeCreature is a mob that spawns in a biome.
+type BiomeCreature struct {
+	Creature *Creature
+	Spawn    CreatureBiome
 }
 
 // BiomeItem is an item and its best source within a biome.
@@ -160,6 +200,7 @@ type Model struct {
 	Fishing    *Fishing
 	Changes    []*ChangeSection
 	Trades     *Trades
+	Creatures  []*Creature
 
 	tradeChanges []*Change
 }
@@ -315,13 +356,43 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		return md
 	}
 
-	items := map[domain.ResourceID]*Item{}
+	items := map[itemKey]*Item{}
+	english := englishNamer(res, opts)
 	itemOf := func(id domain.ResourceID) *Item {
-		if it, ok := items[id]; ok {
+		if it, ok := items[itemKey{id: id}]; ok {
 			return it
 		}
 		it := &Item{Ref: Ref{ID: id, Name: namer.Item(id), URL: "objetos/" + idPath(id) + "/"}, Mod: modOf(id.Namespace)}
-		items[id] = it
+		if english != nil {
+			if en := english.Item(id); en != it.Name {
+				it.Aka = append(it.Aka, en)
+			}
+		}
+		items[itemKey{id: id}] = it
+		return it
+	}
+	// variantOf returns the page of a useful variant of an item.
+	variantOf := func(id domain.ResourceID, v domain.Variant) *Item {
+		// One page per enchantment: the level is a detail of each source.
+		if v.Kind == domain.VariantEnchantment {
+			v.Level = 0
+		}
+		if v.IsZero() {
+			return itemOf(id)
+		}
+		if it, ok := items[itemKey{id, v}]; ok {
+			return it
+		}
+		base := itemOf(id)
+		it := &Item{Ref: Ref{ID: id, URL: base.URL + variantSlug(v) + "/"}, Mod: base.Mod, Variant: v, Base: base}
+		it.Name, it.Label = variantName(namer, base.Name, id, v)
+		if english != nil {
+			if en, _ := variantName(english, english.Item(id), id, v); en != it.Name {
+				it.Aka = append(it.Aka, en)
+			}
+		}
+		base.Variants = append(base.Variants, it)
+		items[itemKey{id, v}] = it
 		return it
 	}
 
@@ -331,10 +402,17 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 			return t
 		}
 		t := &Table{Ref: Ref{ID: id, Name: names.Humanize(id.Path), URL: "tablas/" + idPath(id) + "/"}, Mod: modOf(id.Namespace), Kind: kind}
+		if kind == domain.KindEntity {
+			t.Name = namer.Entity(entityOf(id))
+		}
 		if lt := res.Tables[id]; lt != nil {
 			t.Approx = lt.Approximate
 			for _, d := range lt.Drops {
-				t.Drops = append(t.Drops, Drop{Item: itemOf(d.Item), Chance: d.Chance, CountMin: d.CountMin, CountMax: d.CountMax, Notes: translateNotes(d.Notes, namer), Approx: d.Approximate})
+				notes := translateNotes(d.Notes, namer)
+				if d.Variant.Kind == domain.VariantEnchantment && d.Variant.Level > 0 {
+					notes = append([]string{"Nivel " + levelName(namer, d.Variant.Level)}, notes...)
+				}
+				t.Drops = append(t.Drops, Drop{Item: variantOf(d.Item, d.Variant), Chance: d.Chance, CountMin: d.CountMin, CountMax: d.CountMax, Notes: notes, Approx: d.Approximate})
 			}
 		}
 		tables[id] = t
@@ -344,11 +422,12 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 	// Owners: structures from data, owners declared by discoverers, templates.
 	owners := map[domain.Owner]*Owner{}
 	biomes := map[domain.ResourceID]*Biome{}
+	dimensionOf := biomeDimensions(res)
 	biomeOf := func(id domain.ResourceID) *Biome {
 		if b, ok := biomes[id]; ok {
 			return b
 		}
-		b := &Biome{Ref: Ref{ID: id, Name: namer.Biome(id), URL: "biomas/" + idPath(id) + "/"}, Mod: modOf(id.Namespace)}
+		b := &Biome{Ref: Ref{ID: id, Name: namer.Biome(id), URL: "biomas/" + idPath(id) + "/"}, Mod: modOf(id.Namespace), Dimension: dimensionOf(id)}
 		b.Status = res.Status(domain.Target{Kind: domain.TargetBiome, ID: id})
 		biomes[id] = b
 		return b
@@ -431,7 +510,7 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 				Table: t, Kind: s.Kind, Owner: owner, Chance: d.Chance, Share: s.Share, Effective: eff,
 				CountMin: d.CountMin, CountMax: d.CountMax, Confidence: s.Confidence,
 				Notes: append(append([]string(nil), d.Notes...), use.Notes...), Approx: d.Approx,
-				Status: use.Status,
+				Status: use.Status, Container: containerName(namer, s.Container),
 			}
 			d.Item.Sources = append(d.Item.Sources, src)
 			if eff > d.Item.Best {
@@ -440,7 +519,21 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		}
 	}
 
-	// Collect and sort everything for deterministic output.
+	// Collect and sort everything for deterministic output. listItem adds an
+	// item (and the plain item of a variant) to the lists once.
+	listed := map[*Item]bool{}
+	var listItem func(it *Item)
+	listItem = func(it *Item) {
+		if listed[it] {
+			return
+		}
+		listed[it] = true
+		m.Items = append(m.Items, it)
+		it.Mod.Items = append(it.Mod.Items, it)
+		if it.Base != nil {
+			listItem(it.Base)
+		}
+	}
 	for _, it := range items {
 		if len(it.Sources) == 0 {
 			continue
@@ -475,11 +568,15 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 			}
 		}
 		sortRefs(it.Biomes, func(b *Biome) Ref { return b.Ref })
-		m.Items = append(m.Items, it)
-		it.Mod.Items = append(it.Mod.Items, it)
+		listItem(it)
 	}
 	sortRefs(m.Items, func(i *Item) Ref { return i.Ref })
 	for _, o := range owners {
+		h := newHaul()
+		for _, u := range o.Uses {
+			h.add(u.Table, u.Share, 0)
+		}
+		o.Haul = h.list()
 		m.Owners = append(m.Owners, o)
 		o.Mod.Structures = append(o.Mod.Structures, o)
 		sortUses(o.Uses)
@@ -490,9 +587,14 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		t.Mod.Tables = append(t.Mod.Tables, t)
 	}
 	sortRefs(m.Tables, func(t *Table) Ref { return t.Ref })
+	// Every biome of the pack has a page: it leads to its structures,
+	// creatures and fishing.
+	for _, id := range res.Resources.IDs(resources.TypeBiome) {
+		biomeOf(id)
+	}
 	for _, b := range biomes {
 		sortRefs(b.Owners, func(o *Owner) Ref { return o.Ref })
-		b.Top = topItems(b.Owners, 24)
+		b.Top = topItems(b.Owners, 300)
 		m.Biomes = append(m.Biomes, b)
 	}
 	sortRefs(m.Biomes, func(b *Biome) Ref { return b.Ref })
@@ -541,33 +643,65 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		return a.ID.String() < b.ID.String()
 	})
 	buildLostCities(res, m, namer)
-	ensureItem := func(id domain.ResourceID) *Item {
-		// Fished items may have no loot source: add them to the lists.
-		if it, ok := items[id]; ok && (len(it.Sources) > 0 || len(it.Fishing) > 0) {
-			return it
-		}
-		it := itemOf(id)
-		m.Items = append(m.Items, it)
-		md := it.Mod
-		md.Items = append(md.Items, it)
-		listed := false
-		for _, x := range m.Mods {
-			listed = listed || x == md
-		}
-		if !listed {
-			m.Mods = append(m.Mods, md)
+	ensureVariant := func(id domain.ResourceID, v domain.Variant) *Item {
+		// Fished or traded items may have no loot source: list them too.
+		it := variantOf(id, v)
+		listItem(it)
+		for _, md := range []*Mod{it.Mod} {
+			known := false
+			for _, x := range m.Mods {
+				known = known || x == md
+			}
+			if !known {
+				m.Mods = append(m.Mods, md)
+			}
 		}
 		return it
 	}
+	ensureItem := func(id domain.ResourceID) *Item { return ensureVariant(id, domain.Variant{}) }
 	buildFishing(res, m, namer, ensureItem)
+	buildSpots(m)
 	buildChanges(res, m, namer, ensureItem)
-	buildTrades(res, m, namer, ensureItem)
+	buildTrades(res, m, namer, ensureVariant)
+	for _, it := range m.Items {
+		sortRefs(it.Variants, func(v *Item) Ref { return v.Ref })
+	}
+	buildCreatures(res, m, namer, modOf)
+	if m.LostCities != nil {
+		for _, b := range m.LostCities.Buildings {
+			for _, h := range b.Haul {
+				h.Item.LCBuildings = append(h.Item.LCBuildings, LCHaulRef{Building: b, Haul: h})
+			}
+		}
+	}
+	for _, it := range m.Items {
+		buildWays(it, namer)
+		buildCards(it, m)
+	}
 	sortRefs(m.Items, func(i *Item) Ref { return i.Ref })
 	sortRefs(m.Mods, func(md *Mod) Ref { return md.Ref })
 	for _, md := range m.Mods {
 		sortRefs(md.Items, func(i *Item) Ref { return i.Ref })
 	}
 	return m
+}
+
+// containerName names the block or entity of a container.
+func containerName(namer *names.Namer, id string) string {
+	if id == "" {
+		return ""
+	}
+	rid, err := domain.ParseResourceID(id)
+	if err != nil {
+		return id
+	}
+	if v, ok := namer.Text("block." + rid.Namespace + "." + rid.Path); ok {
+		return v
+	}
+	if v, ok := namer.Text("entity." + rid.Namespace + "." + rid.Path); ok {
+		return v
+	}
+	return namer.Item(rid)
 }
 
 // entityOf maps "ns:entities/zombie" to the entity "ns:zombie".

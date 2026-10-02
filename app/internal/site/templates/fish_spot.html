@@ -1,0 +1,35 @@
+{{define "content"}}
+{{$s := .Data}}
+<nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "pesca/"}}">Pesca</a> / {{$s.Dimension}}{{if $s.Biome}} / <a href="{{rel .Root $s.Biome.URL}}">{{$s.Biome.Name}}</a>{{end}}</nav>
+<header class="item-title">
+  <h1>Pescar en {{$s.Name}}</h1>
+  <p>{{$s.Dimension}} · {{len $s.Rods}} {{if eq (len $s.Rods) 1}}caña{{else}}cañas{{end}} · {{$s.Count}} capturas posibles</p>
+</header>
+<nav class="pozo card" aria-label="Cañas y condiciones">
+  {{range $i, $r := $s.Rods}}<p class="jump"><strong><a href="#rod-{{$i}}">{{$r.Source.Name}}</a></strong>
+    {{range $j, $g := $r.Groups}}<a href="#rod-{{$i}}-{{$j}}">{{$g.Title}}</a> <span class="meta">{{len $g.Catches}}</span>{{end}}</p>{{end}}
+</nav>
+{{range $i, $r := $s.Rods}}
+<section class="pozo card" id="rod-{{$i}}">
+  <header class="card-head">
+    <h2><a href="{{rel $.Root .Source.URL}}">{{.Source.Name}}</a></h2>
+    <p class="meta">{{if .Everywhere}}Igual en todos los biomas{{else}}{{len .Groups}} {{if eq (len .Groups) 1}}condición{{else}}condiciones{{end}}{{end}}</p>
+  </header>
+  {{if .Source.Warning}}<p class="warn-text">{{.Source.Warning}}</p>{{end}}
+  {{range $j, $g := .Groups}}
+  <div class="place-block" id="rod-{{$i}}-{{$j}}">
+    <div class="place-head"><h4>{{.Title}}</h4><span class="num">{{len .Catches}}</span></div>
+    {{if .Note}}<p class="biome-line meta">{{.Note}}</p>{{end}}
+    <div class="scroll"><table class="data stack-sm">
+      <thead><tr><th scope="col">Captura</th><th scope="col" class="w-chance">Probabilidad por captura</th><th scope="col">Condiciones</th></tr></thead>
+      <tbody>{{range .Catches}}<tr>
+        <td>{{template "fishName" (dict "Root" $.Root "Item" .Entry.Item "Table" .Entry.Table "Name" .Entry.Name)}}{{if .Entry.Rarity}} <span class="meta">{{.Entry.Rarity}}</span>{{end}}{{if ne .Entry.Kind "Pez"}} <span class="meta">({{.Entry.Kind}})</span>{{end}}</td>
+        <td>{{if .Chance}}{{template "chance" .Chance}}{{else}}<span class="meta">{{.Note}}</span>{{end}}{{if .Bait}}<br><span class="meta">con {{.Bait}}</span>{{end}}{{if and .Chance .Note}}<br><span class="meta">{{.Note}}</span>{{end}}</td>
+        <td>{{template "fishCondsHere" .Entry}}</td>
+      </tr>{{end}}</tbody>
+    </table></div>
+  </div>
+  {{end}}
+</section>
+{{end}}
+{{end}}

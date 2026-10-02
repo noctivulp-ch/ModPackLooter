@@ -17,6 +17,7 @@ import (
 	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
 	"github.com/EnierAragon/ModPackLooter/app/internal/names"
 	"github.com/EnierAragon/ModPackLooter/app/internal/trades"
+	"github.com/EnierAragon/ModPackLooter/app/internal/variants"
 )
 
 // ID of the discoverer.
@@ -31,9 +32,16 @@ func (Discoverer) Descriptor() discovery.Descriptor {
 }
 
 type stack struct {
-	Slot  int    `json:"Slot"`
-	ID    string `json:"id"`
-	Count int    `json:"Count"`
+	Slot  int             `json:"Slot"`
+	ID    string          `json:"id"`
+	Count int             `json:"Count"`
+	Tag   json.RawMessage `json:"tag"`
+}
+
+// variant reads the useful variant from the stack's NBT.
+func (s stack) variant() domain.Variant {
+	v, _ := variants.FromNBT(string(s.Tag))
+	return v
 }
 
 type npc struct {
@@ -113,12 +121,15 @@ func shopOffers(fd map[string]json.RawMessage) (offers []trades.Offer, title str
 				return trades.Offer{}, false
 			}
 			goods := trades.Stack{Item: item, Count: max(1, p.Count)}
+			if v, ok := variants.FromNBT(p.NBT); ok {
+				goods.Variant = v
+			}
 			pay := trades.Stack{Item: money, Count: p.Price}
 			o := trades.Offer{Buy: []trades.Stack{pay}, Sell: goods}
 			if selling {
 				o = trades.Offer{Buy: []trades.Stack{goods}, Sell: pay}
 			}
-			if p.Name != "" && p.NBT != "" {
+			if p.Name != "" && p.NBT != "" && goods.Variant.IsZero() {
 				o.Note = p.Name // a variant (ammo type, gun model…)
 			}
 			if p.Stock >= 0 {
@@ -217,7 +228,7 @@ func (Discoverer) Discover(_ context.Context, in discovery.Input, out *discovery
 				if !ok {
 					p = 1
 				}
-				m.Drops = append(m.Drops, trades.Drop{Item: id, Count: s.Count, Chance: p})
+				m.Drops = append(m.Drops, trades.Drop{Item: id, Variant: s.variant(), Count: s.Count, Chance: p})
 			}
 			sort.SliceStable(m.Drops, func(i, j int) bool { return m.Drops[i].Chance > m.Drops[j].Chance })
 			if offers := traderOffers(n); len(offers) > 0 {
@@ -270,11 +281,11 @@ func traderOffers(n npc) []trades.Offer {
 		if err != nil {
 			continue
 		}
-		o := trades.Offer{Sell: trades.Stack{Item: id, Count: max(1, s.Count)}}
+		o := trades.Offer{Sell: trades.Stack{Item: id, Count: max(1, s.Count), Variant: s.variant()}}
 		for _, slot := range []int{s.Slot, s.Slot + 18} {
 			if c, ok := cost[slot]; ok {
 				if cid, err := domain.ParseResourceID(c.ID); err == nil {
-					o.Buy = append(o.Buy, trades.Stack{Item: cid, Count: max(1, c.Count)})
+					o.Buy = append(o.Buy, trades.Stack{Item: cid, Count: max(1, c.Count), Variant: c.variant()})
 				}
 			}
 		}

@@ -1,28 +1,41 @@
 {{define "content"}}
 <div class="page-head">
   <h1>Objetos</h1>
-  <p class="lede">{{len .Data}} objetos se pueden conseguir como loot, pescando, por tradeo o de NPCs. Ordenados por nombre; filtra para encontrar uno.</p>
+  <p class="lede">Todo lo que se puede conseguir en este modpack: en estructuras, de criaturas, pescando o comerciando. Cada variante útil (libros encantados, pociones, armas de mods…) tiene su propia fila.</p>
 </div>
-<section class="pozo">
+<section class="pozo" data-list="t-items">
   <div class="filters">
-    <label for="f-items" class="label">Filtrar</label>
-    <input id="f-items" type="search" class="ctl filter" data-filter="t-items" placeholder="Nombre o mod" autocomplete="off">
+    <label for="f-items" class="sr-only">Buscar en la lista</label>
+    <input id="f-items" type="search" class="field" data-smart="t-items" placeholder="Nombre, efecto o ID: reparación, @tacz, minecraft:" autocomplete="off" spellcheck="false">
+    <label class="sr-only" for="f-way">Cómo se consigue</label>
+    <select id="f-way" class="field" data-facet="w">
+      <option value="">Cualquier forma</option>
+      {{range wayOptions}}<option value="{{index . 0}}">{{index . 1}}</option>{{end}}
+    </select>
+    <label class="sr-only" for="f-mod">Mod</label>
+    <select id="f-mod" class="field" data-facet="mod">
+      <option value="">Todos los mods</option>
+      {{range .M.Mods}}{{if .Items}}<option value="{{.ID.Namespace}}">{{.Name}}</option>{{end}}{{end}}
+    </select>
+    <label class="check"><input type="checkbox" data-facet="ok" checked> Solo conseguibles</label>
+    <span class="count" aria-live="polite" data-count></span>
   </div>
+  <p class="hint-text">Escribe parte del nombre aunque tenga erratas. <code>@mod</code> filtra por mod y <code>minecraft:diamond</code> busca por ID.</p>
   <div class="scroll">
-  <table class="data" id="t-items">
-    <thead><tr><th scope="col">Objeto</th><th scope="col">Mod</th><th scope="col" class="num">Fuentes</th><th scope="col" class="w-chance">Mejor probabilidad</th></tr></thead>
+  <table class="data stack-sm" id="t-items">
+    <thead><tr><th scope="col">Objeto</th><th scope="col" class="w-chance">Mejor probabilidad</th><th scope="col">Forma más probable</th><th scope="col" class="hide-sm">Mod</th></tr></thead>
     <tbody>
     {{range .Data}}
-      <tr>
-        <td><a href="{{rel $.Root .URL}}">{{.Name}}</a></td>
-        <td>{{.Mod.Name}}</td>
-        <td class="num">{{plus (plus (len .Sources) (len .Fishing)) (plus (len .Trades) (len .NPCDrops))}}</td>
-        <td>{{if .Sources}}{{template "chance" .Best}}{{else if .Fishing}}<span class="meta">Pesca</span>{{else if .Trades}}<span class="meta">Tradeo</span>{{else}}<span class="meta">NPC</span>{{end}}</td>
+      <tr{{if .Base}} class="variant"{{end}} data-k="{{.SearchKeys}}" data-mod="{{.ID.Namespace}}" data-w="{{.WayKeys}}" data-ok="{{if or .Top .Buys}}1{{else if and .Variants (not .Unobtainable)}}1{{end}}">
+        <td><a href="{{rel $.Root .URL}}">{{if .Base}}{{.Label}}{{else}}{{.Name}}{{end}}</a>{{if .Variants}} <span class="label-v">· {{len .Variants}} variantes</span>{{end}}</td>
+        <td>{{with .Top}}{{if .Chance}}{{template "chance" .Chance}}{{else}}<span class="meta">—</span>{{end}}{{else}}<span class="meta">—</span>{{end}}</td>
+        <td>{{with .Top}}{{.Way.Title}} <span class="meta">· {{.Name}}</span>{{else}}{{if .Unobtainable}}<span class="dis dis-cert">⊘ Desactivado</span>{{else if .Variants}}<span class="meta">ver variantes</span>{{else if .Buys}}<span class="meta">solo te lo compran</span>{{end}}{{end}}</td>
+        <td class="hide-sm">{{.Mod.Name}}</td>
       </tr>
     {{end}}
     </tbody>
   </table>
   </div>
-  <p class="empty filter-empty" hidden>Ningún objeto coincide con el filtro.</p>
+  <p class="empty filter-empty" hidden>Ningún objeto coincide. Prueba con menos letras o quita algún filtro.</p>
 </section>
 {{end}}

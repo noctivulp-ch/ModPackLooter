@@ -9,7 +9,7 @@
 <script>
 try {
   var mode = localStorage.getItem("mpl-mode"), metal = localStorage.getItem("mpl-metal");
-  if (mode) document.documentElement.dataset.mode = mode;
+  if (mode === "claro" || mode === "oscuro") document.documentElement.dataset.mode = mode;
   if (metal) document.documentElement.dataset.metal = metal;
 } catch (e) {}
 </script>
@@ -17,32 +17,49 @@ try {
 <body>
 <a class="skip" href="#main">Saltar al contenido</a>
 <header class="topbar">
-  <a class="brand" href="{{rel .Root ""}}">{{.M.Title}}</a>
-  <div class="search" role="search">
-    <label class="sr-only" for="q">Buscar en el sitio</label>
-    <input id="q" type="search" placeholder="Buscar objeto, estructura o bioma" autocomplete="off" spellcheck="false"
-           aria-controls="results" aria-expanded="false" data-root="{{.Root}}">
-    <kbd class="hint" aria-hidden="true">/</kbd>
-    <ul id="results" role="listbox" hidden></ul>
-  </div>
-  <div class="prefs">
-    <button type="button" id="mode" class="ctl" aria-label="Cambiar entre modo claro y oscuro">Modo</button>
-    <label class="sr-only" for="metal">Metal</label>
-    <select id="metal" class="ctl">
-      {{range metals}}<option value="{{.}}">{{if eq . "oro"}}Oro{{else if eq . "jade"}}Jade{{else}}Peltre{{end}}</option>{{end}}
-    </select>
-  </div>
+  <a class="brand" href="{{rel .Root ""}}">{{.M.Title}}<small>Minecraft {{.M.Pack.MCVersion}} · {{.M.Pack.Mods}} mods</small></a>
+  <button type="button" class="find-btn" id="find-open" aria-haspopup="dialog" aria-controls="finder">
+    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.8-4.8"/></svg>
+    <span>Buscar</span><kbd aria-hidden="true">/</kbd>
+  </button>
+  <details class="look">
+    <summary aria-label="Apariencia"><span class="swatch" aria-hidden="true"></span><span class="look-label">Apariencia</span></summary>
+    <div class="look-panel">
+      <fieldset>
+        <legend>Modo</legend>
+        <div class="seg">
+          <label><input type="radio" name="mode" value="auto">Auto</label>
+          <label><input type="radio" name="mode" value="claro">Claro</label>
+          <label><input type="radio" name="mode" value="oscuro">Oscuro</label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Metal</legend>
+        <div class="seg">
+          {{range metals}}<label><input type="radio" name="metal" value="{{.}}"><span class="dot dot-{{.}}" aria-hidden="true"></span>{{if eq . "oro"}}Oro{{else if eq . "jade"}}Jade{{else}}Peltre{{end}}</label>{{end}}
+        </div>
+      </fieldset>
+    </div>
+  </details>
 </header>
+<div class="finder" id="finder" role="dialog" aria-modal="true" aria-label="Buscar" hidden>
+  <div class="finder-panel">
+    <div class="finder-bar" role="search">
+      <label class="sr-only" for="q">Buscar objetos, estructuras, criaturas, biomas o mods</label>
+      <input id="q" type="search" placeholder="Busca un objeto, estructura, criatura o bioma" autocomplete="off" spellcheck="false"
+             role="combobox" aria-autocomplete="list" aria-controls="results" aria-expanded="false" data-root="{{.Root}}">
+      <button type="button" class="finder-close" id="find-close">Cerrar <kbd>Esc</kbd></button>
+    </div>
+    <p class="finder-tip">Parte del nombre, aunque tenga erratas · <code>@mod</code> filtra por mod · <code>minecraft:</code> busca por ID · también en inglés</p>
+    <ul id="results" role="listbox" aria-label="Resultados" hidden></ul>
+  </div>
+</div>
 <div class="shell">
   <nav class="rail" aria-label="Secciones">
-    <a href="{{rel .Root ""}}"{{if eq .Nav "inicio"}} aria-current="page"{{end}}>Inicio</a>
-    <a href="{{rel .Root "objetos/"}}"{{if eq .Nav "objetos"}} aria-current="page"{{end}}>Objetos</a>
-    <a href="{{rel .Root "estructuras/"}}"{{if eq .Nav "estructuras"}} aria-current="page"{{end}}>Estructuras</a>
-    <a href="{{rel .Root "biomas/"}}"{{if eq .Nav "biomas"}} aria-current="page"{{end}}>Biomas</a>
-    <a href="{{rel .Root "fuentes/"}}"{{if eq .Nav "fuentes"}} aria-current="page"{{end}}>Otras fuentes</a>
-    {{range .M.Sections}}<a href="{{rel $.Root .URL}}"{{if eq $.Nav .Nav}} aria-current="page"{{end}}>{{.Label}}</a>
-    {{end}}<a href="{{rel .Root "mods/"}}"{{if eq .Nav "mods"}} aria-current="page"{{end}}>Mods</a>
-    <a href="{{rel .Root "acerca/"}}"{{if eq .Nav "acerca"}} aria-current="page"{{end}}>Acerca</a>
+    {{range .M.Nav}}<div class="rail-group"><span>{{.Label}}</span>
+      {{range .Links}}<a href="{{rel $.Root .URL}}"{{if eq $.Nav .Nav}} aria-current="page"{{end}}>{{.Label}}</a>{{end}}
+    </div>
+    {{end}}
   </nav>
   <main id="main" tabindex="-1">
 {{template "content" .}}
