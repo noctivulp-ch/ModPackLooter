@@ -51,3 +51,13 @@
   {{if not .Disabled}}<p class="meta">Es un aviso: la app encontró indicios, pero no puede confirmarlo.</p>{{end}}
 </section>
 {{end}}{{end}}
+
+{{define "lcTerm"}}{{if .T.Biome}}<a href="{{rel .Root .T.Biome.URL}}">{{.T.Name}}</a>{{else if .T.Members}}<details class="tag"><summary>Grupo «{{.T.Name}}» · {{len .T.Members}} biomas</summary>{{template "biomeChips" (dict "Root" .Root "Biomes" .T.Members)}}</details>{{else if .T.Tag}}<span title="{{.T.ID}}">Grupo «{{.T.Name}}»</span>{{else}}{{.T.Name}}{{end}}{{end}}
+
+{{define "lcBiomes"}}{{$r := .Root}}{{with .B}}{{if .Everywhere}}<span class="meta">Cualquier bioma</span>{{else}}<div class="lc-biomes">
+  {{if .Any}}<div><span class="meta">En cualquiera de:</span> <ul class="chips">{{range .Any}}<li>{{template "lcTerm" (dict "Root" $r "T" .)}}</li>{{end}}</ul></div>{{end}}
+  {{if .All}}<div><span class="meta">Que sea a la vez:</span> <ul class="chips">{{range .All}}<li>{{template "lcTerm" (dict "Root" $r "T" .)}}</li>{{end}}</ul></div>{{end}}
+  {{if .Excluding}}<div><span class="meta">Excepto:</span> <ul class="chips">{{range .Excluding}}<li>{{template "lcTerm" (dict "Root" $r "T" .)}}</li>{{end}}</ul></div>{{end}}
+</div>{{end}}{{end}}{{end}}
+
+{{define "lcCrumbs"}}<nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "lostcities/"}}">Lost Cities</a>{{if .Sub}} / <a href="{{rel .Root .SubURL}}">{{.Sub}}</a>{{end}}</nav>{{end}}

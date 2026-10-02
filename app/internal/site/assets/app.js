@@ -44,8 +44,8 @@
   var list = document.getElementById("results");
   var index = window.MPL_INDEX || [];
   var siteRoot = input ? input.getAttribute("data-root") || "" : "";
-  var groups = { o: "Objetos", e: "Estructuras", b: "Biomas", m: "Mods" };
-  var order = ["o", "e", "b", "m"];
+  var groups = { o: "Objetos", e: "Estructuras", b: "Biomas", l: "Lost Cities", m: "Mods" };
+  var order = ["o", "e", "b", "l", "m"];
 
   function fold(s) {
     return (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");

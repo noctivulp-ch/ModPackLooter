@@ -1,0 +1,41 @@
+{{define "content"}}
+{{$s := .Data}}
+{{template "lcCrumbs" (dict "Root" .Root "Sub" "Estilos de ciudad" "SubURL" "lostcities/estilos/")}}
+<div class="page-head">
+  <h1>{{$s.Name}}</h1>
+  <p class="id">{{$s.ID}}</p>
+</div>
+<div class="grid">
+  <section class="pozo">
+    <h2>Dónde se usa</h2>
+    {{if $s.Worlds}}<ul class="links">{{range $s.Worlds}}<li>Estilo de mundo <a href="{{rel $.Root .URL}}">{{.Name}}</a></li>{{end}}</ul>
+    {{else}}<p class="meta">Solo como base de otros estilos.</p>{{end}}
+  </section>
+  {{if $s.Inherits}}
+  <section class="pozo">
+    <h2>Hereda de</h2>
+    <p class="meta">Incluye también los edificios de:</p>
+    <ul class="links">{{range $s.Inherits}}<li><a href="{{rel $.Root .URL}}">{{.Name}}</a></li>{{end}}</ul>
+  </section>
+  {{end}}
+</div>
+{{range $title, $list := dict "Edificios" $s.Buildings "Edificios múltiples" $s.Multi}}{{if $list}}
+<h2 class="section-title">{{$title}} <span class="count">{{len $list}}</span></h2>
+<section class="pozo">
+  <p class="meta">Probabilidad de que un solar de la ciudad tenga cada edificio.</p>
+  <div class="scroll">
+  <table class="data">
+    <thead><tr><th scope="col">Edificio</th><th scope="col" class="w-chance">Probabilidad</th><th scope="col" class="num hide-sm">Contenedores</th><th scope="col" class="hide-sm">Loot posible</th></tr></thead>
+    <tbody>
+    {{range $list}}<tr>
+      <td><a href="{{rel $.Root .Building.URL}}">{{.Building.Name}}</a></td>
+      <td>{{template "chance" .Share}}</td>
+      <td class="num hide-sm">{{if .Building.Containers}}{{.Building.Containers}}{{else}}—{{end}}</td>
+      <td class="hide-sm">{{if .Building.Tables}}<ul class="chips">{{range .Building.Tables}}<li><a href="{{rel $.Root .URL}}">{{.Name}}</a></li>{{end}}</ul>{{else}}<span class="meta">Sin loot</span>{{end}}</td>
+    </tr>{{end}}
+    </tbody>
+  </table>
+  </div>
+</section>
+{{end}}{{end}}
+{{end}}

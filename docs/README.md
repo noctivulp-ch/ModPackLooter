@@ -22,6 +22,7 @@ construye o se usa la app, queda escrita aquí**.
 | [12-arquitectura-de-descubrimiento.md](12-arquitectura-de-descubrimiento.md) | Puerta de enganche: descubridores encadenados, reclamaciones y genérico final. |
 | [13-diseno-del-sitio.md](13-diseno-del-sitio.md) | Diseño visual del sitio con Wulfenite UI, PC primero. |
 | [14-mundo-modelo-y-desactivadores.md](14-mundo-modelo-y-desactivadores.md) | `--world` y la puerta de desactivadores (seguro / posible). |
+| [15-pestanas-por-mod-y-lost-cities.md](15-pestanas-por-mod-y-lost-cities.md) | Pestañas dedicadas por mod (solo si está) y Lost Cities por capas; nombres desde `lang`. |
 | [decisiones/](decisiones/) | Registro de decisiones de arquitectura (ADR). |
 
 ## Cómo documentamos decisiones
@@ -50,3 +51,4 @@ cambia, se crea una nueva que la **reemplaza** y se marca la antigua como
 | [0012](decisiones/0012-sitio-con-wulfenite-ui.md) | El sitio usa Wulfenite UI; PC primero, móvil aceptable; español por defecto. |
 | [0013](decisiones/0013-mundo-modelo.md) | Mundo modelo (`--world`) en lugar de un menú de creación de mundos. |
 | [0014](decisiones/0014-desactivadores-con-dos-niveles.md) | Desactivadores con dos niveles: desactivado / posiblemente desactivado. |
+| [0015](decisiones/0015-pestanas-por-mod.md) | Pestañas dedicadas por mod, solo si el mod está; nombres desde cualquier `lang`. |

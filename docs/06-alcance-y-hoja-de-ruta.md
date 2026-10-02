@@ -34,6 +34,8 @@ Objetivo: un sitio útil para un modpack real de una sola versión.
   Pendiente: spawns de mobs por bioma, datapacks integrados en jars, criterios de
   bioma de Structurify. Referencia para 1.21.1: el port público del usuario
   (`gitlab.com/nf1190525/deceasedcraft-revulpe-dev`).
+- ✅ **Pestañas por mod** (solo si el mod está): Lost Cities por capas (doc 15).
+  Siguientes: pesca (Starcatcher, Tide 2) y tradeos (aldeanos, piglins, NPC).
 - Interfaz del sitio traducible (hoy solo los nombres siguen el idioma; la interfaz está
   en español).
 - Comandos de consulta (`where`, `structure`, `biome`) y `export`.

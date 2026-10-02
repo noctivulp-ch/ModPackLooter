@@ -29,6 +29,7 @@ const (
 	TypeLostCitiesCond  = "lostcities/conditions"
 	TypeLostCitiesPal   = "lostcities/palettes"
 	TypeLostCitiesParts = "lostcities/parts"
+	TypeStarcatcherFish = "starcatcher/fish"
 )
 
 // Layout maps the folder names of one range of Minecraft versions to the
@@ -59,19 +60,26 @@ func newLayout(name, versions string, folders map[string]string) *Layout {
 // common folders whose name did not change across the supported range.
 func commonFolders() map[string]string {
 	return map[string]string{
-		"worldgen/structure":      TypeStructure,
-		"worldgen/structure_set":  TypeStructureSet,
-		"worldgen/template_pool":  TypeTemplatePool,
-		"worldgen/processor_list": TypeProcessorList,
-		"worldgen/biome":          TypeBiome,
-		"tags/worldgen/biome":     TypeBiomeTag,
-		"tags/worldgen/structure": TypeStructureTag,
-		"loot_modifiers":          TypeLootModifier,
-		"forge/biome_modifier":    TypeForgeBiomeMod,
-		"neoforge/biome_modifier": TypeNeoBiomeMod,
-		"lostcities/conditions":   TypeLostCitiesCond,
-		"lostcities/palettes":     TypeLostCitiesPal,
-		"lostcities/parts":        TypeLostCitiesParts,
+		"worldgen/structure":        TypeStructure,
+		"worldgen/structure_set":    TypeStructureSet,
+		"worldgen/template_pool":    TypeTemplatePool,
+		"worldgen/processor_list":   TypeProcessorList,
+		"worldgen/biome":            TypeBiome,
+		"tags/worldgen/biome":       TypeBiomeTag,
+		"tags/worldgen/structure":   TypeStructureTag,
+		"loot_modifiers":            TypeLootModifier,
+		"forge/biome_modifier":      TypeForgeBiomeMod,
+		"neoforge/biome_modifier":   TypeNeoBiomeMod,
+		"lostcities/conditions":     TypeLostCitiesCond,
+		"lostcities/palettes":       TypeLostCitiesPal,
+		"lostcities/parts":          TypeLostCitiesParts,
+		"lostcities/worldstyles":    "lostcities/worldstyles",
+		"lostcities/citystyles":     "lostcities/citystyles",
+		"lostcities/buildings":      "lostcities/buildings",
+		"lostcities/multibuildings": "lostcities/multibuildings",
+		"lostcities/scattered":      "lostcities/scattered",
+		"lostcities/styles":         "lostcities/styles",
+		"starcatcher/fish":          TypeStarcatcherFish,
 	}
 }
 

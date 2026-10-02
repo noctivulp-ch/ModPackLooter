@@ -123,9 +123,85 @@ func TestSiteContent(t *testing.T) {
 	if !strings.Contains(read("fuentes/index.html"), "Criatura") {
 		t.Error("las tablas de criaturas deben aparecer en Otras fuentes")
 	}
+	// Mod tabs only exist when the mod is present.
+	if strings.Contains(read("index.html"), "Lost Cities") || fileExists(filepath.Join(out, "lostcities")) {
+		t.Error("sin Lost Cities no debe haber pestaña de Lost Cities")
+	}
 }
 
 func fileExists(p string) bool {
 	_, err := os.Stat(p)
 	return err == nil
+}
+
+func TestLostCitiesTab(t *testing.T) {
+	in := testkit.NewInstance(t)
+	in.Jar("mods/lostcities.jar", testkit.Files{
+		"META-INF/mods.toml": testkit.ModsToml("lostcities", "The Lost Cities", "[1.20.1,1.21)"),
+		"data/lostcities/lostcities/worldstyles/standard.json": `{"citystyles":[
+			{"factor":1,"citystyle":"citystyle_common"},
+			{"factor":4,"citystyle":"citystyle_desert","biomes":{"if_any":["minecraft:desert","#minecraft:is_badlands"]}}]}`,
+		"data/lostcities/lostcities/citystyles/citystyle_common.json": `{"selectors":{"buildings":[{"factor":3,"value":"shop"},{"factor":1,"value":"house"}]}}`,
+		"data/lostcities/lostcities/citystyles/citystyle_desert.json": `{"inherit":"citystyle_common","selectors":{"buildings":[{"factor":4,"value":"house"}]}}`,
+		"data/lostcities/lostcities/buildings/shop.json":              `{"palette":{"palette":[{"char":"C","block":"minecraft:chest[facing=north]","loot":"shop_loot"}]},"parts":[{"part":"shop_floor"},{"part":"shop_roof"}]}`,
+		"data/lostcities/lostcities/buildings/house.json":             `{"parts":[{"part":"house_floor"}]}`,
+		"data/lostcities/lostcities/parts/shop_floor.json":            `{"slices":[["CC#","#C#"]]}`,
+		"data/lostcities/lostcities/parts/shop_roof.json":             `{"slices":[["###"]]}`,
+		"data/lostcities/lostcities/parts/house_floor.json":           `{"refpalette":"house_pal","slices":[["B#"]]}`,
+		"data/lostcities/lostcities/palettes/house_pal.json":          `{"palette":[{"char":"B","block":"minecraft:barrel","loot":"house_loot"}]}`,
+		"data/lostcities/lostcities/conditions/shop_loot.json":        `{"values":[{"factor":3,"value":"lostcities:chests/shop"},{"factor":1,"value":"lostcities:chests/rare","range":"2,5"}]}`,
+		"data/lostcities/lostcities/conditions/house_loot.json":       `{"values":[{"factor":1,"value":"lostcities:chests/shop"}]}`,
+		"data/lostcities/loot_tables/chests/shop.json":                table,
+		"data/lostcities/loot_tables/chests/rare.json":                table,
+		"assets/lostcities/lang/es_es.json":                           `{"lostcities.citystyle.citystyle_desert":"Ciudad del desierto","lostcities.advancement.title.shop":"Tienda de la esquina"}`,
+	})
+	res, err := analysis.Analyzer{Discoverers: plugins.Discoverers(), Enrichers: plugins.Enrichers(), Disablers: plugins.Disablers()}.
+		Run(context.Background(), modpack.Options{Path: in.Root}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Close()
+	out := filepath.Join(t.TempDir(), "site")
+	if _, err := site.Build(res, site.Options{OutDir: out}); err != nil {
+		t.Fatal(err)
+	}
+	read := func(rel string) string {
+		data, err := os.ReadFile(filepath.Join(out, filepath.FromSlash(rel)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(data)
+	}
+	home := read("index.html")
+	if !strings.Contains(home, `href="lostcities/index.html"`) {
+		t.Error("falta la pestaña Lost Cities en la navegación")
+	}
+	index := read("lostcities/index.html")
+	for _, want := range []string{"Ciudad del desierto", "Common", "Desierto", "Grupo «Badlands»"} {
+		if want == "Desierto" {
+			continue // without vanilla data the biome keeps its readable id
+		}
+		if !strings.Contains(index, want) {
+			t.Errorf("la portada de Lost Cities no contiene %q", want)
+		}
+	}
+	desert := read("lostcities/estilos/lostcities/citystyle_desert/index.html")
+	for _, want := range []string{"Tienda de la esquina", "House", "Hereda de", "Common"} {
+		if !strings.Contains(desert, want) {
+			t.Errorf("el estilo desierto no contiene %q", want)
+		}
+	}
+	shop := read("lostcities/edificios/lostcities/shop/index.html")
+	for _, want := range []string{"3 contenedores con loot", "Shop Floor", "75 %", "25 %", "pisos 2 a 5", "1 parte sin contenedores", "../../../../tablas/lostcities/chests/shop/index.html"} {
+		if !strings.Contains(shop, want) {
+			t.Errorf("la página de la tienda no contiene %q", want)
+		}
+	}
+	house := read("lostcities/edificios/lostcities/house/index.html")
+	if !strings.Contains(house, "1 contenedor con loot") || !strings.Contains(house, "100 %") {
+		t.Errorf("la casa debería tener un barril con su paleta de referencia")
+	}
+	if !strings.Contains(read("assets/search-index.js"), `"t":"l"`) {
+		t.Error("los edificios deben estar en la búsqueda")
+	}
 }
