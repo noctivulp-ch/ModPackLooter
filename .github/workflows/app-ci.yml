@@ -1,0 +1,33 @@
+name: app · CI
+
+on:
+  push:
+    paths: ["app/**", ".github/workflows/app-ci.yml"]
+  pull_request:
+    paths: ["app/**", ".github/workflows/app-ci.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: app/go.mod
+          cache-dependency-path: app/go.sum
+      - name: Formato
+        run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
+      - name: Vet
+        run: go vet ./...
+      - name: Datos vanilla reales para los tests de integración
+        run: git clone --depth 1 -b 1.20.1-data https://github.com/misode/mcmeta "$RUNNER_TEMP/mcmeta"
+      - name: Tests
+        env:
+          MPL_MCMETA_DATA: ${{ runner.temp }}/mcmeta
+        run: go test ./...

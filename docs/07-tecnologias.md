@@ -45,17 +45,17 @@ contrato independiente del lenguaje.
 | Necesidad | Opción prevista |
 |---|---|
 | Lenguaje | Go (última versión estable) |
-| CLI | `spf13/cobra` (+ `charmbracelet/fang` para ayuda/errores con estilo, a evaluar) |
+| CLI | `spf13/cobra` (implementado; `fang` sigue a evaluar) |
 | TUI (fase 3) | **Bubble Tea v2** + Lip Gloss v2 + Bubbles v2 (`charm.land/...`), Huh para formularios |
-| NBT | Librería existente o lector propio mínimo detrás del puerto `StructureTemplateReader` |
+| NBT | **Lector propio** (`internal/nbt`, ~250 líneas, sin dependencias), validado con las 1010 plantillas vanilla de 1.20.1 |
 | Zip / JSON / gzip | Librería estándar |
-| Configuración | TOML (`BurntSushi/toml` o `pelletier/go-toml`) |
+| Configuración | TOML con `BurntSushi/toml` (también para `mods.toml` y la config de Lootr) |
 | Plantillas del sitio | `html/template` + `embed` |
 | Frontend del sitio | HTML + CSS propio, JS mínimo sin framework |
-| Búsqueda en el navegador | Índice JSON precalculado + búsqueda difusa ligera (p. ej. MiniSearch o una propia) incluida en el sitio |
+| Búsqueda en el navegador | Propia: índice precalculado servido como script (`fetch` no funciona desde `file://`), sin acentos ni mayúsculas, por prefijo y palabras |
 | Tests | `testing` + *golden files* |
 | Lint / formato | `gofmt`, `go vet`, `golangci-lint` |
-| Releases | GoReleaser en GitHub Actions |
+| Releases | Workflow propio de GitHub Actions (compilación cruzada + `action-gh-release`); GoReleaser solo admite etiquetas con prefijo `app/` en su versión de pago |
 
 ## Pendiente
 

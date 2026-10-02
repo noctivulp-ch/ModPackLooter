@@ -1,7 +1,7 @@
 # 05 · Interfaz de línea de comandos
 
-> Borrador de la experiencia de uso. Nombres y flags pueden cambiar cuando se
-> elijan las tecnologías.
+> Implementados: `build`, `scan` y `plan` (ver [app/README.md](../app/README.md)). El resto
+> de comandos de este documento siguen siendo un plan.
 
 ## Comandos
 
@@ -39,7 +39,9 @@ modpacklooter init --ci gitlab
 | `--minecraft-jar <ruta>` | Jar de vanilla para incluir loot, nombres e iconos base. |
 | `--download-vanilla` | Descarga el jar vanilla del manifiesto oficial de Mojang y lo guarda en caché. |
 | `--loader forge\|neoforge\|fabric` | Fuerza el cargador si no se detecta. |
-| `--lang <código>` | Idioma de los nombres (`es_es`, `en_us`…). |
+| `--lang <código>` | Idioma de los nombres (`es_es`, `es_ar`, `en_us`…). Por defecto el del juego (`options.txt`) o `es_es`. Respaldo: idioma pedido → variante principal (`es_es`) → otras variantes → `en_us`. |
+| `--assets-dir <ruta>` | Carpeta `assets` del launcher: de ahí salen las traducciones vanilla, que no vienen en el jar. |
+| `--metal oro\|jade\|peltre` | Acento visual del sitio (Wulfenite UI). |
 | `--config <archivo>` | Archivo de configuración del proyecto. |
 | `--include-mod / --exclude-mod` | Filtrar mods. |
 | `--format text\|json` | Salida legible o para máquinas (en comandos de consulta). |

@@ -40,7 +40,11 @@ El modpack real **no** se sube al repositorio (licencias de terceros).
 ## Entrega de la app
 
 - **GitHub Releases**: binarios autocontenidos por SO/arquitectura,
-  generados en CI al crear una etiqueta `vX.Y.Z`.
+  generados por `.github/workflows/app-release.yml` al crear una etiqueta
+  `app/vX.Y.Z` (también se puede lanzar a mano para obtener binarios de prueba
+  como artefactos del workflow).
+- **CI** (`app-ci.yml`): formato, `go vet` y tests, incluidos los de integración con
+  los datos vanilla reales de `misode/mcmeta`.
 - Compilación local: un solo comando documentado en el README.
 
 ## Publicación del sitio generado

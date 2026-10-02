@@ -1,6 +1,6 @@
 # 06 · Alcance y hoja de ruta
 
-## MVP (fase 1)
+## MVP (fase 1) — implementado, pendiente de validar con DeceasedCraft
 
 Objetivo: un sitio útil para un modpack real de una sola versión.
 
@@ -30,6 +30,12 @@ Objetivo: un sitio útil para un modpack real de una sola versión.
 - **NeoForge 1.21.1** (carpetas en singular, componentes de item).
 - Global Loot Modifiers (Forge/NeoForge).
 - Overrides manuales vía archivo de configuración.
+- **Mods y configs que desactivan estructuras o spawns** (datapacks que vacían
+  `structure_set`, Structurify, InControl, KubeJS…), de forma genérica, no por mod.
+  Referencia: el port público del usuario a 1.21.1
+  (`gitlab.com/nf1190525/deceasedcraft-revulpe-dev`).
+- Interfaz del sitio traducible (hoy solo los nombres siguen el idioma; la interfaz está
+  en español).
 - Comandos de consulta (`where`, `structure`, `biome`) y `export`.
 
 ## Fase 3
