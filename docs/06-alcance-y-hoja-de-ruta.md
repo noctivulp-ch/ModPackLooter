@@ -12,7 +12,9 @@ Objetivo: un sitio útil para un modpack real de una sola versión.
 - Estructuras → biomas (con tags resueltos).
 - Asociación estructura↔loot por NBT y processor lists (exacta), tabla de
   conocimiento vanilla (conocida) y por nombre (heurística).
-- Todas las loot tables listadas, aunque no tengan origen conocido.
+- Todas las loot tables listadas, aunque no tengan origen conocido (descubridor genérico).
+- Puerta de descubrimiento con piezas enganchables ([ADR-0010](decisiones/0010-descubrimiento-por-ganchos-encadenados.md)).
+- **Lootr 1.20.1**: contenedores por jugador, refresh y decay ([11-lootr.md](11-lootr.md)).
 - Probabilidad por tirada y por cofre, cantidades.
 - Nombres desde archivos `lang` (es/en).
 - Sitio estático: inicio con búsqueda, fichas de objeto, estructura y bioma.

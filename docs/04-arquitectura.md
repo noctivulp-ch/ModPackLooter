@@ -45,7 +45,7 @@ nunca al revés.
  Fuente del modpack
         │  ModpackSource
         ▼
- 1. Descubrimiento   → lista de “paquetes de recursos” (vanilla, mods, datapacks, scripts)
+ 1. Carga            → lista de “paquetes de recursos” (vanilla, mods, datapacks, scripts)
         │  ResourceProvider
         ▼
  2. Extracción       → archivos virtuales con prioridad (el último gana)
@@ -54,8 +54,10 @@ nunca al revés.
  3. Parseo           → objetos de dominio sin resolver (referencias por ID)
         │  dominio
         ▼
- 4. Resolución       → tags expandidos, tablas anidadas, estructuras↔piezas↔loot,
-        │               modificadores, heurísticas, overrides
+ 4. Descubrimiento   → puerta de enganche: descubridores por fuente en orden,
+        │               reclamaciones y genérico final (ver doc 12)
+ 4b. Enriquecimiento → Lootr, probabilidades, nombres
+ 4c. Resolución      → tags expandidos, tablas anidadas, estructura→biomas
         ▼
  5. Indexado         → LootIndex (consultas en ambas direcciones) + Diagnostics
         │  SiteRenderer / Exporter

@@ -18,6 +18,8 @@ construye o se usa la app, queda escrita aquí**.
 | [08-investigacion-app-externa-vs-mod.md](08-investigacion-app-externa-vs-mod.md) | Investigación: app externa frente a mod multicargador/multiversión. |
 | [09-versiones-y-cargadores.md](09-versiones-y-cargadores.md) | Diferencias de formato 1.20.1 → 26.3 y entre Forge/NeoForge/Fabric. |
 | [10-proceso-de-pruebas-y-entrega.md](10-proceso-de-pruebas-y-entrega.md) | Ciclo de review con el modpack real, releases y GitHub/GitLab Pages. |
+| [11-lootr.md](11-lootr.md) | Cómo funciona Lootr y cómo se soporta. |
+| [12-arquitectura-de-descubrimiento.md](12-arquitectura-de-descubrimiento.md) | Puerta de enganche: descubridores encadenados, reclamaciones y genérico final. |
 | [decisiones/](decisiones/) | Registro de decisiones de arquitectura (ADR). |
 
 ## Cómo documentamos decisiones
@@ -40,3 +42,6 @@ cambia, se crea una nueva que la **reemplaza** y se marca la antigua como
 | [0006](decisiones/0006-rango-de-versiones-y-cargadores.md) | 1.20.1 → 26.3; Forge y NeoForge primero, Fabric después. |
 | [0007](decisiones/0007-distribucion-y-publicacion.md) | GitHub Releases + sitio compatible con GitHub/GitLab Pages. |
 | [0008](decisiones/0008-ciclo-de-iteracion-con-modpack-real.md) | Ciclo de review con DeseacedCraft BetaCerrada. |
+| [0009](decisiones/0009-estructura-del-repositorio.md) | Monorepo: `app/` (Go) y `mod/` (futuro mod). |
+| [0010](decisiones/0010-descubrimiento-por-ganchos-encadenados.md) | Descubrimiento con piezas enganchables encadenadas y genérico final. |
+| [0011](decisiones/0011-guias-de-diseno-de-interfaces.md) | Guías de referencia: impeccable (sitio) y tui-architect (CLI/TUI). |
