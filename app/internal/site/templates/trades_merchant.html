@@ -1,0 +1,46 @@
+{{define "content"}}
+{{$m := .Data}}
+<nav class="crumbs" aria-label="Ruta"><a href="{{rel .Root "tradeos/"}}">Tradeos</a> / <a href="{{rel .Root $m.Catalog.URL}}">{{$m.Catalog.Name}}</a></nav>
+<div class="page-head">
+  <h1>{{$m.Name}}</h1>
+  <p class="id">{{$m.ID}}{{if $m.Location}} · {{$m.Location}}{{end}}</p>
+  {{if $m.Station}}<p>Bloque de trabajo: <a href="{{rel .Root $m.Station.URL}}">{{$m.Station.Name}}</a></p>{{end}}
+  {{if $m.Note}}<p class="meta">{{$m.Note}}</p>{{end}}
+</div>
+{{if $m.Changes}}
+<section class="pozo">
+  <h2>Cambios de mods</h2>
+  <ul class="links">{{range $m.Changes}}<li>{{template "change" (dict "Root" $.Root "C" .)}}</li>{{end}}</ul>
+</section>
+{{end}}
+{{range $m.Levels}}
+<section class="pozo">
+  <header class="pozo-head"><h2>{{.Name}}</h2>{{if and .Picks (lt .Picks (len .Offers))}}<p class="meta">Se eligen {{.Picks}} de estas {{len .Offers}} ofertas al azar.</p>{{else if .Picks}}<p class="meta">Siempre ofrece {{if eq (len .Offers) 1}}este tradeo{{else}}todos estos tradeos{{end}}.</p>{{end}}</header>
+  <div class="scroll">
+  <table class="data stack-sm">
+    <thead><tr><th scope="col">Tradeo</th><th scope="col" class="w-chance">Probabilidad de ofrecerlo</th><th scope="col">Notas</th></tr></thead>
+    <tbody>
+    {{range .Offers}}<tr>
+      <td>{{template "toffer" (dict "Root" $.Root "O" .)}}</td>
+      <td>{{template "chance" .Chance}}</td>
+      <td><span class="meta">{{if .MaxUses}}{{.MaxUses}} usos antes de reponer{{end}}{{if .XP}} · {{.XP}} de experiencia al aldeano{{end}}</span>{{if .Note}}<br><span class="meta">{{.Note}}</span>{{end}}</td>
+    </tr>{{end}}
+    </tbody>
+  </table>
+  </div>
+</section>
+{{end}}
+{{if $m.Drops}}
+<section class="pozo">
+  <h2>Lo que suelta al morir</h2>
+  <div class="scroll">
+  <table class="data">
+    <thead><tr><th scope="col">Objeto</th><th scope="col" class="w-chance">Probabilidad</th><th scope="col" class="num">Cantidad</th></tr></thead>
+    <tbody>
+    {{range $m.Drops}}<tr><td><a href="{{rel $.Root .Item.URL}}">{{.Item.Name}}</a></td><td>{{template "chance" .Chance}}</td><td class="num">{{.Count}}</td></tr>{{end}}
+    </tbody>
+  </table>
+  </div>
+</section>
+{{end}}
+{{end}}

@@ -1,0 +1,28 @@
+{{define "content"}}
+{{$lc := .Data}}
+{{template "lcCrumbs" (dict "Root" .Root "Sub" "" "SubURL" "")}}
+<div class="page-head">
+  <h1>Estilos de ciudad</h1>
+  <p class="lede">Cada estilo decide qué edificios puede tener una ciudad.</p>
+</div>
+<section class="pozo">
+  <div class="filters">
+    <label for="f-styles" class="label">Filtrar</label>
+    <input id="f-styles" type="search" class="ctl filter" data-filter="t-styles" placeholder="Estilo de ciudad" autocomplete="off">
+  </div>
+  <div class="scroll">
+  <table class="data" id="t-styles">
+    <thead><tr><th scope="col">Estilo</th><th scope="col" class="num">Edificios</th><th scope="col" class="num">Con loot</th><th scope="col">Hereda de</th></tr></thead>
+    <tbody>
+    {{range $lc.Styles}}<tr>
+      <td><a href="{{rel $.Root .URL}}">{{.Name}}</a></td>
+      <td class="num">{{plus (len .Buildings) (len .Multi)}}</td>
+      <td class="num">{{.WithLoot}}</td>
+      <td>{{range $i, $p := .Inherits}}{{if $i}}, {{end}}<a href="{{rel $.Root $p.URL}}">{{$p.Name}}</a>{{else}}—{{end}}</td>
+    </tr>{{end}}
+    </tbody>
+  </table>
+  </div>
+  <p class="empty filter-empty" hidden>Ningún estilo coincide con el filtro.</p>
+</section>
+{{end}}

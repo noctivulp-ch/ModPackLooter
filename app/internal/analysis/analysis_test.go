@@ -25,7 +25,7 @@ func chestTemplate(table string) string {
 }
 
 func analyzer() analysis.Analyzer {
-	return analysis.Analyzer{Discoverers: plugins.Discoverers(), Enrichers: plugins.Enrichers(), Disablers: plugins.Disablers()}
+	return plugins.Analyzer()
 }
 
 func find(sources []domain.LootSource, table, owner string) (domain.LootSource, bool) {
@@ -127,7 +127,7 @@ func TestAnalyzeSyntheticModpack(t *testing.T) {
 	if len(res.Tables) != 7 {
 		t.Errorf("tablas resueltas = %d", len(res.Tables))
 	}
-	if want := "structure-templates vanilla-knowledge lostcities name-matching generic-by-path"; strings.Join(res.Plan, " ") != want {
+	if want := "structure-templates vanilla-knowledge lostcities vanilla-fishing vanilla-trades name-matching generic-by-path"; strings.Join(res.Plan, " ") != want {
 		t.Errorf("plan = %v", res.Plan)
 	}
 	for _, d := range res.Diagnostics.Items() {

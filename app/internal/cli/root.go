@@ -164,6 +164,7 @@ type scanSummary struct {
 	Disabled      int                  `json:"disabled"`
 	Possibly      int                  `json:"possiblyDisabled"`
 	Disablements  []domain.Disablement `json:"disablements"`
+	Changes       []domain.Change      `json:"changes"`
 	LangSource    string               `json:"langSource"`
 	Loader        string               `json:"loader"`
 	Mods          int                  `json:"mods"`
@@ -182,7 +183,7 @@ func summarize(res *analysis.Result) scanSummary {
 	s := scanSummary{
 		Root: res.Modpack.Root, MCVersion: res.Modpack.MCVersion.String(), VersionSource: res.Modpack.VersionSource,
 		Lang: res.Modpack.Lang, LangSource: res.Modpack.LangSource,
-		Disablers: res.Disablers, Disablements: res.Disablements,
+		Disablers: res.Disablers, Disablements: res.Disablements, Changes: res.Changes,
 		Loader: string(res.Modpack.Loader), Mods: len(res.Modpack.Mods), HasVanilla: res.Modpack.HasVanilla,
 		LootTables: len(res.Tables), Structures: len(res.Structures), Sources: len(res.Sources),
 		ByConfidence: map[string]int{}, ByDiscoverer: map[string]int{},
@@ -190,6 +191,9 @@ func summarize(res *analysis.Result) scanSummary {
 	}
 	if res.Modpack.World != nil {
 		s.World = res.Modpack.World.Name
+		if res.Modpack.WorldAuto {
+			s.World += " (detectado: mundo del servidor)"
+		}
 	}
 	for _, st := range res.Statuses {
 		switch st.Certainty {
@@ -238,12 +242,44 @@ func writeSummary(w io.Writer, s scanSummary) {
 		fmt.Fprintf(w, "\nAjustes aplicados: %s\n", strings.Join(s.Enrichments, ", "))
 	}
 	fmt.Fprintf(w, "\nDesactivados: %d seguro · %d posible\n", s.Disabled, s.Possibly)
+	// One line per target, with every reason and the strongest certainty.
+	type row struct {
+		certainty domain.Certainty
+		reasons   []string
+	}
+	rows := map[domain.Target]*row{}
+	var order []domain.Target
 	for _, d := range s.Disablements {
+		r := rows[d.Target]
+		if r == nil {
+			r = &row{}
+			rows[d.Target] = r
+			order = append(order, d.Target)
+		}
+		r.certainty = max(r.certainty, d.Certainty)
+		r.reasons = append(r.reasons, d.Reason)
+	}
+	for _, t := range order {
+		r := rows[t]
 		mark := "!"
-		if d.Certainty == domain.Certainly {
+		if r.certainty == domain.Certainly {
 			mark = "⊘"
 		}
-		fmt.Fprintf(w, "  %s %-9s %-40s %s\n", mark, d.Target.Kind, d.Target.ID, d.Reason)
+		fmt.Fprintf(w, "  %s %-9s %-40s %s\n", mark, t.Kind, t.ID, strings.Join(r.reasons, "; "))
+	}
+	sure, maybe := 0, 0
+	byDetector := map[string]int{}
+	for _, c := range s.Changes {
+		if c.Certainty == domain.Certainly {
+			sure++
+		} else {
+			maybe++
+		}
+		byDetector[c.By]++
+	}
+	fmt.Fprintf(w, "\nCambios de mods a las fuentes: %d seguros · %d posibles\n", sure, maybe)
+	for _, k := range sortedKeys(byDetector) {
+		fmt.Fprintf(w, "  %-22s %d\n", k, byDetector[k])
 	}
 	fmt.Fprintln(w)
 }

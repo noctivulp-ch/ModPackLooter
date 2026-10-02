@@ -91,6 +91,12 @@ func Build(res *analysis.Result, opts Options) (Stats, error) {
 	for _, t := range m.Tables {
 		r.render("table", t.URL, "fuentes", t.Name, m, t)
 	}
+	r.renderLostCities(m)
+	r.renderFishing(m)
+	r.renderTrades(m)
+	if len(m.Changes) > 0 {
+		r.render("changes", "cambios/", "cambios", "Cambios de mods", m, m.Changes)
+	}
 	r.render("mods", "mods/", "mods", "Mods", m, m.Mods)
 	for _, md := range m.Mods {
 		r.render("mod", md.URL, "mods", md.Name, m, md)
@@ -212,6 +218,7 @@ func (r *renderer) writeAssets(m *Model) error {
 	for _, b := range m.Biomes {
 		idx = append(idx, searchEntry{"b", b.Name, b.ID.String(), b.URL + "index.html", b.Mod.Name})
 	}
+	idx = append(idx, lcSearch(m)...)
 	for _, md := range m.Mods {
 		idx = append(idx, searchEntry{"m", md.Name, md.ID.Namespace, md.URL + "index.html", ""})
 	}
@@ -332,6 +339,14 @@ var funcs = template.FuncMap{
 				return v[:n]
 			}
 		case []*Biome:
+			if len(v) > n {
+				return v[:n]
+			}
+		case []*Change:
+			if len(v) > n {
+				return v[:n]
+			}
+		case []*TradeRef:
 			if len(v) > n {
 				return v[:n]
 			}

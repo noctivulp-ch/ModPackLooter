@@ -3,6 +3,9 @@ package modpack
 import (
 	"os"
 	"path/filepath"
+
+	"github.com/EnierAragon/ModPackLooter/app/internal/nbt"
+	"github.com/EnierAragon/ModPackLooter/app/internal/world"
 	"strings"
 	"testing"
 
@@ -142,5 +145,35 @@ func TestVanillaTranslationsFromLauncherAssets(t *testing.T) {
 	}
 	if len(mp.Index.Lang("fr_fr", nil)) != 0 {
 		t.Error("no deben cargarse idiomas de otra familia")
+	}
+}
+
+func TestDedicatedServerLayout(t *testing.T) {
+	in := testkit.NewInstance(t)
+	in.Jar("mods/a.jar", testkit.Files{"META-INF/mods.toml": testkit.ModsToml("a", "A", "[1.20.1,1.21)")})
+	// server.jar is a bundler: the real server, with its data, is nested.
+	inner := testkit.ZipBytes(t, testkit.Files{"data/minecraft/loot_tables/chests/igloo_chest.json": `{"pools":[]}`})
+	in.Jar("server.jar", testkit.Files{"net/minecraft/bundler/Main.class": "x", "META-INF/versions/1.20.1/server-1.20.1.jar": string(inner)})
+	in.Dir("", testkit.Files{"server.properties": "motd=hola\nlevel-name=mundo\n"})
+	dir := filepath.Join(in.Root, "mundo")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "level.dat"), nbt.Encode(nbt.Compound{"Data": world.Sample()}), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	mp, err := Open(Options{Path: in.Root, Diagnostics: &domain.Diagnostics{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mp.Close()
+	if !mp.HasVanilla {
+		t.Error("debe cargar los datos del jar interno del server.jar")
+	}
+	if _, ok := mp.Index.Lookup(resources.TypeLootTable, domain.MustParseResourceID("minecraft:chests/igloo_chest")); !ok {
+		t.Error("falta la loot table vanilla del bundler")
+	}
+	if mp.World == nil || !mp.WorldAuto || mp.World.Name != "Prueba" {
+		t.Errorf("mundo del servidor = %+v auto=%v", mp.World, mp.WorldAuto)
 	}
 }

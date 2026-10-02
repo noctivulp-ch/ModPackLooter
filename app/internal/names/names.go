@@ -11,7 +11,8 @@ import (
 
 // Namer resolves display names.
 type Namer struct {
-	langs []map[string]string // preferred language first
+	langs []map[string]string   // preferred language first
+	byEnd []map[string][]string // per lang: last key segment -> keys, built on first Asset call
 }
 
 // New creates a namer from lang maps, most preferred first.
@@ -81,3 +82,93 @@ func Humanize(path string) string {
 	}
 	return strings.Join(words, " ")
 }
+
+// Asset names a mod asset that has no standard translation key, such as a
+// Lost Cities city style or building. The reader of the site is not assumed
+// to be technical, so every lang key that may name it is tried before the
+// readable id:
+//  1. explicit keys: "<kind>.<ns>.<path>", "<ns>.<kind>.<path>",
+//     "<ns>.<kind>s.<path>", "lostcities.<kind>.<path>";
+//  2. any key of the asset's namespace ending in ".<path>" that looks like a
+//     name ("title", "name"), e.g. the advancement titles some modpacks give
+//     each district ("deceasedcraft.advancement.title.retail_district");
+//  3. any other key of the namespace ending in ".<path>" that is not a
+//     description or tooltip.
+//
+// Languages are tried in the order of the chain (requested, its family,
+// en_us): any key in a preferred language wins over a better key in a
+// fallback one. Empty values count as missing.
+func (n *Namer) Asset(kind string, id domain.ResourceID) string {
+	path := strings.ReplaceAll(id.Path, "/", ".")
+	explicit := []string{
+		kind + "." + id.Namespace + "." + path, id.Namespace + "." + kind + "." + path,
+		id.Namespace + "." + kind + "s." + path, "lostcities." + kind + "." + path,
+	}
+	suffix := "." + path
+	prefix := id.Namespace + "."
+	if n.byEnd == nil {
+		for _, lang := range n.langs {
+			idx := map[string][]string{}
+			for k := range lang {
+				idx[k[strings.LastIndex(k, ".")+1:]] = append(idx[k[strings.LastIndex(k, ".")+1:]], k)
+			}
+			n.byEnd = append(n.byEnd, idx)
+		}
+	}
+	last := path[strings.LastIndex(path, ".")+1:]
+	for i, lang := range n.langs {
+		for _, k := range explicit {
+			if v := lang[k]; v != "" {
+				return v
+			}
+		}
+		var named, other string
+		for _, k := range n.byEnd[i][last] {
+			v := lang[k]
+			if v == "" || !strings.HasPrefix(k, prefix) || !strings.HasSuffix(k, suffix) {
+				continue
+			}
+			low := strings.ToLower(k)
+			if strings.Contains(low, "desc") || strings.Contains(low, "tooltip") || strings.Contains(low, "lore") {
+				continue
+			}
+			// Deterministic choice: the shortest key, then alphabetical.
+			better := func(cur string) bool { return cur == "" || len(k) < len(cur) || len(k) == len(cur) && k < cur }
+			if strings.Contains(low, "title") || strings.Contains(low, "name") {
+				if better(named) {
+					named = k
+				}
+			} else if better(other) {
+				other = k
+			}
+		}
+		if named != "" {
+			return lang[named]
+		}
+		if other != "" {
+			return lang[other]
+		}
+	}
+	// "citystyle_desert" reads better as "Desert" under "Estilos de ciudad".
+	base := id.Path[strings.LastIndex(id.Path, "/")+1:]
+	if rest, ok := strings.CutPrefix(base, kind+"_"); ok && rest != "" {
+		return Humanize(rest)
+	}
+	return Humanize(id.Path)
+}
+
+// BiomeTag names a biome tag ("minecraft:is_ocean" → "Ocean" unless a
+// lang file names it).
+func (n *Namer) BiomeTag(id domain.ResourceID) string {
+	if v, ok := n.lookup(key("tag.worldgen.biome", id), key("biome_tag", id)); ok {
+		return v
+	}
+	base := id.Path[strings.LastIndex(id.Path, "/")+1:]
+	if rest, ok := strings.CutPrefix(base, "is_"); ok && rest != "" {
+		return Humanize(rest)
+	}
+	return Humanize(id.Path)
+}
+
+// Text returns the translation of a lang key, following the language chain.
+func (n *Namer) Text(key string) (string, bool) { return n.lookup(key) }

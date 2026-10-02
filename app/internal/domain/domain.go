@@ -36,6 +36,9 @@ func MustParseResourceID(s string) ResourceID {
 
 func (id ResourceID) String() string { return id.Namespace + ":" + id.Path }
 
+// IsZero reports whether the id is empty.
+func (id ResourceID) IsZero() bool { return id.Namespace == "" && id.Path == "" }
+
 // Loader is the mod loader of a modpack.
 type Loader string
 

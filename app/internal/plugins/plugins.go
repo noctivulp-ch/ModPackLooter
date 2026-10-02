@@ -3,13 +3,18 @@
 package plugins
 
 import (
+	"github.com/EnierAragon/ModPackLooter/app/internal/analysis"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery"
+	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/changes"
+	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/customnpcs"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/disablers"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/generic"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/heuristics"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/lootr"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/lostcities"
+	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/starcatcher"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/templates"
+	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/tide"
 	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/vanilla"
 )
 
@@ -19,6 +24,12 @@ func Discoverers() *discovery.Registry[discovery.Discoverer] {
 		templates.Discoverer{},
 		vanilla.Discoverer1_20{},
 		lostcities.Discoverer{},
+		starcatcher.Discoverer{},
+		tide.Discoverer{},
+		vanilla.Fishing{},
+		vanilla.Trades1_20{},
+		vanilla.Trades1_21{},
+		customnpcs.Discoverer{},
 		heuristics.NameMatching{},
 		generic.ByPath{},
 	)
@@ -43,4 +54,25 @@ func Enrichers() *discovery.Registry[discovery.Enricher] {
 	return discovery.NewRegistry[discovery.Enricher](
 		lootr.Enricher1_20{},
 	)
+}
+
+// Changes returns the change-detector hook point: specific plugins first,
+// generic ones (any mod, script or config) last.
+func Changes() *discovery.Registry[discovery.ChangeDetector] {
+	return discovery.NewRegistry[discovery.ChangeDetector](
+		changes.TableOverrides{},
+		changes.GlobalLootModifiers{},
+		changes.LootJS{},
+		changes.KubeJSLootEvents{},
+		changes.TradeScripts{},
+		changes.CraftTweaker{},
+		changes.ScriptMentions{},
+		changes.ConfigKeys{},
+		changes.CodeHooks{},
+	)
+}
+
+// Analyzer returns the analysis use case with every hook point filled.
+func Analyzer() analysis.Analyzer {
+	return analysis.Analyzer{Discoverers: Discoverers(), Enrichers: Enrichers(), Disablers: Disablers(), Changes: Changes()}
 }
