@@ -146,6 +146,9 @@ type Model struct {
 	// Disabled lists the disabled targets for the about page.
 	Disabled  []DisabledRow
 	WorldName string
+	// Sections are the tabs of mods present in the pack (Lost Cities…).
+	Sections   []Section
+	LostCities *LostCities
 }
 
 // DisabledRow is a disabled structure, biome or mob, for the about page.
@@ -481,6 +484,7 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		}
 		return a.ID.String() < b.ID.String()
 	})
+	buildLostCities(res, m, namer)
 	return m
 }
 

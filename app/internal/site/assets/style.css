@@ -346,6 +346,13 @@ details.evidence ul { margin: 4px 0; padding-left: 1.25em; }
   main { padding: var(--labio); }
 }
 
+/* Lost Cities: reglas de biomas y grupos de biomas desplegables. */
+.lc-biomes { display: grid; gap: 6px; }
+.lc-biomes > div { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+details.tag { display: inline-block; }
+details.tag summary { cursor: pointer; }
+details.tag[open] .chips { margin-top: 6px; }
+
 /* Móvil: una columna; las tablas se desplazan dentro de su pozo. */
 @media (max-width: 599px) {
   :root { --labio: 16px; }
@@ -360,6 +367,7 @@ details.evidence ul { margin: 4px 0; padding-left: 1.25em; }
   .best .chance { min-width: 64px; }
   .best .meter { display: none; }
   .legend li { grid-template-columns: 1fr; gap: 0; }
+  .hide-sm { display: none; }
 }
 
 @media (prefers-reduced-motion: no-preference) {

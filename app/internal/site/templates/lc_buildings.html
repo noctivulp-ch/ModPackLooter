@@ -1,0 +1,28 @@
+{{define "content"}}
+{{$lc := .Data}}
+{{template "lcCrumbs" (dict "Root" .Root "Sub" "" "SubURL" "")}}
+<div class="page-head">
+  <h1>Edificios</h1>
+  <p class="lede">Todos los edificios que pueden aparecer en las ciudades o sueltos, con sus contenedores de loot.</p>
+</div>
+<section class="pozo">
+  <div class="filters">
+    <label for="f-buildings" class="label">Filtrar</label>
+    <input id="f-buildings" type="search" class="ctl filter" data-filter="t-buildings" placeholder="Edificio o estilo" autocomplete="off">
+  </div>
+  <div class="scroll">
+  <table class="data" id="t-buildings">
+    <thead><tr><th scope="col">Edificio</th><th scope="col" class="num">Contenedores</th><th scope="col" class="num">Tablas</th><th scope="col" class="hide-sm">Estilos de ciudad</th></tr></thead>
+    <tbody>
+    {{range $lc.Buildings}}<tr>
+      <td><a href="{{rel $.Root .URL}}">{{.Name}}</a>{{if .Multi}} <span class="meta">(múltiple)</span>{{end}}</td>
+      <td class="num">{{if .Containers}}{{.Containers}}{{else}}—{{end}}</td>
+      <td class="num">{{if .Tables}}{{len .Tables}}{{else}}—{{end}}</td>
+      <td class="hide-sm">{{range $i, $s := .Styles}}{{if $i}}, {{end}}{{$s.Name}}{{else}}<span class="meta">suelto o parte de otro</span>{{end}}</td>
+    </tr>{{end}}
+    </tbody>
+  </table>
+  </div>
+  <p class="empty filter-empty" hidden>Ningún edificio coincide con el filtro.</p>
+</section>
+{{end}}

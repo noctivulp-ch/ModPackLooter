@@ -1,0 +1,50 @@
+{{define "content"}}
+{{$b := .Data}}
+{{template "lcCrumbs" (dict "Root" .Root "Sub" "Edificios" "SubURL" "lostcities/edificios/")}}
+<div class="page-head">
+  <h1>{{$b.Name}}</h1>
+  <p class="id">{{$b.ID}}</p>
+</div>
+<div class="grid">
+  <section class="pozo">
+    <h2>Dónde aparece</h2>
+    {{if $b.Styles}}<p class="meta">En ciudades de estilo:</p><ul class="chips">{{range $b.Styles}}<li><a href="{{rel $.Root .URL}}">{{.Name}}</a></li>{{end}}</ul>
+    {{else}}<p class="meta">Fuera de las ciudades o como parte de un edificio múltiple.</p>{{end}}
+  </section>
+  <section class="pozo">
+    <h2>Resumen</h2>
+    <ul class="links">
+      <li>{{if $b.Containers}}{{$b.Containers}} {{if eq $b.Containers 1}}contenedor{{else}}contenedores{{end}} con loot{{else}}Sin contenedores con loot{{end}}</li>
+      {{if $b.Empty}}<li class="meta">{{$b.Empty}} {{if eq $b.Empty 1}}parte sin contenedores{{else}}partes sin contenedores{{end}}</li>{{end}}
+    </ul>
+    {{if $b.Tables}}<ul class="chips">{{range $b.Tables}}<li><a href="{{rel $.Root .URL}}" title="{{.ID}}">{{.Name}}</a></li>{{end}}</ul>{{end}}
+  </section>
+</div>
+{{if $b.Children}}
+<section class="pozo">
+  <h2>Edificios que lo forman</h2>
+  <ul class="links">{{range $b.Children}}<li><a href="{{rel $.Root .URL}}">{{.Name}}</a> <span class="meta">{{if .Containers}}{{.Containers}} {{if eq .Containers 1}}contenedor{{else}}contenedores{{end}}{{else}}sin loot{{end}}</span></li>{{end}}</ul>
+</section>
+{{end}}
+{{range $b.Parts}}
+<section class="pozo">
+  <header class="pozo-head"><h3>{{.Name}}</h3><p class="id">{{.ID}}</p></header>
+  <div class="scroll">
+  <table class="data">
+    <thead><tr><th scope="col">Contenedor</th><th scope="col" class="num">Cantidad</th><th scope="col">Tabla de loot</th><th scope="col" class="w-chance">Probabilidad por contenedor</th><th scope="col">Solo si…</th></tr></thead>
+    {{range .Containers}}
+    <tbody>
+      {{$c := .}}
+      {{range $i, $ch := .Choices}}<tr>
+        {{if eq $i 0}}<th scope="rowgroup" rowspan="{{len $c.Choices}}">{{$c.Block}}</th><td class="num" rowspan="{{len $c.Choices}}">{{$c.Count}}</td>{{end}}
+        <td>{{if $ch.Table}}<a href="{{rel $.Root $ch.Table.URL}}">{{$ch.Name}}</a>{{else}}{{$ch.Name}}{{end}}</td>
+        <td>{{template "chance" $ch.Share}}</td>
+        <td>{{if $ch.Detail}}{{$ch.Detail}}{{else}}<span class="meta">—</span>{{end}}</td>
+      </tr>{{else}}<tr><th scope="row">{{$c.Block}}</th><td class="num">{{$c.Count}}</td><td colspan="3" class="empty">Ninguna tabla aplica a esta parte.</td></tr>{{end}}
+    </tbody>
+    {{end}}
+  </table>
+  </div>
+</section>
+{{end}}
+{{end}}

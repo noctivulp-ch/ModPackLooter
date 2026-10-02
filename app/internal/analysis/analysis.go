@@ -49,6 +49,8 @@ type Result struct {
 	Statuses     map[domain.Target]domain.Status
 	Diagnostics  *domain.Diagnostics
 	Resources    *Resources
+	// Extras holds data attached by discoverers (see discovery.Claims.Attach).
+	Extras map[string]any
 }
 
 // Close releases the modpack files.
@@ -123,7 +125,7 @@ func (a Analyzer) Run(ctx context.Context, opts modpack.Options, progress Progre
 	result := &Result{
 		Modpack: mp, Sources: claims.Sources(), Owners: claims.Owners(),
 		Structures: world.Structures(), Tables: tables, Diagnostics: diags, Resources: res,
-		Disablements: dis.Items(),
+		Disablements: dis.Items(), Extras: claims.Extras(),
 	}
 	result.Statuses = statuses(dis, result.Structures, result.Owners)
 	for _, d := range disPlan.Steps {

@@ -1,0 +1,61 @@
+{{define "content"}}
+{{$lc := .Data}}
+<div class="page-head">
+  <h1>Lost Cities</h1>
+  <p class="lede">Las ciudades se arman por capas: cada mundo usa un <strong>estilo de mundo</strong>, que elige un <strong>estilo de ciudad</strong> según el bioma; cada estilo de ciudad tiene sus <strong>edificios</strong>, y cada edificio, pisos con <strong>contenedores</strong> que reciben una tabla de loot al azar.</p>
+</div>
+{{template "statusBox" $lc.Status}}
+<div class="grid">
+  <section class="pozo">
+    <h2>Dónde hay ciudades</h2>
+    {{if $lc.Profiles}}
+    <ul class="links">{{range $lc.Profiles}}<li><strong>{{.Dimension}}</strong>: perfil {{.Profile}}{{if .World}} · estilo de mundo {{.World.Name}}{{end}} <span class="meta">({{.Origin}})</span></li>{{end}}</ul>
+    {{else}}<p class="empty">No se sabe qué perfil usa el mundo: se muestran todos los estilos de mundo del modpack. Indica un mundo modelo con <code>--world</code> para precisarlo.</p>{{end}}
+  </section>
+  <section class="pozo">
+    <h2>Explorar</h2>
+    <ul class="links">
+      <li><a href="{{rel .Root "lostcities/estilos/"}}">Estilos de ciudad</a> <span class="count">{{len $lc.Styles}}</span></li>
+      <li><a href="{{rel .Root "lostcities/edificios/"}}">Edificios</a> <span class="count">{{len $lc.Buildings}}</span></li>
+    </ul>
+  </section>
+</div>
+{{range $lc.Worlds}}
+<h2 class="section-title">Estilo de mundo: {{.Name}}</h2>
+<section class="pozo">
+  <h3>Estilos de ciudad por bioma</h3>
+  <p class="meta">En cada zona se elige al azar uno de los estilos que admiten su bioma; el peso indica cuánto más probable es frente a los demás.</p>
+  <div class="scroll">
+  <table class="data">
+    <thead><tr><th scope="col">Estilo de ciudad</th><th scope="col" class="num">Peso</th><th scope="col">Biomas</th><th scope="col" class="num">Edificios con loot</th></tr></thead>
+    <tbody>
+    {{range .Rules}}<tr>
+      <td><a href="{{rel $.Root .Style.URL}}">{{.Style.Name}}</a></td>
+      <td class="num">{{.Factor}}</td>
+      <td>{{template "lcBiomes" (dict "Root" $.Root "B" .Biomes)}}</td>
+      <td class="num">{{.Style.WithLoot}}</td>
+    </tr>{{end}}
+    </tbody>
+  </table>
+  </div>
+</section>
+{{if .Scattered}}
+<section class="pozo">
+  <h3>Edificios sueltos (fuera de las ciudades)</h3>
+  <div class="scroll">
+  <table class="data">
+    <thead><tr><th scope="col">Grupo</th><th scope="col" class="num">Peso</th><th scope="col">Biomas</th><th scope="col">Edificios</th></tr></thead>
+    <tbody>
+    {{range .Scattered}}<tr>
+      <td>{{.Name}}</td>
+      <td class="num">{{.Weight}}</td>
+      <td>{{template "lcBiomes" (dict "Root" $.Root "B" .Biomes)}}</td>
+      <td><ul class="chips">{{range .Buildings}}<li><a href="{{rel $.Root .URL}}">{{.Name}}</a></li>{{end}}</ul></td>
+    </tr>{{end}}
+    </tbody>
+  </table>
+  </div>
+</section>
+{{end}}
+{{end}}
+{{end}}
