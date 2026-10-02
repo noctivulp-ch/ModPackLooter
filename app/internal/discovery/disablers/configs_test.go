@@ -20,8 +20,8 @@ func TestGoverningKey(t *testing.T) {
 	}
 	for _, c := range cases {
 		lines := strings.Split(c.text, "\n")
-		if got := governingKey(lines, c.line); got != c.want {
-			t.Errorf("governingKey(%q, %d) = %q, se esperaba %q", c.text, c.line, got, c.want)
+		if got := GoverningKey(lines, c.line); got != c.want {
+			t.Errorf("GoverningKey(%q, %d) = %q, se esperaba %q", c.text, c.line, got, c.want)
 		}
 	}
 }

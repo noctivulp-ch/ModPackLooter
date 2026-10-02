@@ -5,6 +5,12 @@
   <h1>{{$t.Name}}</h1>
   <p class="id">{{$t.ID}} · {{kind $t.Kind}}{{if $t.Approx}} · cálculo aproximado{{end}}</p>
 </div>
+{{if $t.Changes}}
+<section class="pozo">
+  <h2>Cambios de mods</h2>
+  <ul class="links">{{range $t.Changes}}<li>{{template "change" (dict "Root" $.Root "C" .)}}</li>{{end}}</ul>
+</section>
+{{end}}
 <section class="pozo">
   <h2>Qué contiene</h2>
   {{template "drops" (dict "Root" .Root "Drops" $t.Drops)}}

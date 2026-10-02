@@ -25,7 +25,7 @@ func chestTemplate(table string) string {
 }
 
 func analyzer() analysis.Analyzer {
-	return analysis.Analyzer{Discoverers: plugins.Discoverers(), Enrichers: plugins.Enrichers(), Disablers: plugins.Disablers()}
+	return plugins.Analyzer()
 }
 
 func find(sources []domain.LootSource, table, owner string) (domain.LootSource, bool) {

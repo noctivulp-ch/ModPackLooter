@@ -1,0 +1,25 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>Cambios de mods</h1>
+  <p class="lede">Mods, datapacks, scripts y configuraciones que cambian el loot, los drops, los tradeos o la pesca. <strong>Seguro</strong>: la app leyó el cambio en datos o en un script que entiende. <strong>Posible</strong>: hay un indicio (una opción de config, código que escucha esos eventos), pero no se sabe el efecto exacto.</p>
+</div>
+{{range .Data}}
+<h2 class="section-title">{{.Title}} <span class="count">{{.Sure}} seguros · {{.Maybe}} posibles</span></h2>
+{{if .Note}}<p class="meta">{{.Note}}</p>{{end}}
+<section class="pozo">
+  <div class="scroll">
+  <table class="data stack-sm">
+    <thead><tr><th scope="col">Afecta a</th><th scope="col">Cambio</th><th scope="col">Origen</th></tr></thead>
+    <tbody>
+    {{range .Groups}}<tr{{if .First.Disables}} class="off"{{end}}>
+      <td>{{if eq (len .Targets) 1}}{{with .First}}{{if .Table}}<a href="{{rel $.Root .Table.URL}}">{{.Target}}</a>{{else}}{{.Target}}{{end}}{{end}}
+        {{else}}<details><summary>{{len .Targets}} tablas</summary><ul class="plain">{{range limit 200 .Targets}}<li>{{if .Table}}<a href="{{rel $.Root .Table.URL}}">{{.Target}}</a>{{else}}{{.Target}}{{end}}</li>{{end}}</ul></details>{{end}}</td>
+      <td>{{template "change" (dict "Root" $.Root "C" .First)}}</td>
+      <td class="id">{{.First.Origin}}</td>
+    </tr>{{end}}
+    </tbody>
+  </table>
+  </div>
+</section>
+{{end}}
+{{end}}

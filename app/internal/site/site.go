@@ -93,6 +93,9 @@ func Build(res *analysis.Result, opts Options) (Stats, error) {
 	}
 	r.renderLostCities(m)
 	r.renderFishing(m)
+	if len(m.Changes) > 0 {
+		r.render("changes", "cambios/", "cambios", "Cambios de mods", m, m.Changes)
+	}
 	r.render("mods", "mods/", "mods", "Mods", m, m.Mods)
 	for _, md := range m.Mods {
 		r.render("mod", md.URL, "mods", md.Name, m, md)
@@ -335,6 +338,10 @@ var funcs = template.FuncMap{
 				return v[:n]
 			}
 		case []*Biome:
+			if len(v) > n {
+				return v[:n]
+			}
+		case []*Change:
 			if len(v) > n {
 				return v[:n]
 			}

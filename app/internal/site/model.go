@@ -36,6 +36,8 @@ type Item struct {
 	Unobtainable bool
 	// Fishing lists the fishing systems that can give the item.
 	Fishing []*FishEntry
+	// Changes are mods adding or removing the item somewhere.
+	Changes []*Change
 }
 
 // ItemSource is one way to get an item.
@@ -82,11 +84,12 @@ type TableUse struct {
 // Table is a loot table page.
 type Table struct {
 	Ref
-	Mod    *Mod
-	Kind   domain.SourceKind
-	Drops  []Drop
-	Uses   []*TableUse
-	Approx bool
+	Mod     *Mod
+	Kind    domain.SourceKind
+	Drops   []Drop
+	Uses    []*TableUse
+	Approx  bool
+	Changes []*Change // modifications by mods, scripts or configs
 }
 
 // Drop is a row of a loot table.
@@ -152,6 +155,7 @@ type Model struct {
 	Sections   []Section
 	LostCities *LostCities
 	Fishing    *Fishing
+	Changes    []*ChangeSection
 }
 
 // DisabledRow is a disabled structure, biome or mob, for the about page.
@@ -531,7 +535,7 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		return a.ID.String() < b.ID.String()
 	})
 	buildLostCities(res, m, namer)
-	buildFishing(res, m, namer, func(id domain.ResourceID) *Item {
+	ensureItem := func(id domain.ResourceID) *Item {
 		// Fished items may have no loot source: add them to the lists.
 		if it, ok := items[id]; ok && (len(it.Sources) > 0 || len(it.Fishing) > 0) {
 			return it
@@ -548,7 +552,9 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 			m.Mods = append(m.Mods, md)
 		}
 		return it
-	})
+	}
+	buildFishing(res, m, namer, ensureItem)
+	buildChanges(res, m, namer, ensureItem)
 	sortRefs(m.Items, func(i *Item) Ref { return i.Ref })
 	sortRefs(m.Mods, func(md *Mod) Ref { return md.Ref })
 	for _, md := range m.Mods {

@@ -98,3 +98,8 @@
   </div>
 </section>
 {{end}}{{end}}
+
+{{define "change"}}{{$r := .Root}}{{with .C}}<span class="dis {{if .Sure}}dis-cert{{else}}dis-maybe{{end}}" title="{{if .Sure}}Leído de datos o de un script que la app entiende{{else}}Indicio: la app no sabe el efecto exacto{{end}}">{{if .Sure}}Seguro{{else}}Posible{{end}}</span>
+<strong>{{.Effect}}</strong>{{if .Items}} {{range $i, $it := .Items}}{{if $i}}, {{end}}<a href="{{rel $r $it.URL}}">{{$it.Name}}</a>{{end}}{{end}}{{if .With}} por {{range $i, $it := .With}}{{if $i}}, {{end}}<a href="{{rel $r $it.URL}}">{{$it.Name}}</a>{{end}}{{end}}{{if .Inject}} el loot de <a href="{{rel $r .Inject.URL}}">{{.Inject.Name}}</a>{{end}}{{if .Chance}} <span class="meta">({{pct .Chance}})</span>{{end}}
+<span class="meta">· {{.Mod}}</span>
+{{if .Detail}}<br><span class="meta">{{.Detail}}</span>{{end}}{{end}}{{end}}

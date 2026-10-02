@@ -36,8 +36,9 @@ Objetivo: un sitio útil para un modpack real de una sola versión.
   (`gitlab.com/nf1190525/deceasedcraft-revulpe-dev`).
 - ✅ **Pestañas por mod** (solo si el mod está): Lost Cities por capas (doc 15).
   ✅ Pesca: Starcatcher, Tide 2 y vanilla (doc 16).
-  Siguientes: tradeos (aldeanos, piglins, NPC) y bloqueos de objetos o
-  encantamientos por mods (p. ej. Reparación en la pesca).
+  ✅ Cambios de mods a las fuentes, genérico + específicos (doc 17).
+  Siguientes: tradeos (aldeanos, piglins, NPC); específicos de formato para
+  configs frecuentes (Quark, Vinery…).
 - Interfaz del sitio traducible (hoy solo los nombres siguen el idioma; la interfaz está
   en español).
 - Comandos de consulta (`where`, `structure`, `biome`) y `export`.
