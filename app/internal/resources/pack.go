@@ -172,3 +172,34 @@ func (p *DirPack) Open(path string) (io.ReadCloser, error) {
 	}
 	return os.Open(filepath.Join(p.root, filepath.FromSlash(path)))
 }
+
+// MappedPack exposes individual files from anywhere on disk under virtual
+// pack paths (used for the launcher's hashed asset objects).
+type MappedPack struct {
+	name  string
+	kind  PackKind
+	files map[string]string // pack path -> real path
+	order []string
+}
+
+// NewMappedPack creates a pack from a map of pack paths to real files.
+func NewMappedPack(name string, kind PackKind, files map[string]string) *MappedPack {
+	p := &MappedPack{name: name, kind: kind, files: files}
+	for k := range files {
+		p.order = append(p.order, k)
+	}
+	sort.Strings(p.order)
+	return p
+}
+
+func (p *MappedPack) Name() string    { return p.name }
+func (p *MappedPack) Kind() PackKind  { return p.kind }
+func (p *MappedPack) Files() []string { return p.order }
+
+func (p *MappedPack) Open(path string) (io.ReadCloser, error) {
+	real, ok := p.files[path]
+	if !ok {
+		return nil, fmt.Errorf("%s: %w", path, fs.ErrNotExist)
+	}
+	return os.Open(real)
+}

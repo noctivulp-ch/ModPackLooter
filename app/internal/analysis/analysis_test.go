@@ -71,7 +71,8 @@ func TestAnalyzeSyntheticModpack(t *testing.T) {
 		"META-INF/mods.toml":                              testkit.ModsToml("lostcities", "Lost Cities", "[1.20.1,1.21)"),
 		"data/lostcities/lostcities/palettes/common.json": `{"palette":[{"char":"C","block":"minecraft:chest[facing=north]","loot":"chestloot"}]}`,
 		"data/lostcities/lostcities/conditions/chestloot.json": `{"values":[
-			{"factor":3,"value":"lostcities:chests/lostcitychest","range":"4,100"},
+			{"factor":2,"value":"lostcities:chests/lostcitychest","range":"4,100"},
+			{"factor":1,"value":"lostcities:chests/lostcitychest","range":"-100,-3"},
 			{"factor":1,"value":"minecraft:chests/simple_dungeon"}]}`,
 		"data/lostcities/loot_tables/chests/lostcitychest.json": chestTable,
 	})
@@ -104,7 +105,7 @@ func TestAnalyzeSyntheticModpack(t *testing.T) {
 	}
 
 	city, ok := find(res.Sources, "lostcities:chests/lostcitychest", "lostcities:city")
-	if !ok || city.Share != 0.75 || !strings.Contains(city.Evidence[0].Detail, "pisos 4 a 100") {
+	if !ok || city.Share != 0.75 || len(city.Evidence) != 2 || !strings.Contains(city.Evidence[0].Detail, "pisos 4 a 100") {
 		t.Errorf("Lost Cities = %+v", city)
 	}
 	if !hasNote(city, "lootr.blacklisted") {

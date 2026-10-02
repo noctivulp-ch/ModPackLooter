@@ -87,20 +87,42 @@ func (Discoverer) Discover(_ context.Context, in discovery.Input, out *discovery
 		for _, v := range raw.Values {
 			total += v.Factor
 		}
+		// A table may appear in several values (e.g. different floors): its
+		// share is the sum of their weights.
+		type agg struct {
+			factor  float64
+			details []string
+		}
+		byTable := map[domain.ResourceID]*agg{}
+		var order []domain.ResourceID
 		for _, v := range raw.Values {
 			table, err := domain.ParseResourceID(v.Value)
 			if err != nil || total <= 0 {
 				continue
 			}
-			out.Add(domain.LootSource{
+			a := byTable[table]
+			if a == nil {
+				a = &agg{}
+				byTable[table] = a
+				order = append(order, table)
+			}
+			a.factor += v.Factor
+			a.details = append(a.details, describe(cond, v, total))
+		}
+		for _, table := range order {
+			a := byTable[table]
+			src := domain.LootSource{
 				LootTable:  table,
 				Kind:       discovery.KindForContainer(used[cond]),
 				Owner:      Owner,
 				Confidence: domain.ConfidenceExact,
 				Container:  used[cond],
-				Share:      v.Factor / total,
-				Evidence:   []domain.Evidence{{DiscoveredBy: ID, Detail: describe(cond, v, total)}},
-			})
+				Share:      a.factor / total,
+			}
+			for _, d := range a.details {
+				src.Evidence = append(src.Evidence, domain.Evidence{DiscoveredBy: ID, Detail: d})
+			}
+			out.Add(src)
 		}
 	}
 	return nil

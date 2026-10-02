@@ -1,0 +1,18 @@
+{{define "content"}}
+<div class="page-head">
+  <h1>Mods</h1>
+  <p class="lede">Mods que aportan objetos, estructuras o tablas de loot.</p>
+</div>
+<section class="pozo">
+  <div class="scroll">
+  <table class="data">
+    <thead><tr><th scope="col">Mod</th><th scope="col" class="num">Objetos</th><th scope="col" class="num">Estructuras</th><th scope="col" class="num">Tablas</th></tr></thead>
+    <tbody>
+    {{range .Data}}
+      <tr><td><a href="{{rel $.Root .URL}}">{{.Name}}</a> <span class="id">{{.ID.Namespace}}{{if .Version}} · {{.Version}}{{end}}</span></td><td class="num">{{len .Items}}</td><td class="num">{{len .Structures}}</td><td class="num">{{len .Tables}}</td></tr>
+    {{end}}
+    </tbody>
+  </table>
+  </div>
+</section>
+{{end}}
