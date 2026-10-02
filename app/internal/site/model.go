@@ -34,6 +34,8 @@ type Item struct {
 	Biomes  []*Biome // biomes of the owners that can give the item
 	// Unobtainable is true when every source is certainly disabled.
 	Unobtainable bool
+	// Fishing lists the fishing systems that can give the item.
+	Fishing []*FishEntry
 }
 
 // ItemSource is one way to get an item.
@@ -149,6 +151,7 @@ type Model struct {
 	// Sections are the tabs of mods present in the pack (Lost Cities…).
 	Sections   []Section
 	LostCities *LostCities
+	Fishing    *Fishing
 }
 
 // DisabledRow is a disabled structure, biome or mob, for the about page.
@@ -485,6 +488,29 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		return a.ID.String() < b.ID.String()
 	})
 	buildLostCities(res, m, namer)
+	buildFishing(res, m, namer, func(id domain.ResourceID) *Item {
+		// Fished items may have no loot source: add them to the lists.
+		if it, ok := items[id]; ok && (len(it.Sources) > 0 || len(it.Fishing) > 0) {
+			return it
+		}
+		it := itemOf(id)
+		m.Items = append(m.Items, it)
+		md := it.Mod
+		md.Items = append(md.Items, it)
+		listed := false
+		for _, x := range m.Mods {
+			listed = listed || x == md
+		}
+		if !listed {
+			m.Mods = append(m.Mods, md)
+		}
+		return it
+	})
+	sortRefs(m.Items, func(i *Item) Ref { return i.Ref })
+	sortRefs(m.Mods, func(md *Mod) Ref { return md.Ref })
+	for _, md := range m.Mods {
+		sortRefs(md.Items, func(i *Item) Ref { return i.Ref })
+	}
 	return m
 }
 

@@ -92,6 +92,7 @@ func Build(res *analysis.Result, opts Options) (Stats, error) {
 		r.render("table", t.URL, "fuentes", t.Name, m, t)
 	}
 	r.renderLostCities(m)
+	r.renderFishing(m)
 	r.render("mods", "mods/", "mods", "Mods", m, m.Mods)
 	for _, md := range m.Mods {
 		r.render("mod", md.URL, "mods", md.Name, m, md)

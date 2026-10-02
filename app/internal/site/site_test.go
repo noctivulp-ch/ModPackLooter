@@ -205,3 +205,105 @@ func TestLostCitiesTab(t *testing.T) {
 		t.Error("los edificios deben estar en la búsqueda")
 	}
 }
+
+func TestFishingTab(t *testing.T) {
+	in := testkit.NewInstance(t)
+	in.Jar("mods/starcatcher.jar", testkit.Files{
+		"META-INF/mods.toml": testkit.ModsToml("starcatcher", "Starcatcher", "[1.20.1,1.21)"),
+		"data/minecraft/starcatcher/fish/nether_star.json": `{"base_chance":0,"rarity":"legendary",
+			"catch_info":{"item":"minecraft:nether_star","entity":"minecraft:wither","always_spawn_entity":true},
+			"restrictions":[{"type":"starcatcher:bait","baits":{"minecraft:wither_skeleton_skull":200}}]}`,
+		"data/starcatcher/starcatcher/fish/trout.json": `{"base_chance":30,"rarity":"common","catch_info":{"item":"starcatcher:trout"},
+			"restrictions":[{"type":"starcatcher:biome","biomes":["minecraft:river"],"biomes_tags":[],"biomes_blacklist":[],"biomes_blacklist_tags":[]},
+			{"type":"starcatcher:fluid","fluids":["minecraft:water"]},
+			{"type":"starcatcher:daytime_restriction","ranges":[{"first":13000,"second":23000}]}]}`,
+		"data/starcatcher/starcatcher/fish/missing_mod.json": `{"base_chance":10,"catch_info":{"item":"othermod:fish"},"restrictions":[],
+			"forge:conditions":[{"type":"forge:mod_loaded","modid":"othermod"}]}`,
+		"data/minecraft/worldgen/biome/river.json":             `{"temperature":0.5}`,
+		"data/minecraft/worldgen/biome/desert.json":            `{"temperature":2.0}`,
+		"data/minecraft/tags/worldgen/biome/is_overworld.json": `{"values":["minecraft:river","minecraft:desert"]}`,
+		"assets/starcatcher/lang/es_es.json":                   `{"item.starcatcher.trout":"Trucha"}`,
+	})
+	in.Jar("mods/tide.jar", testkit.Files{
+		"META-INF/mods.toml": testkit.ModsToml("tide", "Tide", "[1.20.1,1.21)"),
+		"data/tide/fishing/fish/freshwater/carp.json": `{"fish":"tide:carp","selection_weight":20,
+			"conditions":[{"type":"tide:dimension","dimensions":["minecraft:overworld"]},{"type":"tide:fluid","fluid":"water"}],
+			"modifiers":[{"type":"tide:temperature","preferred_temperature":0.5,"temperature_tolerance":1.0}]}`,
+		"data/tide/fishing/fish/freshwater/perch.json": `{"fish":"tide:perch","selection_weight":20,
+			"conditions":[{"type":"tide:fluid","fluid":"water"}]}`,
+		"data/tide/fishing/fish/freshwater/compat.json":    `{"fish":"other:fish","associated_mods":["othermod"],"selection_weight":20}`,
+		"data/tide/fishing/loot/junk.json":                 `{"loot_table":"tide:gameplay/fishing/junk","weight":10,"conditions":[{"type":"tide:above","y":40}]}`,
+		"data/tide/loot_tables/gameplay/fishing/junk.json": `{"type":"minecraft:fishing","pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:stick"}]}]}`,
+	})
+	in.Jar("mods/vanilla-data.jar", testkit.Files{
+		"META-INF/mods.toml": testkit.ModsToml("vanilladata", "Vanilla data", "[1.20.1,1.21)"),
+		"data/minecraft/loot_tables/gameplay/fishing.json": `{"type":"minecraft:fishing","pools":[{"rolls":1,"entries":[
+			{"type":"minecraft:loot_table","name":"minecraft:gameplay/fishing/junk","weight":10,"quality":-2},
+			{"type":"minecraft:loot_table","name":"minecraft:gameplay/fishing/treasure","weight":5,"quality":2,
+			 "conditions":[{"condition":"minecraft:entity_properties","entity":"this","predicate":{"type_specific":{"type":"fishing_hook","in_open_water":true}}}]},
+			{"type":"minecraft:loot_table","name":"minecraft:gameplay/fishing/fish","weight":85,"quality":-1}]}]}`,
+	})
+	res, err := analysis.Analyzer{Discoverers: plugins.Discoverers(), Enrichers: plugins.Enrichers(), Disablers: plugins.Disablers()}.
+		Run(context.Background(), modpack.Options{Path: in.Root}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Close()
+	out := filepath.Join(t.TempDir(), "site")
+	if _, err := site.Build(res, site.Options{OutDir: out}); err != nil {
+		t.Fatal(err)
+	}
+	read := func(rel string) string {
+		data, err := os.ReadFile(filepath.Join(out, filepath.FromSlash(rel)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(data)
+	}
+	if !strings.Contains(read("index.html"), `href="pesca/index.html"`) {
+		t.Error("falta la pestaña Pesca")
+	}
+	star := read("objetos/minecraft/nether_star/index.html")
+	for _, want := range []string{"Se pesca", "Starcatcher", "solo con cebo:", "Wither Skeleton Skull", "aparece Wither al pescarlo", "en cualquier bioma"} {
+		if !strings.Contains(star, want) {
+			t.Errorf("la Estrella del Nether no contiene %q", want)
+		}
+	}
+	river := read("pesca/starcatcher/minecraft/river/index.html")
+	for _, want := range []string{"Trucha", "100 %", "solo de 19:00 a 05:00", "Con cebo", "con Wither Skeleton Skull"} {
+		if !strings.Contains(river, want) {
+			t.Errorf("Starcatcher en el río no contiene %q", want)
+		}
+	}
+	if strings.Contains(read("pesca/starcatcher/index.html"), "othermod") || fileExists(filepath.Join(out, "objetos/othermod")) {
+		t.Error("los peces de mods ausentes no deben aparecer")
+	}
+	if fileExists(filepath.Join(out, "pesca/starcatcher/minecraft/desert/index.html")) && strings.Contains(read("pesca/starcatcher/minecraft/desert/index.html"), "Trucha") {
+		t.Error("la trucha solo vive en el río")
+	}
+	// Tide: carp prefers 0.5 °, so in the desert (2.0) it loses all weight.
+	tideRiver := read("pesca/tide/minecraft/river/index.html")
+	tideDesert := read("pesca/tide/minecraft/desert/index.html")
+	if !strings.Contains(tideRiver, "Carp") || !strings.Contains(tideRiver, "50 %") {
+		t.Errorf("Tide en el río debería repartir carpa y perca al 50 %%")
+	}
+	if strings.Contains(tideDesert, "Carp") || !strings.Contains(tideDesert, "100 %") {
+		t.Errorf("Tide en el desierto: la carpa no debería salir")
+	}
+	if !strings.Contains(tideRiver, "por encima de Y=40") || !strings.Contains(tideRiver, "peso 10") {
+		t.Error("falta el botín de Tide con su condición")
+	}
+	vanilla := read("pesca/minecraft/index.html")
+	for _, want := range []string{"En aguas abiertas", "Fuera de aguas abiertas", "85 %", "89 %", "Tide reemplaza la caña vanilla"} {
+		if !strings.Contains(vanilla, want) {
+			t.Errorf("la pesca vanilla no contiene %q", want)
+		}
+	}
+}
+
+func TestNoFishingTabWithoutFishing(t *testing.T) {
+	out := buildSite(t)
+	if fileExists(filepath.Join(out, "pesca")) {
+		t.Error("sin datos de pesca no debe haber pestaña")
+	}
+}
