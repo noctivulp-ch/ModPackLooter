@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
 )
 
 // Entry is one file of one pack.

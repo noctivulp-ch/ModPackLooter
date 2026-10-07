@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
-	"github.com/EnierAragon/ModPackLooter/app/internal/names"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/names"
 )
 
 // Way is one method of getting an item (structures, mobs, fishing…), for

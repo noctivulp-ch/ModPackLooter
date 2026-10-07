@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
-	"github.com/EnierAragon/ModPackLooter/app/internal/resources"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/resources"
 )
 
 // The vanilla jar only ships en_us. Other languages live in the launcher's

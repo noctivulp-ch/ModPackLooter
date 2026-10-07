@@ -1,9 +1,9 @@
 package site
 
 import (
-	"github.com/EnierAragon/ModPackLooter/app/internal/analysis"
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
-	"github.com/EnierAragon/ModPackLooter/app/internal/resources"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/analysis"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/resources"
 	"math"
 	"strconv"
 	"strings"

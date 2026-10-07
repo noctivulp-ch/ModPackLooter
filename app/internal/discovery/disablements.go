@@ -4,7 +4,7 @@ import (
 	"context"
 	"sort"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
 )
 
 // Disablements collects what disablers report.

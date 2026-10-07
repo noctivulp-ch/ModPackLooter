@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
 )
 
 const idChars = `[a-z0-9_.-]+:[a-z0-9_./-]+`

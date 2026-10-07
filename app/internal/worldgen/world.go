@@ -5,9 +5,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
-	"github.com/EnierAragon/ModPackLooter/app/internal/nbt"
-	"github.com/EnierAragon/ModPackLooter/app/internal/resources"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/nbt"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/resources"
 )
 
 const stage = "parser"

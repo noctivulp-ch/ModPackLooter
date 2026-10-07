@@ -1,7 +1,7 @@
 package site
 
 import (
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
 	"sort"
 	"strings"
 )

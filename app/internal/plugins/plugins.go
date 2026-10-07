@@ -3,20 +3,20 @@
 package plugins
 
 import (
-	"github.com/EnierAragon/ModPackLooter/app/internal/analysis"
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery"
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/changes"
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/customnpcs"
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/disablers"
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/generic"
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/heuristics"
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/lootr"
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/lostcities"
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/spawns"
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/starcatcher"
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/templates"
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/tide"
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/vanilla"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/analysis"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/changes"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/customnpcs"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/disablers"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/generic"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/heuristics"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/lootr"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/lostcities"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/spawns"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/starcatcher"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/templates"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/tide"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/vanilla"
 )
 
 // Discoverers returns the discovery hook point with every known plugin.

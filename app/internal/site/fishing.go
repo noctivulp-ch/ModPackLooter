@@ -4,10 +4,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/analysis"
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
-	"github.com/EnierAragon/ModPackLooter/app/internal/fishing"
-	"github.com/EnierAragon/ModPackLooter/app/internal/names"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/analysis"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/fishing"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/names"
 )
 
 // Fishing is the fishing tab: pesca › fuente › bioma › condiciones › captura.

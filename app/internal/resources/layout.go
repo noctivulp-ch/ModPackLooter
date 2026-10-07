@@ -4,7 +4,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/mcversion"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/mcversion"
 )
 
 // Canonical resource types. The index always uses these names (the 1.21+

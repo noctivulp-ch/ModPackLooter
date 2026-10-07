@@ -5,8 +5,8 @@ package main
 import (
 	"os"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/cli"
-	"github.com/EnierAragon/ModPackLooter/app/internal/plugins"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/cli"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/plugins"
 )
 
 // version is set at build time with -ldflags "-X main.version=…".

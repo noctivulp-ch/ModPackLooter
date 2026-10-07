@@ -3,7 +3,7 @@
 // attaches a *Model with the key Extra.
 package spawns
 
-import "github.com/EnierAragon/ModPackLooter/app/internal/domain"
+import "github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
 
 // Extra is the key of the attached model.
 const Extra = "spawns"

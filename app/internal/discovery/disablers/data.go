@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery"
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
 )
 
 func structureTarget(id domain.ResourceID) domain.Target {

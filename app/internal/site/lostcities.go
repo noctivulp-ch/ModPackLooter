@@ -4,11 +4,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/analysis"
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/lostcities"
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
-	"github.com/EnierAragon/ModPackLooter/app/internal/names"
-	"github.com/EnierAragon/ModPackLooter/app/internal/resources"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/analysis"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/lostcities"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/names"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/resources"
 )
 
 // Section is a dedicated tab of a mod. It only exists when the mod and its

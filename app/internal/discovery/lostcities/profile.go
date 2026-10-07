@@ -8,8 +8,8 @@ import (
 
 	"github.com/BurntSushi/toml"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery"
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
 )
 
 // Profiles says where Lost Cities generates cities, following Lost Cities

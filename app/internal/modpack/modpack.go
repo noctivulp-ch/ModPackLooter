@@ -13,12 +13,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery"
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
-	"github.com/EnierAragon/ModPackLooter/app/internal/mcversion"
-	"github.com/EnierAragon/ModPackLooter/app/internal/names"
-	"github.com/EnierAragon/ModPackLooter/app/internal/resources"
-	"github.com/EnierAragon/ModPackLooter/app/internal/world"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/mcversion"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/names"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/resources"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/world"
 )
 
 const stage = "cargador"

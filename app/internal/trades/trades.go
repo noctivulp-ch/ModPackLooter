@@ -4,7 +4,7 @@
 package trades
 
 import (
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
 )
 
 // ExtraPrefix is the prefix of the keys trade discoverers attach with.

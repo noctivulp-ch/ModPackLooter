@@ -6,10 +6,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery"
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/generic"
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
-	"github.com/EnierAragon/ModPackLooter/app/internal/mcversion"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/generic"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/mcversion"
 )
 
 // fake is a configurable discoverer for tests.

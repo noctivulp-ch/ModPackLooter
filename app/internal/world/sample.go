@@ -1,6 +1,6 @@
 package world
 
-import "github.com/EnierAragon/ModPackLooter/app/internal/nbt"
+import "github.com/noctivulp-ch/ModPackLooter/app/internal/nbt"
 
 // Sample returns the Data compound of a small synthetic level.dat, for tests.
 func Sample() nbt.Compound {

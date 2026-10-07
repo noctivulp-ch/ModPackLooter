@@ -10,12 +10,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery"
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
-	"github.com/EnierAragon/ModPackLooter/app/internal/loot"
-	"github.com/EnierAragon/ModPackLooter/app/internal/modpack"
-	"github.com/EnierAragon/ModPackLooter/app/internal/resources"
-	"github.com/EnierAragon/ModPackLooter/app/internal/worldgen"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/loot"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/modpack"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/resources"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/worldgen"
 )
 
 // Progress receives stage updates. Implementations must be cheap.

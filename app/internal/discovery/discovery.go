@@ -10,10 +10,10 @@ package discovery
 import (
 	"context"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
-	"github.com/EnierAragon/ModPackLooter/app/internal/mcversion"
-	"github.com/EnierAragon/ModPackLooter/app/internal/world"
-	"github.com/EnierAragon/ModPackLooter/app/internal/worldgen"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/mcversion"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/world"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/worldgen"
 )
 
 // Phase groups plugins by how trustworthy their findings are.

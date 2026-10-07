@@ -4,10 +4,10 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery"
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
-	"github.com/EnierAragon/ModPackLooter/app/internal/mcversion"
-	"github.com/EnierAragon/ModPackLooter/app/internal/trades"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/mcversion"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/trades"
 )
 
 // TradesID is the ID of the vanilla trades discoverer.

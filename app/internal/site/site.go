@@ -17,8 +17,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/analysis"
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/analysis"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
 )
 
 //go:embed templates/*.html

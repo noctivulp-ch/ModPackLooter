@@ -3,7 +3,7 @@ package discovery
 import (
 	"sort"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
 )
 
 type claimKey struct {

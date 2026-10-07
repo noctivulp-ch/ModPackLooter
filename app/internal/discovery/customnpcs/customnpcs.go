@@ -13,11 +13,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery"
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
-	"github.com/EnierAragon/ModPackLooter/app/internal/names"
-	"github.com/EnierAragon/ModPackLooter/app/internal/trades"
-	"github.com/EnierAragon/ModPackLooter/app/internal/variants"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/names"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/trades"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/variants"
 )
 
 // ID of the discoverer.

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
 )
 
 // Namer resolves display names.
