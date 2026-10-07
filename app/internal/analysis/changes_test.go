@@ -5,10 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
-	"github.com/EnierAragon/ModPackLooter/app/internal/modpack"
-	"github.com/EnierAragon/ModPackLooter/app/internal/plugins"
-	"github.com/EnierAragon/ModPackLooter/app/internal/testkit"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/modpack"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/plugins"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/testkit"
 )
 
 func TestChangeDetectors(t *testing.T) {

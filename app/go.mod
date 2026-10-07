@@ -1,4 +1,4 @@
-module github.com/EnierAragon/ModPackLooter/app
+module github.com/noctivulp-ch/ModPackLooter/app
 
 go 1.24.7
 

@@ -3,12 +3,12 @@ package site
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/EnierAragon/ModPackLooter/app/internal/analysis"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/analysis"
 	"hash/fnv"
 	"strings"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
-	"github.com/EnierAragon/ModPackLooter/app/internal/names"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/names"
 )
 
 // itemKey tells items apart: each useful variant has its own page.

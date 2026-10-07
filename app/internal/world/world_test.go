@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/nbt"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/nbt"
 )
 
 // Write creates a level.dat for tests in other packages too.

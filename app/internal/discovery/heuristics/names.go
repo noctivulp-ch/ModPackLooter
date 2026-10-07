@@ -6,9 +6,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery"
-	"github.com/EnierAragon/ModPackLooter/app/internal/discovery/generic"
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/discovery/generic"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
 )
 
 // NameMatchingID is the ID of the name matching discoverer.

@@ -6,12 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/analysis"
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
-	"github.com/EnierAragon/ModPackLooter/app/internal/modpack"
-	"github.com/EnierAragon/ModPackLooter/app/internal/nbt"
-	"github.com/EnierAragon/ModPackLooter/app/internal/plugins"
-	"github.com/EnierAragon/ModPackLooter/app/internal/testkit"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/analysis"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/modpack"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/nbt"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/plugins"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/testkit"
 )
 
 const chestTable = `{"type":"minecraft:chest","pools":[{"rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:diamond"}]}]}`

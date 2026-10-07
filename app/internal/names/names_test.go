@@ -3,7 +3,7 @@ package names
 import (
 	"testing"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
 )
 
 func TestAssetUsesAnyLangKey(t *testing.T) {

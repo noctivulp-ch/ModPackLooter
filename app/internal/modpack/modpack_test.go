@@ -4,14 +4,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/nbt"
-	"github.com/EnierAragon/ModPackLooter/app/internal/world"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/nbt"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/world"
 	"strings"
 	"testing"
 
-	"github.com/EnierAragon/ModPackLooter/app/internal/domain"
-	"github.com/EnierAragon/ModPackLooter/app/internal/resources"
-	"github.com/EnierAragon/ModPackLooter/app/internal/testkit"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/domain"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/resources"
+	"github.com/noctivulp-ch/ModPackLooter/app/internal/testkit"
 )
 
 func TestOpenMergesPacksInGameOrder(t *testing.T) {
