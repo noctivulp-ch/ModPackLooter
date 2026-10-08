@@ -76,6 +76,7 @@ func Build(res *analysis.Result, opts Options) (Stats, error) {
 	}
 
 	r.render("home", "", "inicio", opts.Title, m, nil)
+	r.render("search", "buscar/", "buscar", "Búsqueda Avanzada", m, nil)
 	r.render("items", "objetos/", "objetos", "Objetos", m, listRows(m.Items))
 	for _, it := range m.Items {
 		r.render("item", it.URL, "objetos", it.Name, m, it)
