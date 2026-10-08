@@ -1,0 +1,32 @@
+{{template "layout" .}}
+
+{{define "title"}}Búsqueda Avanzada - {{.Title}}{{end}}
+{{define "body"}}
+<header class="page-head">
+  <h1>Búsqueda Avanzada</h1>
+  <p class="meta">Análisis de lugares óptimos (Greedy Set Cover)</p>
+</header>
+
+<section class="pozo" id="search-results-container">
+  <p>Calculando lugares óptimos...</p>
+</section>
+
+<script>
+  window.addEventListener("DOMContentLoaded", function() {
+    var params = new URLSearchParams(window.location.search);
+    var qRaw = params.get("q");
+    var container = document.getElementById("search-results-container");
+    if (!qRaw) {
+      container.innerHTML = "<p>No se especificó ninguna consulta.</p>";
+      return;
+    }
+    
+    // We will hook this up in app.js
+    if (window.renderAdvancedSearch) {
+      window.renderAdvancedSearch(qRaw, container);
+    } else {
+      container.innerHTML = "<p>Error: El script de búsqueda no está cargado.</p>";
+    }
+  });
+</script>
+{{end}}

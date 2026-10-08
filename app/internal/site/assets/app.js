@@ -145,7 +145,7 @@
     return total;
   }
 
-  function searchMulti(list, qs) {
+  function searchMulti(list, qs, raw) {
     var targetItems = [];
     var sourceItems = {};
     for (var i = 0; i < list.length; i++) {
@@ -193,15 +193,18 @@
         uncoverCount--;
       }
     }
+    if (hits.length > 0 && raw) {
+      hits.unshift({ e: { t: "f", n: "🔍 Ver análisis detallado de lugares óptimos", u: "buscar/index.html?q=" + encodeURIComponent(raw), s: "Abre una página detallando qué objetos tiene cada edificio", i: "advanced_search", k: "" }, s: 2000 });
+    }
     return hits;
   }
 
   function search(list, raw) {
     var q = parse(raw);
     if (empty(q)) return [];
-    if (q.multi) return searchMulti(list, q.multi);
+    if (q.multi) return searchMulti(list, q.multi, raw);
     var hits = [];
-    if (q.group) hits = searchMulti(list, [q]);
+    if (q.group) hits = searchMulti(list, [q], raw);
     for (var i = 0; i < list.length; i++) {
       var s = score(list[i], q);
       if (s > 0) hits.push({ e: list[i], s: s });
@@ -493,3 +496,92 @@
   window.addEventListener("hashchange", openTarget);
   openTarget();
 })();
+
+
+window.renderAdvancedSearch = function(raw, container) {
+  if (!window.MPL_INDEX) return;
+  var list = window.MPL_INDEX;
+  var q = parse(raw);
+  if (empty(q)) {
+    container.innerHTML = "<p>Consulta vacía.</p>";
+    return;
+  }
+  
+  var qs = q.multi ? q.multi : [q];
+  var targetItems = [];
+  var sourceItems = {};
+  for (var i = 0; i < list.length; i++) {
+    var e = list[i];
+    if (e.t !== "o" || !e.c) continue;
+    var matchesAny = false;
+    for (var j = 0; j < qs.length; j++) {
+      if (score(e, qs[j]) > 0) { matchesAny = true; break; }
+    }
+    if (matchesAny) {
+      targetItems.push(e);
+      for (var k = 0; k < e.c.length; k++) {
+        var srcIdx = e.c[k];
+        if (!sourceItems[srcIdx]) sourceItems[srcIdx] = [];
+        sourceItems[srcIdx].push(e);
+      }
+    }
+  }
+  
+  if (!targetItems.length) {
+    container.innerHTML = "<p>No se encontraron objetos que coincidan con la búsqueda.</p>";
+    return;
+  }
+  
+  var html = "<p>Se encontraron <strong>" + targetItems.length + "</strong> objetos. Calculando los mejores lugares para obtener la mayor cantidad de ellos...</p>";
+  
+  var uncovered = {}, uncoverCount = targetItems.length;
+  for (var i = 0; i < targetItems.length; i++) uncovered[targetItems[i].i] = true;
+  
+  var sourcesData = window.MPL_SOURCES || [];
+  var results = [];
+  
+  while (uncoverCount > 0) {
+    var bestSrc = -1, bestCount = 0, bestCovered = [];
+    for (var srcIdx in sourceItems) {
+      var items = sourceItems[srcIdx];
+      var count = 0, covered = [];
+      for (var i = 0; i < items.length; i++) {
+        if (uncovered[items[i].i]) { count++; covered.push(items[i]); }
+      }
+      if (count > bestCount) { bestCount = count; bestSrc = srcIdx; bestCovered = covered; }
+    }
+    if (bestCount === 0) break;
+    
+    var srcObj = sourcesData[bestSrc] || { n: "Fuente " + bestSrc, u: targetItems[0].u };
+    var srcName = srcObj.n || srcObj;
+    var srcUrl = srcObj.u || targetItems[0].u;
+    
+    results.push({ name: srcName, url: srcUrl, items: bestCovered });
+    
+    for (var i = 0; i < bestCovered.length; i++) {
+      delete uncovered[bestCovered[i].i];
+      uncoverCount--;
+    }
+  }
+  
+  if (results.length > 0) {
+    html += "<ul class='links'>";
+    for (var i = 0; i < results.length; i++) {
+      var r = results[i];
+      html += "<li><a href='../" + r.url + "'><strong>" + r.name + "</strong></a>";
+      html += "<br><span class='meta'>Provee " + r.items.length + " objetos nuevos:</span>";
+      html += "<ul style='margin-top: 4px; margin-bottom: 12px; font-size: 0.9em; color: #555;'>";
+      for (var j = 0; j < r.items.length; j++) {
+        html += "<li><a href='../" + r.items[j].u + "'>" + r.items[j].n + "</a></li>";
+      }
+      html += "</ul></li>";
+    }
+    html += "</ul>";
+  }
+  
+  if (uncoverCount > 0) {
+    html += "<p style='margin-top: 1em;'><em>Nota: " + uncoverCount + " objetos no se pueden obtener en ninguna estructura/mob registrado, deberás craftearlos o buscar de otra forma.</em></p>";
+  }
+  
+  container.innerHTML = html;
+};
