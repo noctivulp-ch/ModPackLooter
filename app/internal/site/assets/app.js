@@ -201,6 +201,7 @@
     if (empty(q)) return [];
     if (q.multi) return searchMulti(list, q.multi);
     var hits = [];
+    if (q.group) hits = searchMulti(list, [q]);
     for (var i = 0; i < list.length; i++) {
       var s = score(list[i], q);
       if (s > 0) hits.push({ e: list[i], s: s });
@@ -238,7 +239,7 @@
   var index = (window.MPL_INDEX || []).map(prepare);
   var siteRoot = input ? input.getAttribute("data-root") || "" : "";
   var groups = { o: "Objetos", e: "Estructuras", f: "Lugares óptimos", l: "Lost Cities", c: "Criaturas", b: "Biomas", m: "Mods" };
-  var order = ["o", "f", "e", "l", "c", "b", "m"];
+  var order = ["f", "o", "e", "l", "c", "b", "m"];
   var opener = null;
 
   var active = -1;
