@@ -37,7 +37,7 @@ func NewRootCommand(deps Deps) *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
-	root.AddCommand(newBuildCommand(deps), newScanCommand(deps), newPlanCommand(deps))
+	root.AddCommand(newBuildCommand(deps), newScanCommand(deps), newPlanCommand(deps), newFindCommand(deps))
 	return root
 }
 

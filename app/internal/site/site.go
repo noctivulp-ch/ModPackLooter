@@ -14,6 +14,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -68,7 +69,7 @@ func Build(res *analysis.Result, opts Options) (Stats, error) {
 	if !validMetal(opts.Metal) {
 		opts.Metal = "oro"
 	}
-	m := buildModel(res, opts)
+	m := BuildModel(res, opts)
 	r, err := newRenderer(opts.OutDir)
 	if err != nil {
 		return Stats{}, err
@@ -113,6 +114,7 @@ func Build(res *analysis.Result, opts Options) (Stats, error) {
 	if err := r.writeAssets(m); err != nil {
 		return Stats{}, err
 	}
+	EvaluateCompleteness(m, opts.OutDir)
 	return Stats{Pages: r.pages, Items: len(m.Items), Owners: len(m.Owners), Biomes: len(m.Biomes), Tables: len(m.Tables)}, nil
 }
 
@@ -196,6 +198,8 @@ type searchEntry struct {
 	Keys string `json:"k,omitempty"`
 	// Mod is the namespace, for "@mod" filters.
 	Mod string `json:"m,omitempty"`
+	// Srcs is the list of source indices for multiple-item searches.
+	Srcs []int `json:"c,omitempty"`
 }
 
 func (r *renderer) writeAssets(m *Model) error {
@@ -212,9 +216,68 @@ func (r *renderer) writeAssets(m *Model) error {
 			return err
 		}
 	}
+	type searchSrc struct {
+		N string `json:"n"`
+		U string `json:"u"`
+	}
+	var srcNames []searchSrc
+	srcIndex := map[string]int{}
+	getSrc := func(name, url string) int {
+		if i, ok := srcIndex[name]; ok {
+			return i
+		}
+		i := len(srcNames)
+		srcNames = append(srcNames, searchSrc{N: name, U: url})
+		srcIndex[name] = i
+		return i
+	}
 	var idx []searchEntry
 	for _, it := range m.Items {
-		idx = append(idx, itemEntry(it))
+		e := itemEntry(it)
+		if !it.Unobtainable {
+			var srcs []int
+			for _, card := range it.Cards {
+				for _, g := range card.Structures {
+					for _, st := range g.Structures {
+						if st.Owner != nil {
+							url := st.Owner.URL
+							if url != "" { url += "index.html" }
+							srcs = append(srcs, getSrc(st.Owner.Name, url))
+						}
+					}
+				}
+				for _, g := range card.LC {
+					for _, b := range g.Buildings {
+						if b.Building != nil {
+							url := b.Building.URL
+							if url != "" { url += "index.html" }
+							srcs = append(srcs, getSrc(b.Building.Name+" (Lost Cities)", url))
+						}
+					}
+				}
+				for _, mob := range card.Mobs {
+					if mob.Owner != nil {
+						url := mob.Owner.URL
+						if url != "" { url += "index.html" }
+						srcs = append(srcs, getSrc(mob.Owner.Name+" (Mob)", url))
+					}
+				}
+				for _, f := range card.Fish {
+					srcs = append(srcs, getSrc(f.Name+" (Pesca)", ""))
+				}
+			}
+			if len(srcs) > 0 {
+				sort.Ints(srcs)
+				uniq := []int{srcs[0]}
+				for _, s := range srcs[1:] {
+					if s != uniq[len(uniq)-1] {
+						uniq = append(uniq, s)
+					}
+				}
+				e.Srcs = uniq
+			}
+		}
+		idx = append(idx, e)
 	}
 	for _, o := range m.Owners {
 		idx = append(idx, searchEntry{Type: "e", Name: o.Name, ID: o.ID.String(), URL: o.URL + "index.html", Sub: o.Mod.Name, Keys: o.Mod.Name, Mod: o.ID.Namespace})
@@ -234,7 +297,11 @@ func (r *renderer) writeAssets(m *Model) error {
 		return err
 	}
 	// A script, not a fetched JSON: fetch() does not work from file://.
-	js := append([]byte("window.MPL_INDEX="), data...)
+	srcsData, _ := json.Marshal(srcNames)
+	js := append([]byte("window.MPL_SOURCES="), srcsData...)
+	js = append(js, []byte(";\n")...)
+	js = append(js, []byte("window.MPL_INDEX=")...)
+	js = append(js, data...)
 	js = append(js, []byte(";\n")...)
 	if err := os.WriteFile(filepath.Join(dir, "search-index.js"), js, 0o644); err != nil {
 		return err

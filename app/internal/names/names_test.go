@@ -20,12 +20,12 @@ func TestAssetUsesAnyLangKey(t *testing.T) {
 	}
 	n := New(es, en)
 	cases := map[string]string{
-		"deceasedcraft:retail_district": "Distrito: Comercial",
-		"deceasedcraft:highrise":        "Highrise",
-		"deceasedcraft:suburb":          "Suburb", // only a description: readable id
-		"deceasedcraft:park":            "Parque", // es found by search beats en explicit key
-		"other:retail_district":         "Retail District",
-		"deceasedcraft:empty":           "Empty", // empty value counts as missing
+		"deceasedcraft:retail_district": "Distrito: Comercial (retail_district)",
+		"deceasedcraft:highrise":        "Highrise (highrise)",
+		"deceasedcraft:suburb":          "Suburb (suburb)", // only a description: readable id
+		"deceasedcraft:park":            "Parque (park)", // es found by search beats en explicit key
+		"other:retail_district":         "Retail District (retail_district)",
+		"deceasedcraft:empty":           "Empty (empty)", // empty value counts as missing
 	}
 	for id, want := range cases {
 		if got := n.Asset("citystyle", domain.MustParseResourceID(id)); got != want {

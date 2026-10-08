@@ -31,6 +31,15 @@
   <ul class="links">{{range $b.Children}}<li><a href="{{rel $.Root .URL}}">{{.Name}}</a> <span class="meta">{{if .Containers}}{{.Containers}} {{if eq .Containers 1}}contenedor{{else}}contenedores{{end}}{{else}}sin loot{{end}}</span></li>{{end}}</ul>
 </section>
 {{end}}
+{{if $b.Blocks}}
+<section class="pozo">
+  <h2>Bloques de construcción</h2>
+  <p class="meta">Los bloques que forman la estructura del edificio (suma de todas las partes).</p>
+  <ul class="chips">
+    {{range $b.Blocks}}<li>{{if .Item}}<a href="{{rel $.Root .Item.URL}}" title="{{.ID}}">{{.Name}} <span class="meta">×{{.Count}}</span></a>{{else}}<span title="{{.ID}}">{{.Name}} <span class="meta">×{{.Count}}</span></span>{{end}}</li>{{end}}
+  </ul>
+</section>
+{{end}}
 {{if $b.Parts}}<h2 class="section-title">Partes y contenedores <span class="meta">piso por piso</span></h2>{{end}}
 {{range $b.Parts}}
 <section class="pozo card">

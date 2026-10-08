@@ -264,9 +264,9 @@ func TestFishingTab(t *testing.T) {
 		t.Error("falta la pestaña Pesca")
 	}
 	star := read("objetos/minecraft/nether_star/index.html")
-	for _, want := range []string{"Pescando", "La forma más probable", "Starcatcher", "solo con cebo:", "Wither Skeleton Skull", "aparece Wither al pescarlo", "en cualquier bioma"} {
+	for _, want := range []string{"Pescando", "La forma más probable", "Starcatcher", "solo con cebo:", "Calavera de esqueleto del Wither", "aparece Wither al pescarlo", "en cualquier bioma"} {
 		if !strings.Contains(star, want) {
-			t.Errorf("la Estrella del Nether no contiene %q", want)
+			t.Errorf("la Estrella del Nether no contiene %q, star:\n%s", want, star)
 		}
 	}
 	// The master page of a biome joins every rod: dimension › biome › rod › condition › catch.
@@ -277,7 +277,7 @@ func TestFishingTab(t *testing.T) {
 		}
 	}
 	river := read("pesca/starcatcher/minecraft/river/index.html")
-	for _, want := range []string{"Trucha", "100 %", "solo de 19:00 a 05:00", "Con cebo", "con Wither Skeleton Skull"} {
+	for _, want := range []string{"Trucha", "100 %", "solo de 19:00 a 05:00", "Con cebo", "con Calavera de esqueleto del Wither"} {
 		if !strings.Contains(river, want) {
 			t.Errorf("Starcatcher en el río no contiene %q", want)
 		}
@@ -418,9 +418,9 @@ func TestTradesTab(t *testing.T) {
 		}
 	}
 	farmer := read("tradeos/aldeanos/minecraft/farmer/index.html")
-	for _, want := range []string{"Novato", "Se eligen 2 de estas 5 ofertas", "20 × ", "40 %", "Composter"} {
+	for _, want := range []string{"Novato", "Se eligen 2 de estas 5 ofertas", "20 × ", "40 %", "Compostador"} {
 		if !strings.Contains(farmer, want) {
-			t.Errorf("el granjero no contiene %q", want)
+			t.Errorf("el granjero no contiene %q, html:\n%s", want, farmer)
 		}
 	}
 	bread := read("objetos/minecraft/bread/index.html")
@@ -430,13 +430,13 @@ func TestTradesTab(t *testing.T) {
 		}
 	}
 	merchant := read("tradeos/npcs/npc/merchant/index.html")
-	for _, want := range []string{"20 × ", "Money", "2 × ", "Bread", "1 × ", "Diamond"} {
+	for _, want := range []string{"20 × ", "Money", "2 × ", "Pan", "1 × ", "Diamante"} {
 		if !strings.Contains(merchant, want) {
 			t.Errorf("el mercader no contiene %q", want)
 		}
 	}
 	shop := read("tradeos/npcs/npc/shopkeeper/index.html")
-	for _, want := range []string{"Tienda: Tienda del tendero", "7 × ", "Apple", "existencias: 4"} {
+	for _, want := range []string{"Tienda: Tienda del tendero", "7 × ", "Manzana", "existencias: 4"} {
 		if !strings.Contains(shop, want) {
 			t.Errorf("la tienda no contiene %q", want)
 		}

@@ -3,6 +3,7 @@
 package names
 
 import (
+	"fmt"
 	"strings"
 	"unicode"
 
@@ -116,12 +117,21 @@ func (n *Namer) Asset(kind string, id domain.ResourceID) string {
 		}
 	}
 	last := path[strings.LastIndex(path, ".")+1:]
+	
+	var result string
+	found := false
 	for i, lang := range n.langs {
 		for _, k := range explicit {
 			if v := lang[k]; v != "" {
-				return v
+				result = v
+				found = true
+				break
 			}
 		}
+		if found {
+			break
+		}
+		
 		var named, other string
 		for _, k := range n.byEnd[i][last] {
 			v := lang[k]
@@ -143,18 +153,31 @@ func (n *Namer) Asset(kind string, id domain.ResourceID) string {
 			}
 		}
 		if named != "" {
-			return lang[named]
+			result = lang[named]
+			found = true
+			break
 		}
 		if other != "" {
-			return lang[other]
+			result = lang[other]
+			found = true
+			break
 		}
 	}
-	// "citystyle_desert" reads better as "Desert" under "Estilos de ciudad".
-	base := id.Path[strings.LastIndex(id.Path, "/")+1:]
-	if rest, ok := strings.CutPrefix(base, kind+"_"); ok && rest != "" {
-		return Humanize(rest)
+	
+	if !found {
+		// "citystyle_desert" reads better as "Desert" under "Estilos de ciudad".
+		base := id.Path[strings.LastIndex(id.Path, "/")+1:]
+		if rest, ok := strings.CutPrefix(base, kind+"_"); ok && rest != "" {
+			result = Humanize(rest)
+		} else {
+			result = Humanize(id.Path)
+		}
 	}
-	return Humanize(id.Path)
+	
+	if id.Namespace == "lostcities" || id.Namespace == "deceasedcraft" || strings.HasPrefix(kind, "city") || kind == "building" || kind == "part" || kind == "worldstyle" || kind == "scattered" {
+		return fmt.Sprintf("%s (%s)", result, id.Path)
+	}
+	return result
 }
 
 // BiomeTag names a biome tag ("minecraft:is_ocean" → "Ocean" unless a

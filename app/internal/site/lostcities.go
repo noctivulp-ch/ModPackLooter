@@ -105,6 +105,15 @@ type LCBuilding struct {
 	Containers int
 	Tables     []*Table // every loot table the building can hold
 	Haul       []HaulItem
+	Blocks     []LCBlockCount // blocks that make up the structure
+}
+
+// LCBlockCount is a block that makes up a building's structure.
+type LCBlockCount struct {
+	Name  string
+	ID    string
+	Count int
+	Item  *Item
 }
 
 // LCPart is a floor or section of a building with loot containers.
@@ -132,7 +141,7 @@ type LCChoice struct {
 // HasLoot reports whether the building or a child holds loot.
 func (b *LCBuilding) HasLoot() bool { return b.Containers > 0 }
 
-func buildLostCities(res *analysis.Result, m *Model, namer *names.Namer) {
+func buildLostCities(res *analysis.Result, m *Model, namer *names.Namer, getItem func(domain.ResourceID) *Item, variantOf func(domain.ResourceID, domain.Variant) *Item) {
 	lm, ok := res.Extras[lostcities.ID].(*lostcities.Model)
 	if !ok || !lm.HasContent() {
 		return
@@ -199,6 +208,7 @@ func buildLostCities(res *analysis.Result, m *Model, namer *names.Namer) {
 				x.Tables = append(x.Tables, t)
 			}
 		}
+		blockCounts := map[string]int{}
 		for _, c := range b.Children {
 			child := building(c)
 			x.Children = append(x.Children, child)
@@ -207,8 +217,14 @@ func buildLostCities(res *analysis.Result, m *Model, namer *names.Namer) {
 			for _, t := range child.Tables {
 				addTable(t)
 			}
+			for _, bc := range child.Blocks {
+				blockCounts[bc.ID] += bc.Count
+			}
 		}
 		for _, p := range b.Parts {
+			for bid, count := range p.Blocks {
+				blockCounts[bid] += count
+			}
 			if len(p.Containers) == 0 {
 				x.Empty++
 				continue
@@ -253,6 +269,28 @@ func buildLostCities(res *analysis.Result, m *Model, namer *names.Namer) {
 		}
 		sortRefs(x.Tables, func(t *Table) Ref { return t.Ref })
 		x.Haul = h.list()
+		for bid, count := range blockCounts {
+			if id, err := domain.ParseResourceID(bid); err == nil {
+				item := getItem(id)
+				if item == nil {
+					item = variantOf(id, domain.Variant{})
+				}
+				if item != nil {
+					name := namer.Item(id)
+					x.Blocks = append(x.Blocks, LCBlockCount{Name: name, ID: bid, Count: count, Item: item})
+					// Also register as a source for the item!
+					if !b.Multi {
+						item.addLC(x, LCItemRow{Part: "Estructura del edificio", Block: name, Count: count, Chance: 1, Share: 1, Detail: "Rompiendo los bloques", CountMin: float64(count), CountMax: float64(count)})
+					}
+				}
+			}
+		}
+		sort.Slice(x.Blocks, func(i, j int) bool {
+			if x.Blocks[i].Count != x.Blocks[j].Count {
+				return x.Blocks[i].Count > x.Blocks[j].Count
+			}
+			return x.Blocks[i].Name < x.Blocks[j].Name
+		})
 		return x
 	}
 

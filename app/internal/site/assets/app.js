@@ -65,8 +65,16 @@
   }
 
   function parse(raw) {
-    var q = { mods: [], ids: [], words: [], text: "" };
+    if (raw.indexOf(",") >= 0) {
+      return { multi: raw.split(",").map(parse).filter(function(q) { return !empty(q); }) };
+    }
+    var q = { mods: [], ids: [], words: [], text: "", group: false };
     fold(raw).split(/\s+/).forEach(function (t) {
+      if (!t) return;
+      if (t.charAt(t.length - 1) === "*") {
+        q.group = true;
+        t = t.slice(0, -1);
+      }
       if (!t) return;
       if (t.charAt(0) === "@" && t.length > 1) q.mods.push(t.slice(1));
       else if (t.indexOf("mod:") === 0 && t.length > 4) q.mods.push(t.slice(4));
@@ -76,7 +84,7 @@
     q.text = q.words.join(" ");
     return q;
   }
-  function empty(q) { return !q.mods.length && !q.ids.length && !q.words.length; }
+  function empty(q) { return q.multi ? q.multi.length === 0 : (!q.mods.length && !q.ids.length && !q.words.length); }
 
   // prepare guarda las formas plegadas de una entrada {n, k, i, m}.
   function prepare(e) {
@@ -137,9 +145,61 @@
     return total;
   }
 
+  function searchMulti(list, qs) {
+    var targetItems = [];
+    var sourceItems = {};
+    for (var i = 0; i < list.length; i++) {
+      var e = list[i];
+      if (e.t !== "o" || !e.c) continue;
+      var matchesAny = false;
+      for (var j = 0; j < qs.length; j++) {
+        if (score(e, qs[j]) > 0) { matchesAny = true; break; }
+      }
+      if (matchesAny) {
+        targetItems.push(e);
+        for (var k = 0; k < e.c.length; k++) {
+          var srcIdx = e.c[k];
+          if (!sourceItems[srcIdx]) sourceItems[srcIdx] = [];
+          sourceItems[srcIdx].push(e);
+        }
+      }
+    }
+    if (!targetItems.length) return [];
+    var uncovered = {}, uncoverCount = targetItems.length;
+    for (var i = 0; i < targetItems.length; i++) uncovered[targetItems[i].i] = true;
+    var hits = [];
+    var sourcesData = window.MPL_SOURCES || [];
+    while (uncoverCount > 0) {
+      var bestSrc = -1, bestCount = 0, bestCovered = [];
+      for (var srcIdx in sourceItems) {
+        var items = sourceItems[srcIdx];
+        var count = 0, covered = [];
+        for (var i = 0; i < items.length; i++) {
+          if (uncovered[items[i].i]) { count++; covered.push(items[i]); }
+        }
+        if (count > bestCount) { bestCount = count; bestSrc = srcIdx; bestCovered = covered; }
+      }
+      if (bestCount === 0) break;
+      var srcObj = sourcesData[bestSrc] || { n: "Fuente " + bestSrc, u: targetItems[0].u };
+      var srcName = srcObj.n || srcObj;
+      var srcUrl = srcObj.u || targetItems[0].u;
+      
+      var names = [];
+      for (var i = 0; i < bestCovered.length; i++) names.push(bestCovered[i].n);
+      var sub = "Provee " + bestCount + " objetos: " + names.slice(0, 3).join(", ") + (names.length > 3 ? " y " + (names.length - 3) + " más" : "");
+      hits.push({ e: { t: "f", n: srcName, u: srcUrl, s: sub, i: srcName, k: "" }, s: 1000 - hits.length });
+      for (var i = 0; i < bestCovered.length; i++) {
+        delete uncovered[bestCovered[i].i];
+        uncoverCount--;
+      }
+    }
+    return hits;
+  }
+
   function search(list, raw) {
     var q = parse(raw);
     if (empty(q)) return [];
+    if (q.multi) return searchMulti(list, q.multi);
     var hits = [];
     for (var i = 0; i < list.length; i++) {
       var s = score(list[i], q);
@@ -177,8 +237,8 @@
   var list = document.getElementById("results");
   var index = (window.MPL_INDEX || []).map(prepare);
   var siteRoot = input ? input.getAttribute("data-root") || "" : "";
-  var groups = { o: "Objetos", e: "Estructuras", l: "Lost Cities", c: "Criaturas", b: "Biomas", m: "Mods" };
-  var order = ["o", "e", "l", "c", "b", "m"];
+  var groups = { o: "Objetos", e: "Estructuras", f: "Lugares óptimos", l: "Lost Cities", c: "Criaturas", b: "Biomas", m: "Mods" };
+  var order = ["o", "f", "e", "l", "c", "b", "m"];
   var opener = null;
 
   var active = -1;

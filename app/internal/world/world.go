@@ -33,6 +33,7 @@ type World struct {
 	Path       string
 	Name       string
 	Version    string
+	GenerateFeatures bool
 	Dimensions []Dimension
 	Enabled    []string // DataPacks.Enabled, e.g. "vanilla", "mod:lootr", "file/x.zip"
 	Disabled   []string
@@ -56,6 +57,12 @@ func Load(dir string) (*World, error) {
 		return nil, fmt.Errorf("level.dat sin datos en %s", dir)
 	}
 	w := &World{Path: dir, Name: d.String("LevelName"), Version: d.Compound("Version").String("Name")}
+
+	w.GenerateFeatures = true
+	genSettings := d.Compound("WorldGenSettings")
+	if b, ok := genSettings["generate_features"].(byte); ok {
+		w.GenerateFeatures = b != 0
+	}
 	for _, v := range d.Compound("DataPacks").List("Enabled") {
 		if s, ok := v.(string); ok {
 			w.Enabled = append(w.Enabled, s)

@@ -88,6 +88,7 @@ type Building struct {
 type Part struct {
 	ID         domain.ResourceID
 	Containers []PartContainer
+	Blocks     map[string]int
 }
 
 // PartContainer is one kind of loot container in a part.
@@ -483,7 +484,7 @@ func (r *reader) part(id domain.ResourceID, buildingPal map[string]paletteEntry)
 	if !r.read(resources.TypeLostCitiesParts, id, &raw) {
 		return nil
 	}
-	p := &Part{ID: id}
+	p := &Part{ID: id, Blocks: map[string]int{}}
 	r.parts[id] = p
 	local := r.paletteRef(raw.Palette, id.Namespace)
 	var refPal map[string]paletteEntry
@@ -513,6 +514,9 @@ func (r *reader) part(id domain.ResourceID, buildingPal map[string]paletteEntry)
 		}
 		if !ok {
 			e, ok = r.globalPal[c]
+		}
+		if ok && e.Block != "" {
+			p.Blocks[e.Block] += counts[c]
 		}
 		if !ok || e.Loot == "" {
 			continue

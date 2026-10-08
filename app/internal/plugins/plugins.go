@@ -41,6 +41,8 @@ func Discoverers() *discovery.Registry[discovery.Discoverer] {
 func Disablers() *discovery.Registry[discovery.Disabler] {
 	return discovery.NewRegistry[discovery.Disabler](
 		disablers.StructureSets{},
+		disablers.LevelDatFeatures{},
+		disablers.DimensionAccess{},
 		disablers.StructureBiomes{},
 		disablers.BiomeReplacer{},
 		disablers.Structurify{},

@@ -309,7 +309,7 @@ func translateNotes(in []string, namer *names.Namer) []string {
 }
 
 // buildModel turns an analysis result into the site model.
-func buildModel(res *analysis.Result, opts Options) *Model {
+func BuildModel(res *analysis.Result, opts Options) *Model {
 	ix := res.Resources.Index()
 	var langs []map[string]string
 	for _, code := range names.LangChain(opts.Lang, ix.Languages()) {
@@ -642,7 +642,6 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		}
 		return a.ID.String() < b.ID.String()
 	})
-	buildLostCities(res, m, namer)
 	ensureVariant := func(id domain.ResourceID, v domain.Variant) *Item {
 		// Fished or traded items may have no loot source: list them too.
 		it := variantOf(id, v)
@@ -659,6 +658,7 @@ func buildModel(res *analysis.Result, opts Options) *Model {
 		return it
 	}
 	ensureItem := func(id domain.ResourceID) *Item { return ensureVariant(id, domain.Variant{}) }
+	buildLostCities(res, m, namer, func(id domain.ResourceID) *Item { return items[itemKey{id: id}] }, ensureVariant)
 	buildFishing(res, m, namer, ensureItem)
 	buildSpots(m)
 	buildChanges(res, m, namer, ensureItem)

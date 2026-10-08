@@ -6,6 +6,7 @@ package disablers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -151,5 +152,129 @@ func (BiomeReplacer) Detect(_ context.Context, in discovery.Input, out *discover
 			out.Add(domain.Disablement{Target: domain.Target{Kind: domain.TargetBiome, ID: b}, Certainty: domain.Certainly, By: BiomeReplacerID, Reason: reason})
 		}
 	}
+	return nil
+}
+
+// LevelDatFeaturesID is the ID of the LevelDatFeatures disabler.
+const LevelDatFeaturesID = "leveldat-features"
+
+// LevelDatFeatures: if generate_features is false in level.dat, no structures generate.
+type LevelDatFeatures struct{}
+
+func (LevelDatFeatures) Descriptor() discovery.Descriptor {
+	return discovery.Descriptor{ID: LevelDatFeaturesID, Phase: discovery.PhaseSpecific, Priority: 110}
+}
+
+func (LevelDatFeatures) Detect(_ context.Context, in discovery.Input, out *discovery.Disablements) error {
+	w := in.Files.Level()
+	if w == nil || w.GenerateFeatures {
+		return nil
+	}
+	for _, s := range in.World.Structures() {
+		if s.ID.Namespace == "lostcities" {
+			continue // Lost Cities ignore generate_features
+		}
+		out.Add(domain.Disablement{
+			Target: structureTarget(s.ID), Certainty: domain.Certainly, By: LevelDatFeaturesID,
+			Reason: "generación de estructuras desactivada en el mundo (generate_features = false en level.dat)",
+		})
+	}
+	return nil
+}
+
+// DimensionAccessID is the ID of the DimensionAccess disabler.
+const DimensionAccessID = "dimension-access"
+
+// DimensionAccess disables biomes of dimensions that cannot be reached.
+type DimensionAccess struct{}
+
+func (DimensionAccess) Descriptor() discovery.Descriptor {
+	return discovery.Descriptor{ID: DimensionAccessID, Phase: discovery.PhaseSpecific, Priority: 120}
+}
+
+func (DimensionAccess) Detect(_ context.Context, in discovery.Input, out *discovery.Disablements) error {
+	hasPortalMods := in.Target.Mods["wormhole"] || in.Target.Mods["dimension_portal_api"] || in.Target.Mods["dimdoors"]
+	var portalModNames []string
+	if in.Target.Mods["wormhole"] { portalModNames = append(portalModNames, "wormhole") }
+	if in.Target.Mods["dimension_portal_api"] { portalModNames = append(portalModNames, "dimension_portal_api") }
+	if in.Target.Mods["dimdoors"] { portalModNames = append(portalModNames, "dimdoors") }
+	portalModsStr := strings.Join(portalModNames, ", ")
+
+	netherDisabled := false
+	serverData, err := in.Files.ReadFile("server.properties")
+	if err == nil {
+		for _, line := range strings.Split(string(serverData), "\n") {
+			if strings.HasPrefix(strings.TrimSpace(line), "allow-nether=false") {
+				netherDisabled = true
+				break
+			}
+		}
+	}
+	
+	if netherDisabled {
+		certainty := domain.Certainly
+		reason := "Dimensión inacesible: allow-nether=false en server.properties y no hay mods de portales alternativos"
+		if hasPortalMods {
+			certainty = domain.Possibly
+			reason = "El acceso estándar está bloqueado (allow-nether=false), pero podría ser accesible vía mods: " + portalModsStr
+		}
+		
+		if w := in.Files.Level(); w != nil {
+			if d, ok := w.Dimension("minecraft:the_nether"); ok && d.Biomes != nil {
+				for _, b := range d.Biomes {
+					out.Add(domain.Disablement{
+						Target: domain.Target{Kind: domain.TargetBiome, ID: b}, Certainty: certainty, By: DimensionAccessID,
+						Reason: reason,
+					})
+				}
+			}
+		}
+	}
+
+	strongholdDisabled := false
+	w := in.Files.Level()
+	if w != nil && !w.GenerateFeatures {
+		strongholdDisabled = true
+	}
+	
+	if !strongholdDisabled {
+		if cfgData, err := in.Files.ReadFile("config/structurify.json"); err == nil {
+			var cfg struct {
+				Structures []struct {
+					Name       string `json:"name"`
+					IsDisabled bool   `json:"is_disabled"`
+				} `json:"structures"`
+			}
+			if json.Unmarshal(cfgData, &cfg) == nil {
+				for _, e := range cfg.Structures {
+					if e.Name == "minecraft:stronghold" && e.IsDisabled {
+						strongholdDisabled = true
+						break
+					}
+				}
+			}
+		}
+	}
+
+	if strongholdDisabled {
+		certainty := domain.Certainly
+		reason := "Dimensión inacesible: los Strongholds están desactivados y no hay mods de portales alternativos"
+		if hasPortalMods {
+			certainty = domain.Possibly
+			reason = "El acceso estándar está bloqueado (sin Strongholds), pero podría ser accesible vía mods: " + portalModsStr
+		}
+		
+		if w := in.Files.Level(); w != nil {
+			if d, ok := w.Dimension("minecraft:the_end"); ok && d.Biomes != nil {
+				for _, b := range d.Biomes {
+					out.Add(domain.Disablement{
+						Target: domain.Target{Kind: domain.TargetBiome, ID: b}, Certainty: certainty, By: DimensionAccessID,
+						Reason: reason,
+					})
+				}
+			}
+		}
+	}
+
 	return nil
 }
