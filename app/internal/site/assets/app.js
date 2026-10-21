@@ -495,9 +495,6 @@
   }
   window.addEventListener("hashchange", openTarget);
   openTarget();
-})();
-
-
 window.renderAdvancedSearch = function(raw, container) {
   if (!window.MPL_INDEX) return;
   var list = window.MPL_INDEX;
@@ -585,3 +582,5 @@ window.renderAdvancedSearch = function(raw, container) {
   
   container.innerHTML = html;
 };
+
+})();
